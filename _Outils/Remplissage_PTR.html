@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remplissage PTR — SUEZ Gestion d'Actif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+:root{--bg:#F4F7FB;--panel:#fff;--panel2:#F8FAFD;--line:#E4EAF3;--line2:#CBD7E6;
+ --txt:#1E293B;--muted:#5B6B82;--faint:#93A2B8;--accent:#1B6FE8;--teal:#0D9488;--navy:#132446;
+ --add:#16A34A;--warn:#D97706;--del:#DC2626;
+ --shadow:0 1px 2px rgba(15,35,70,.05),0 10px 30px rgba(15,35,70,.06);
+ --mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--disp:'Space Grotesk','Inter',sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
+.wrap{max-width:1400px;margin:0 auto;padding:0 24px 70px}
+.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:24px}
+.top::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--teal))}
+.top .inner{max-width:1400px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none;
+ background:linear-gradient(135deg,var(--accent),var(--teal));color:#fff;font-family:var(--mono);font-weight:600;font-size:17px;box-shadow:0 5px 14px rgba(27,111,232,.28)}
+.btit{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--navy)}
+.bsub{font-size:12px;color:var(--muted)}
+.sp{margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;
+ font-family:var(--sans);border:1px solid var(--line2);background:var(--panel);color:var(--txt);transition:all .12s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.teal{background:linear-gradient(135deg,var(--teal),#0B7C72);color:#fff;border:none;box-shadow:0 3px 12px rgba(13,148,136,.26)}
+.btn.teal:hover{filter:brightness(1.05);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;box-shadow:var(--shadow)}
+.stat .v{font-family:var(--disp);font-size:25px;font-weight:700;color:var(--navy)}
+.stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+.stat.k-ok .v{color:var(--add)}.stat.k-warn .v{color:var(--warn)}.stat.k-no .v{color:var(--del)}.stat.k-ex .v{color:var(--faint)}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.bar input[type=search]{flex:1;min-width:240px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:10px 13px;font-family:var(--sans);font-size:13px}
+.bar select{background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-family:var(--sans);font-size:13px;color:var(--txt)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.scroll{overflow:auto;max-height:70vh}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,#20406B,#182F52);color:#EAF1FB;font-family:var(--mono);
+ font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;text-align:left;padding:10px 11px;white-space:nowrap;border-right:1px solid rgba(255,255,255,.08)}
+tbody td{padding:8px 11px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--panel2)}
+tbody tr:hover td{background:#EAF3FE}
+td.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+td.fill{background:#EAF7EE!important;font-weight:600;color:#166534}
+tbody tr.warn td{background:#FEF7E7}
+tbody tr.no td{background:#FEF2F2}
+tbody tr.ex td{background:#F1F5F9;color:var(--muted)}
+.pill{font-family:var(--mono);font-size:10px;font-weight:600;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.p-exact{color:#166534;background:#DCFCE7}.p-appr{color:#B45309;background:#FEF3C7}
+.p-large{color:#C2410C;background:#FFEDD5}.p-none{color:#B91C1C;background:#FEE2E2}
+.p-ex{color:#5B6B82;background:#E5E9F0}.p-deja{color:#1E40AF;background:#DBEAFE}
+.alerte{font-family:var(--mono);font-size:10px;color:#B45309}
+.src{font-size:11px;color:var(--faint)}
+/* écran de chargement */
+#loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg);font-family:var(--sans);overflow:auto;padding:20px}
+#loader::before{content:'';position:absolute;inset:0;pointer-events:none;
+ background:radial-gradient(900px 440px at 82% -8%,rgba(27,111,232,.08),transparent 60%),radial-gradient(720px 400px at 4% 0%,rgba(13,148,136,.07),transparent 60%)}
+#loader .box{position:relative;width:min(720px,94vw);background:#fff;border:1px solid var(--line);border-radius:18px;
+ box-shadow:0 1px 2px rgba(15,35,70,.05),0 18px 50px rgba(15,35,70,.12);padding:26px 30px;margin:auto}
+.bl{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.bl .bt{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--navy)}
+.bl .bs{font-size:12px;color:var(--muted)}
+.bl .au{margin-left:auto;font-size:12px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),#1559BE);border-radius:99px;padding:7px 15px;box-shadow:0 4px 14px rgba(27,111,232,.28)}
+#loader .ti{font-family:var(--disp);font-size:25px;font-weight:700;color:var(--navy);margin-bottom:8px}
+#loader .de{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+/* --- deux zones de dépôt --- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.zone{position:relative;border:1.5px dashed var(--line2);border-radius:16px;background:var(--panel2);
+ padding:22px 16px 18px;text-align:center;transition:all .16s;cursor:default}
+.zone:hover{border-color:var(--accent);background:#FBFDFF}
+.zone.drag{border-color:var(--accent);background:#EFF5FE;transform:scale(1.01)}
+.zone.done{border-style:solid;border-color:var(--add);background:#F3FBF6}
+.zone .zi{font-size:30px;margin-bottom:8px;transition:transform .16s}
+.zone.done .zi{transform:scale(.85)}
+.zone .zt{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.zone .zs{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;min-height:32px}
+.zone.done .zs{color:#15803D;font-weight:600}
+.zone .zb{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.zc{background:#fff;border:1px solid var(--line2);border-radius:9px;padding:8px 13px;font-family:var(--sans);
+ font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer;transition:all .12s}
+.zc:hover{border-color:var(--accent);background:#F5F9FF}
+.zc.alt{color:var(--teal)}
+.zc.alt:hover{border-color:var(--teal);background:#F3FBFA}
+.zone .zok{position:absolute;top:12px;right:14px;width:22px;height:22px;border-radius:50%;background:var(--add);
+ color:#fff;font-size:13px;font-weight:700;display:none;place-items:center}
+.zone.done .zok{display:grid}
+/* --- exclusions intégrées --- */
+.exc{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:16px;background:#fff}
+.exh{display:flex;align-items:center;margin-bottom:10px}
+.exl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.exq{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--line2);
+ color:#fff;font-size:10px;font-weight:700;cursor:help;margin-left:5px;vertical-align:middle}
+.exc-n{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px;min-height:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#F1F5F9;border:1px solid var(--line2);
+ border-radius:99px;padding:5px 10px;font-size:12.5px;color:var(--txt)}
+.chip b{font-weight:600}
+.chip .x{cursor:pointer;color:var(--faint);font-weight:700;font-size:14px;line-height:1}
+.chip .x:hover{color:var(--del)}
+.exadd{display:flex;gap:8px}
+.exp{border:1px solid var(--line);border-radius:9px;padding:9px 8px;font-family:var(--sans);font-size:12px;background:#fff;color:var(--muted);cursor:pointer;flex:none}
+.chip .cp{border:none;background:#E2E8F0;border-radius:6px;padding:2px 4px;font-family:var(--mono);font-size:10.5px;color:#475569;cursor:pointer;outline:none}
+.chip .cp:hover{background:#CBD5E1}
+.exi{flex:1;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-family:var(--sans);
+ font-size:12.5px;background:var(--panel2)}
+.exi:focus{outline:2px solid var(--accent);outline-offset:1px;background:#fff}
+/* --- bouton principal --- */
+.go{width:100%;background:linear-gradient(135deg,var(--teal),#0B7C72);color:#fff;border:none;border-radius:12px;padding:14px;
+ font-family:var(--sans);font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(13,148,136,.3);transition:all .14s}
+.go:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-1px)}
+.go:disabled{background:#CBD5E1;box-shadow:none;cursor:not-allowed}
+#log{margin-top:14px;font-family:var(--mono);font-size:11.5px;color:var(--muted);max-height:130px;overflow:auto;line-height:1.7}
+#log .ok{color:var(--add)}#log .err{color:var(--del)}#log .warn{color:var(--warn)}
+.note{margin-top:12px;font-size:11.5px;color:var(--faint);line-height:1.6}
+#app{display:none}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="box">
+    <div class="bl">
+      <div class="logo">▤</div>
+      <div><div class="bt">SUEZ — Gestion d'Actif</div><div class="bs">Remplissage automatique des PTR</div></div>
+      <span class="au">Tanguy BAYLE</span>
+    </div>
+    <div class="ti">Remplissage PTR</div>
+    <div class="de">Déposez votre base de prix et le PTR à remplir. L'outil calcule les prix, M.O. et S/T, et vous rend le PTR complété — <b>macros préservées</b>.</div>
+
+    <div class="duo">
+      <!-- Zone 1 : base de prix -->
+      <div class="zone" id="z1">
+        <div class="zi">💰</div>
+        <div class="zt">Base de prix</div>
+        <div class="zs" id="i1">Glissez un .json ou un dossier de PTR</div>
+        <div class="zb">
+          <button class="zc" id="b0">⚡ Base .json</button>
+          <button class="zc alt" id="b1">📁 Dossier</button>
+        </div>
+        <div class="zok" id="k1">✓</div>
+        <input id="f0" type="file" accept=".json" hidden>
+        <input id="f1" type="file" webkitdirectory directory multiple hidden>
+      </div>
+      <!-- Zone 2 : PTR vierge -->
+      <div class="zone" id="z2">
+        <div class="zi">📄</div>
+        <div class="zt">PTR à remplir</div>
+        <div class="zs" id="i2">Glissez votre PTR vierge ici</div>
+        <div class="zb">
+          <button class="zc" id="b2">Choisir un fichier</button>
+        </div>
+        <div class="zok" id="k2">✓</div>
+        <input id="f2" type="file" accept=".xlsx,.xlsm,.xls" hidden>
+      </div>
+    </div>
+
+    <!-- Exclusions intégrées -->
+    <div class="exc">
+      <div class="exh">
+        <span class="exl">Non chiffrés <span class="exq" title="Ces équipements ne sont pas valorisés : prix mis à 0, M.O. et S/T laissés vides. Un mot suffit (recherche partielle).">?</span></span>
+        <span class="exc-n" id="i3"></span>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="exadd">
+        <input class="exi" id="exAdd" type="text" placeholder="Ajouter un mot-clé (ex : clôture) puis Entrée…">
+        <select class="exp" id="exPortee" title="Où chercher ce mot-clé ?">
+          <option value="lib">dans le Libellé</option>
+          <option value="typ">dans le Type</option>
+          <option value="les2">dans les deux</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="go" id="go" disabled>Calculer et remplir le PTR →</button>
+    <div id="log"></div>
+    <div class="note">🔒 Tout se passe sur votre poste : aucun fichier n'est envoyé sur internet.</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="top"><div class="inner">
+    <div class="logo">▤</div>
+    <div><div class="btit">Remplissage PTR</div><div class="bsub" id="sub">—</div></div>
+    <div class="sp"></div>
+    <button class="btn" id="reset">↺ Recommencer</button>
+    <button class="btn" id="xls">⬇ Tableau des valeurs (Excel)</button>
+    <button class="btn teal" id="fill">📥 Télécharger le PTR rempli</button>
+  </div></div>
+  <div class="wrap">
+    <div class="stats" id="stats"></div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="Rechercher un libellé, un type, une marque…">
+      <select id="fstat">
+        <option value="">Tous les statuts</option>
+        <option value="Exact">Exact</option>
+        <option value="Approché (type + marque)">Approché (type + marque)</option>
+        <option value="Large (type seul)">Large (type seul)</option>
+        <option value="Aucune correspondance">Aucune correspondance</option>
+        <option value="__alerte">⚠ À vérifier seulement</option>
+        <option value="__remplis">Lignes remplies seulement</option>
+      </select>
+    </div>
+    <div class="card"><div class="scroll"><table id="tbl"></table></div></div>
+  </div>
+</div>
+
+<script>
+// ===== Moteur de remplissage PTR (port fidèle de Remplir_PTR_Automatique.py) =====
+function stripAccents(s){return String(s==null?'':s).normalize('NFKD').replace(/[\u0300-\u036f]/g,'');}
+function norm(s){return stripAccents(s).trim().toLowerCase().replace(/\s+/g,' ');}
+function toNum(v){var f=parseFloat(v); return (!isNaN(f)&&f>0)?Math.round(f*100)/100:null;}
+function mediane(vals){
+  var s=vals.filter(function(v){return v!=null;}).sort(function(a,b){return a-b;});
+  var n=s.length; if(!n) return null;
+  var mid=Math.floor(n/2);
+  return (n%2)?s[mid]:(s[mid-1]+s[mid])/2;
+}
+var SEUIL_NB_MINI=2, FACTEUR_DISPERSION=3;
+
+// --- Index : 3 niveaux de correspondance ---
+function construireIndex(base){
+  var idxExact=new Map(), idxTM=new Map(), idxT=new Map();
+  function push(m,k,v){ if(!m.has(k)) m.set(k,[]); m.get(k).push(v); }
+  for(var i=0;i<base.length;i++){
+    var r=base[i]; if(!r.vu) continue;
+    var l=norm(r.l), t=norm(r.t), m=norm(r.m), ref=norm(r.r);
+    if(l&&m&&ref) push(idxExact,l+'\u0000'+m+'\u0000'+ref,r);
+    if(t&&m) push(idxTM,t+'\u0000'+m,r);
+    if(t) push(idxT,t,r);
+  }
+  return {idxExact:idxExact,idxTM:idxTM,idxT:idxT};
+}
+// --- Représentant : l'équipement dont le prix est le plus proche de la médiane ---
+function choisirRepresentant(equipements){
+  var prix=equipements.filter(function(e){return e.vu!=null;}).map(function(e){return e.vu;});
+  if(!prix.length) return {vals:null,nb:0,vuMin:null,vuMax:null,source:''};
+  var med=mediane(prix);
+  var cands=equipements.filter(function(e){return e.vu!=null;});
+  var rep=null, best=null;
+  for(var i=0;i<cands.length;i++){
+    var e=cands[i];
+    var completude=['moh','moe','st'].reduce(function(a,k){return a+(e[k]!=null?1:0);},0);
+    var sc=[Math.abs(e.vu-med), -completude];
+    if(best===null || sc[0]<best[0] || (sc[0]===best[0] && sc[1]<best[1])){ best=sc; rep=e; }
+  }
+  var vus=prix.slice().sort(function(a,b){return a-b;});
+  var source=rep.l||'';
+  if(rep.r) source=source+' ['+rep.r+']';
+  return {vals:{vu:rep.vu,moh:rep.moh,moe:rep.moe,st:rep.st},
+          nb:equipements.length,vuMin:vus[0],vuMax:vus[vus.length-1],source:source};
+}
+// --- Recherche en cascade : Exact -> type+marque -> type seul ---
+function trouverValeurs(ligne,IDX){
+  var l=norm(ligne.l), t=norm(ligne.t), m=norm(ligne.m), ref=norm(ligne.r);
+  var k;
+  if(l&&m&&ref){ k=l+'\u0000'+m+'\u0000'+ref;
+    if(IDX.idxExact.has(k)){var R=choisirRepresentant(IDX.idxExact.get(k));R.niveau='Exact';return R;} }
+  if(t&&m){ k=t+'\u0000'+m;
+    if(IDX.idxTM.has(k)){var R2=choisirRepresentant(IDX.idxTM.get(k));R2.niveau='Approché (type + marque)';return R2;} }
+  if(t&&IDX.idxT.has(t)){var R3=choisirRepresentant(IDX.idxT.get(t));R3.niveau='Large (type seul)';return R3;}
+  return {vals:null,niveau:'Aucune correspondance',nb:0,vuMin:null,vuMax:null,source:''};
+}
+// --- Alerte de fiabilité ---
+function alerteFiabilite(niveau,nb,vuMin,vuMax){
+  var r=[];
+  if(niveau==='Large (type seul)') r.push('type seul');
+  if(nb&&nb<SEUIL_NB_MINI) r.push(nb+' source');
+  if(vuMin&&vuMax&&vuMin>0&&(vuMax/vuMin)>FACTEUR_DISPERSION) r.push('dispersion x'+Math.round(vuMax/vuMin));
+  return r.join(' / ');
+}
+// --- Exclusions : liste de {lib, typ} ---
+function regleExclusion(ligne,regles){
+  var l=norm(ligne.l), t=norm(ligne.t);
+  for(var i=0;i<regles.length;i++){
+    var lib=regles[i].lib, typ=regles[i].typ;
+    var okL=lib?(l.indexOf(lib)>=0):true;
+    var okT=typ?(t.indexOf(typ)>=0):true;
+    if(okL&&okT){
+      var p=[]; if(lib)p.push('lib~'+lib); if(typ)p.push('type~'+typ);
+      return p.join(' & ');
+    }
+  }
+  return null;
+}
+// --- Traitement complet d'un PTR vierge ---
+function traiterPTR(lignes,base,regles){
+  var IDX=construireIndex(base);
+  var rapport=[], nRemplies=0, nExclus=0, nSansCorr=0;
+  for(var i=0;i<lignes.length;i++){
+    var lg=lignes[i];
+    var regle=regleExclusion(lg,regles);
+    if(regle){
+      nExclus++;
+      if(!lg.prix_existant){
+        rapport.push({row:lg.excel_row,l:lg.l,t:lg.t,m:lg.m,vu:0,moh:lg.moh_existant,moe:lg.moe_existant,st:lg.st_existant,
+          statut:'Non chiffré (prix=0)',nb:0,vuMin:'',vuMax:'',remplis:'',alerte:'Exclu: '+regle,source:'',aRemplir:true});
+      }else{
+        rapport.push({row:lg.excel_row,l:lg.l,t:lg.t,m:lg.m,vu:lg.prix_existant,moh:lg.moh_existant,moe:lg.moe_existant,st:lg.st_existant,
+          statut:'Non chiffré - prix déjà présent (à vérifier)',nb:0,vuMin:'',vuMax:'',remplis:'',alerte:'Exclu: '+regle,source:'',aRemplir:false});
+      }
+      continue;
+    }
+    var besoin={vu:!lg.prix_existant, moh:!lg.moh_existant, moe:!lg.moe_existant, st:!lg.st_existant};
+    if(!besoin.vu&&!besoin.moh&&!besoin.moe&&!besoin.st){
+      rapport.push({row:lg.excel_row,l:lg.l,t:lg.t,m:lg.m,vu:lg.prix_existant,moh:lg.moh_existant,moe:lg.moe_existant,st:lg.st_existant,
+        statut:'Déjà renseigné',nb:0,vuMin:'',vuMax:'',remplis:'',alerte:'',source:'',aRemplir:false});
+      continue;
+    }
+    var R=trouverValeurs(lg,IDX);
+    var prix_f=lg.prix_existant, moh_f=lg.moh_existant, moe_f=lg.moe_existant, st_f=lg.st_existant;
+    var remplis=[];
+    if(R.vals){
+      if(besoin.vu&&R.vals.vu!=null){prix_f=toNum(R.vals.vu);remplis.push('Prix');}
+      if(besoin.moh&&R.vals.moh!=null){moh_f=toNum(R.vals.moh);remplis.push('M.O.(h)');}
+      if(besoin.moe&&R.vals.moe!=null){moe_f=toNum(R.vals.moe);remplis.push('M.O.(€)');}
+      if(besoin.st&&R.vals.st!=null){st_f=toNum(R.vals.st);remplis.push('S/T');}
+    }
+    var statut;
+    if(remplis.length){nRemplies++;statut=R.niveau;}
+    else if(R.vals) statut='Correspondance sans valeur à compléter';
+    else {statut=R.niveau; if(R.niveau==='Aucune correspondance') nSansCorr++;}
+    var alerte=remplis.length?alerteFiabilite(R.niveau,R.nb,R.vuMin,R.vuMax):'';
+    rapport.push({row:lg.excel_row,l:lg.l,t:lg.t,m:lg.m,vu:prix_f,moh:moh_f,moe:moe_f,st:st_f,
+      statut:statut,nb:R.nb,vuMin:toNum(R.vuMin)||'',vuMax:toNum(R.vuMax)||'',
+      remplis:remplis.join(', '),alerte:alerte,source:remplis.length?R.source:'',aRemplir:remplis.length>0});
+  }
+  return {rapport:rapport,nRemplies:nRemplies,nExclus:nExclus,nSansCorr:nSansCorr,total:lignes.length};
+}
+
+
+// ===== Écriture directe dans un .xlsx/.xlsm en préservant tout le reste =====
+// Principe : le fichier est un ZIP. On ne modifie QUE les cellules ciblées dans
+// la feuille XML. Tous les autres fichiers du ZIP (dont xl/vbaProject.bin qui
+// contient les macros) sont recopiés tels quels, octet pour octet.
+
+function colLettre(n){ // 1 -> A, 27 -> AA
+  var s='';
+  while(n>0){ var m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function escXml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Trouve le nom du fichier XML de la feuille cible dans le zip
+async function trouverFeuilleXml(zip, nomFeuille){
+  var wbXml=await zip.file('xl/workbook.xml').async('string');
+  var relsXml=await zip.file('xl/_rels/workbook.xml.rels').async('string');
+  var P=new DOMParser();
+  var wb=P.parseFromString(wbXml,'application/xml');
+  var rels=P.parseFromString(relsXml,'application/xml');
+  var sheets=wb.getElementsByTagName('sheet');
+  var rid=null;
+  for(var i=0;i<sheets.length;i++){
+    var nm=sheets[i].getAttribute('name');
+    if(nm===nomFeuille){ rid=sheets[i].getAttribute('r:id')||sheets[i].getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id'); break; }
+  }
+  if(!rid) return null;
+  var rl=rels.getElementsByTagName('Relationship');
+  for(var j=0;j<rl.length;j++){
+    if(rl[j].getAttribute('Id')===rid){
+      var t=rl[j].getAttribute('Target');
+      return t.charAt(0)==='/'?t.slice(1):('xl/'+t.replace(/^\.\//,''));
+    }
+  }
+  return null;
+}
+
+// edits : [{row: 4, col: 23, value: 1200}]  (col en n° de colonne 1-based)
+async function ecrireCellules(fileBuf, nomFeuille, edits){
+  var zip=await JSZip.loadAsync(fileBuf);
+  var chemin=await trouverFeuilleXml(zip, nomFeuille);
+  if(!chemin || !zip.file(chemin)) throw new Error("Feuille « "+nomFeuille+" » introuvable dans le fichier.");
+
+  var xml=await zip.file(chemin).async('string');
+  var P=new DOMParser();
+  var doc=P.parseFromString(xml,'application/xml');
+  var err=doc.getElementsByTagName('parsererror');
+  if(err.length) throw new Error('XML de la feuille illisible.');
+
+  var NS='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  var sheetData=doc.getElementsByTagName('sheetData')[0];
+  if(!sheetData) throw new Error('Structure de feuille inattendue (sheetData absent).');
+
+  // indexer les lignes existantes
+  var rowsByNum={};
+  var rowEls=sheetData.getElementsByTagName('row');
+  for(var i=0;i<rowEls.length;i++) rowsByNum[rowEls[i].getAttribute('r')]=rowEls[i];
+
+  var nEcrites=0;
+  for(var k=0;k<edits.length;k++){
+    var e=edits[k];
+    if(e.value==null||e.value==='') continue;
+    var ref=colLettre(e.col)+e.row;
+    var rowEl=rowsByNum[String(e.row)];
+    if(!rowEl){
+      // créer la ligne, insérée au bon endroit (ordre croissant obligatoire)
+      rowEl=doc.createElementNS(NS,'row');
+      rowEl.setAttribute('r',String(e.row));
+      var place=null;
+      for(var q=0;q<sheetData.childNodes.length;q++){
+        var ch=sheetData.childNodes[q];
+        if(ch.nodeType===1&&ch.localName==='row'&&parseInt(ch.getAttribute('r'),10)>e.row){place=ch;break;}
+      }
+      sheetData.insertBefore(rowEl,place);
+      rowsByNum[String(e.row)]=rowEl;
+    }
+    // chercher la cellule
+    var cells=rowEl.getElementsByTagName('c'), cell=null;
+    for(var c=0;c<cells.length;c++){ if(cells[c].getAttribute('r')===ref){cell=cells[c];break;} }
+    if(!cell){
+      cell=doc.createElementNS(NS,'c');
+      cell.setAttribute('r',ref);
+      // insérer dans l'ordre des colonnes
+      var placeC=null;
+      for(var c2=0;c2<cells.length;c2++){
+        var rr=cells[c2].getAttribute('r')||'';
+        var lettres=rr.replace(/\d+$/,'');
+        // comparer par longueur puis alphabétique (A < B < ... < Z < AA)
+        var L=colLettre(e.col);
+        if(lettres.length>L.length || (lettres.length===L.length && lettres>L)){placeC=cells[c2];break;}
+      }
+      rowEl.insertBefore(cell,placeC);
+    }
+    // écrire une valeur NUMÉRIQUE : on retire t= (type texte) et tout enfant
+    cell.removeAttribute('t');
+    while(cell.firstChild) cell.removeChild(cell.firstChild);
+    var v=doc.createElementNS(NS,'v');
+    v.appendChild(doc.createTextNode(String(e.value)));
+    cell.appendChild(v);
+    nEcrites++;
+  }
+
+  // sérialiser la feuille modifiée
+  var out=new XMLSerializer().serializeToString(doc);
+  if(out.indexOf('<?xml')!==0) out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+out;
+  // remplacer UNIQUEMENT ce fichier ; tout le reste du zip est conservé
+  zip.file(chemin, out);
+
+  // Excel recalcule les formules à l'ouverture
+  if(zip.file('xl/workbook.xml')){
+    var wbx=await zip.file('xl/workbook.xml').async('string');
+    if(wbx.indexOf('<calcPr')>=0) wbx=wbx.replace(/<calcPr[^>]*\/>/,'<calcPr calcId="0" fullCalcOnLoad="1"/>');
+    else wbx=wbx.replace('</workbook>','<calcPr calcId="0" fullCalcOnLoad="1"/></workbook>');
+    zip.file('xl/workbook.xml', wbx);
+  }
+  // le cache de calcul devient obsolète : le retirer force le recalcul
+  if(zip.file('xl/calcChain.xml')) zip.remove('xl/calcChain.xml');
+
+  // Reconstruire une archive propre : uniquement des fichiers, aucune entrée de dossier.
+  // Chaque fichier d'origine est recopié tel quel (dont xl/vbaProject.bin = les macros) ;
+  // seule la feuille ciblée est remplacée par sa version modifiée.
+  var propre=new JSZip();
+  var noms=Object.keys(zip.files);
+  for(var z=0;z<noms.length;z++){
+    var nom=noms[z], entree=zip.files[nom];
+    if(entree.dir) continue;                       // on ignore les entrées de dossier
+    var contenu=await entree.async('uint8array');  // octet pour octet
+    propre.file(nom, contenu, {createFolders:false, binary:true});
+  }
+  var buf=await propre.generateAsync({type:'uint8array',compression:'DEFLATE',createFolders:false});
+  return {buf:buf, nEcrites:nEcrites};
+}
+
+</script>
+<script>
+(function(){
+  var BASE=[], LIGNES=[], REGLES=[], RES=null, NOM_PTR='';
+  var PTR_BUF=null, PTR_SHEET='', PTR_COLS=null;
+  var loader=document.getElementById('loader'), logEl=document.getElementById('log');
+  function log(m,c){var d=document.createElement('div');if(c)d.className=c;d.textContent=m;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
+  function bind(btn,inp,fn){document.getElementById(btn).addEventListener('click',function(){document.getElementById(inp).click();});
+    document.getElementById(inp).addEventListener('change',function(){if(this.files.length)fn(this.files);});}
+
+  var SHEET_KEYS=['renouv','suez','complet'];
+  function cl(v){var s=(v==null?'':String(v)).trim();return ['nan','0','0.0','None','x','X'].indexOf(s)>=0?'':s;}
+  function tn(v){if(v==null||v==='')return null;var f=parseFloat(String(v).replace(',','.'));return (!isNaN(f)&&f>0)?Math.round(f*100)/100:null;}
+  function lireFeuille(wb){
+    var sh=wb.SheetNames.find(function(n){var l=n.toLowerCase();return SHEET_KEYS.some(function(k){return l.indexOf(k)>=0;});});
+    if(!sh) return null;
+    return XLSX.utils.sheet_to_json(wb.Sheets[sh],{header:1,defval:null,raw:true});
+  }
+  function reperer(rows){
+    var hrow=-1;
+    for(var i=0;i<Math.min(30,rows.length);i++){
+      var v=(rows[i]||[]).map(function(x){return (x==null?'':String(x)).toLowerCase();});
+      if(v.some(function(x){return x.indexOf('commune')>=0;})&&v.some(function(x){return x.indexOf('libell')>=0;})){hrow=i;break;}
+    }
+    if(hrow<0) return null;
+    var H=(rows[hrow]||[]).map(function(x){return (x==null?'':String(x)).trim().toLowerCase();});
+    function ci(mots,fb){for(var j=0;j<H.length;j++)for(var k=0;k<mots.length;k++)if(H[j].indexOf(mots[k])>=0)return j;return fb;}
+    return {hrow:hrow,
+      iL:ci(['libell'],6), iT:ci(["type d'éq","type d'eq"],7), iM:ci(['marque'],8), iR:ci(['référence con','reference con'],9),
+      iVU:ci(['valeur unitaire'],22), iMH:ci(['m.o. (h)'],25), iME:ci(['m.o. (€)','m.o. (e)'],24), iST:ci(['s/t'],26)};
+  }
+  function g(row,i){return (i!=null&&i<row.length)?row[i]:null;}
+
+  // ---- 1a) base de prix : fichier déjà calculé (export de l'outil Base de prix PTR) ----
+  bind('b0','f0',function(files){ lireBaseJSON(files); });
+  function lireBaseJSON(files){
+    var fr=new FileReader();
+    fr.onload=function(e){
+      try{
+        var p=JSON.parse(e.target.result);
+        var recs=Array.isArray(p)?p:(p.equipements||[]);
+        if(!recs.length) throw new Error('fichier vide');
+        BASE=recs.filter(function(r){return r.vu;}).map(function(r){
+          return {l:r.l||'',t:r.t||'',m:r.m||'',r:r.r||'',vu:r.vu,moh:r.moh,moe:r.moe,st:r.st};
+        });
+        if(!BASE.length) throw new Error('aucun équipement avec un prix');
+        logEl.innerHTML='';
+        var info=BASE.length.toLocaleString('fr-FR')+' équipements';
+        if(p.domaine) info+=' · '+p.domaine;
+        log('Base chargée : '+info+(p.date?(' (générée le '+p.date+')'):''),'ok');
+        document.getElementById('i1').textContent=BASE.length.toLocaleString('fr-FR')+' équipements';
+        document.getElementById('z1').classList.add('done'); check();
+      }catch(err){
+        log('Fichier de base illisible : '+err.message,'err');
+        log("Attendu : le .json exporté par l'outil « Base de prix PTR ».",'warn');
+      }
+    };
+    fr.readAsText(files[0]);
+  }
+
+  // ---- 1b) base de prix : dossier de PTR historiques ----
+  bind('b1','f1',function(files){ lireDossier(files); });
+  function lireDossier(files){
+    var fl=[].slice.call(files).filter(function(f){return /\.(xlsx|xlsm|xls)$/i.test(f.name)&&!/^~\$/.test(f.name);});
+    if(!fl.length){log('Aucun fichier Excel dans ce dossier.','err');return;}
+    logEl.innerHTML=''; log('Base : lecture de '+fl.length+' fichier(s)…');
+    BASE=[]; var i=0;
+    (function suite(){
+      if(i>=fl.length){
+        document.getElementById('i1').textContent=BASE.length.toLocaleString('fr-FR')+' équipements';
+        document.getElementById('z1').classList.add('done'); check(); return;
+      }
+      var f=fl[i], fr=new FileReader();
+      fr.onload=function(e){
+        try{
+          var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+          var rows=lireFeuille(wb);
+          if(!rows){log('  ✗ '+f.name+' : feuille introuvable','err');}
+          else{
+            var C=reperer(rows);
+            if(!C){log('  ✗ '+f.name+' : en-têtes introuvables','err');}
+            else{
+              var n=0;
+              for(var r=C.hrow+2;r<rows.length;r++){
+                var row=rows[r]; if(!row) continue;
+                var lib=cl(g(row,C.iL)); if(!lib||lib.length<2) continue;
+                var vu=tn(g(row,C.iVU)); if(!vu) continue;
+                BASE.push({l:lib,t:cl(g(row,C.iT)),m:cl(g(row,C.iM)),r:cl(g(row,C.iR)),
+                  vu:vu,moh:tn(g(row,C.iMH)),moe:tn(g(row,C.iME)),st:tn(g(row,C.iST))});
+                n++;
+              }
+              log('  ✓ '+f.name+' — '+n+' équipements chiffrés','ok');
+            }
+          }
+        }catch(err){log('  ✗ '+f.name+' : '+err.message,'err');}
+        i++; setTimeout(suite,10);
+      };
+      fr.readAsArrayBuffer(f);
+    })();
+  }
+
+  // ---- 2) PTR vierge ----
+  bind('b2','f2',function(files){ lirePTR(files); });
+  function lirePTR(files){
+    var f=files[0]; NOM_PTR=f.name;
+    var fr=new FileReader();
+    fr.onload=function(e){
+      try{
+        PTR_BUF=new Uint8Array(e.target.result).slice();  // copie du fichier d'origine
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        PTR_SHEET=wb.SheetNames.find(function(n){var l=n.toLowerCase();
+          return SHEET_KEYS.some(function(k){return l.indexOf(k)>=0;});})||'';
+        var rows=lireFeuille(wb);
+        if(!rows){log('PTR vierge : feuille introuvable.','err');return;}
+        var C=reperer(rows); PTR_COLS=C;
+        if(!C){log('PTR vierge : en-têtes introuvables.','err');return;}
+        LIGNES=[];
+        for(var r=C.hrow+2;r<rows.length;r++){
+          var row=rows[r]; if(!row) continue;
+          var lib=cl(g(row,C.iL)); if(!lib||lib.length<2) continue;
+          LIGNES.push({excel_row:r+1, l:lib, t:cl(g(row,C.iT)), m:cl(g(row,C.iM)), r:cl(g(row,C.iR)),
+            prix_existant:tn(g(row,C.iVU)), moh_existant:tn(g(row,C.iMH)),
+            moe_existant:tn(g(row,C.iME)), st_existant:tn(g(row,C.iST))});
+        }
+        log('PTR vierge : '+LIGNES.length+' lignes détectées.','ok');
+        document.getElementById('i2').textContent=LIGNES.length+' lignes';
+        document.getElementById('z2').classList.add('done'); check();
+      }catch(err){log('PTR vierge : '+err.message,'err');}
+    };
+    fr.readAsArrayBuffer(f);
+  }
+
+  // ---- Exclusions intégrées (étiquettes modifiables) ----
+  // Règles par défaut, identiques au programme Python :
+  //   portee = 'lib' (cherche dans le libellé), 'typ' (dans le type), ou 'les2' (dans les deux)
+  var EXCL=[
+    {mot:'bache',      portee:'lib'},
+    {mot:'genie civil', portee:'typ'}
+  ];
+  var LIB_PORTEE={lib:'Libellé', typ:'Type', les2:'Les deux'};
+
+  function majRegles(){
+    REGLES=[];
+    EXCL.forEach(function(e){
+      var k=norm(e.mot);
+      if(e.portee==='lib')       REGLES.push({lib:k, typ:''});
+      else if(e.portee==='typ')  REGLES.push({lib:'', typ:k});
+      else { REGLES.push({lib:k, typ:''}); REGLES.push({lib:'', typ:k}); }
+    });
+    var c=document.getElementById('chips');
+    c.innerHTML=EXCL.map(function(e,i){
+      var opts=['lib','typ','les2'].map(function(p){
+        return '<option value="'+p+'"'+(e.portee===p?' selected':'')+'>'+LIB_PORTEE[p]+'</option>';
+      }).join('');
+      return '<span class="chip"><b>'+String(e.mot).replace(/</g,'&lt;')+'</b>'+
+             '<select class="cp" data-i="'+i+'" title="Où chercher ce mot-clé ?">'+opts+'</select>'+
+             '<span class="x" data-i="'+i+'" title="Retirer">×</span></span>';
+    }).join('');
+    c.querySelectorAll('.x').forEach(function(x){
+      x.addEventListener('click',function(){ EXCL.splice(parseInt(this.dataset.i,10),1); majRegles(); });
+    });
+    c.querySelectorAll('.cp').forEach(function(s){
+      s.addEventListener('change',function(){ EXCL[parseInt(this.dataset.i,10)].portee=this.value; majRegles(); });
+    });
+    document.getElementById('i3').textContent=EXCL.length?(EXCL.length+' règle'+(EXCL.length>1?'s':'')):'aucune';
+  }
+  document.getElementById('exAdd').addEventListener('keydown',function(e){
+    if(e.key!=='Enter') return;
+    var v=this.value.trim();
+    var portee=document.getElementById('exPortee').value;
+    if(v && !EXCL.some(function(x){return x.mot===v && x.portee===portee;})){
+      EXCL.push({mot:v, portee:portee}); majRegles();
+    }
+    this.value='';
+  });
+  majRegles();
+
+  // ---- Glisser-déposer sur les deux zones ----
+  function dropZone(id,fn){
+    var z=document.getElementById(id);
+    ['dragenter','dragover'].forEach(function(ev){
+      z.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();z.classList.add('drag');});});
+    ['dragleave','drop'].forEach(function(ev){
+      z.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();z.classList.remove('drag');});});
+    z.addEventListener('drop',function(e){ if(e.dataTransfer.files.length) fn(e.dataTransfer.files); });
+  }
+  dropZone('z1',function(files){
+    var f=files[0];
+    if(/\.json$/i.test(f.name)) lireBaseJSON(files);
+    else lireDossier(files);         // fichiers Excel déposés
+  });
+  dropZone('z2',function(files){ lirePTR(files); });
+
+  function check(){ document.getElementById('go').disabled=!(BASE.length&&LIGNES.length); }
+  document.getElementById('go').addEventListener('click',function(){
+    log('Calcul en cours…');
+    RES=traiterPTR(LIGNES,BASE,REGLES);
+    rendre(); loader.style.display='none'; document.getElementById('app').style.display='block';
+  });
+  document.getElementById('reset').addEventListener('click',function(){location.reload();});
+
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function pill(st){
+    var c=st==='Exact'?'p-exact':st.indexOf('Approché')===0?'p-appr':st.indexOf('Large')===0?'p-large':
+      st.indexOf('Aucune')===0?'p-none':st.indexOf('Non chiffré')===0?'p-ex':'p-deja';
+    return '<span class="pill '+c+'">'+esc(st)+'</span>';
+  }
+  function n2(v){return (v==null||v==='')?'':Number(v).toLocaleString('fr-FR',{maximumFractionDigits:2});}
+
+  function rendre(){
+    var R=RES.rapport;
+    var aVerif=R.filter(function(x){return x.alerte&&x.aRemplir;}).length;
+    document.getElementById('sub').textContent=NOM_PTR+' · '+RES.total+' lignes';
+    document.getElementById('stats').innerHTML=
+      st(RES.total,'Lignes du PTR','')+
+      st(RES.nRemplies,'Valeurs trouvées','k-ok')+
+      st(aVerif,'À vérifier','k-warn')+
+      st(RES.nSansCorr,'Sans correspondance','k-no')+
+      st(RES.nExclus,'Exclus (non chiffrés)','k-ex')+
+      st(BASE.length.toLocaleString('fr-FR'),'Base de prix','');
+    filtrer();
+    document.getElementById('q').addEventListener('input',filtrer);
+    document.getElementById('fstat').addEventListener('change',filtrer);
+    document.getElementById('xls').addEventListener('click',exportExcel);
+    document.getElementById('fill').addEventListener('click',telechargerPTRRempli);
+  }
+  function st(v,l,c){return '<div class="stat '+(c||'')+'"><div class="v">'+v+'</div><div class="l">'+l+'</div></div>';}
+
+  function filtrer(){
+    var q=(document.getElementById('q').value||'').trim().toLowerCase();
+    var fs=document.getElementById('fstat').value;
+    var rows=RES.rapport.filter(function(x){
+      if(q && (x.l+' '+x.t+' '+x.m).toLowerCase().indexOf(q)<0) return false;
+      if(fs==='__alerte') return !!x.alerte;
+      if(fs==='__remplis') return x.aRemplir;
+      if(fs) return x.statut===fs;
+      return true;
+    });
+    var head='<thead><tr><th>Ligne</th><th>Libellé</th><th>Type</th><th>Marque</th>'+
+      '<th>Prix unitaire</th><th>M.O. (h)</th><th>M.O. (€)</th><th>S/T</th>'+
+      '<th>Correspondance</th><th>Champs remplis</th><th>Nb</th><th>Min–Max</th><th>À vérifier</th><th>Équipement source</th></tr></thead>';
+    var body='<tbody>'+rows.map(function(x){
+      var cls=x.statut.indexOf('Aucune')===0?'no':(x.alerte&&x.aRemplir?'warn':(x.statut.indexOf('Non chiffré')===0?'ex':''));
+      var f=x.aRemplir?' fill':'';
+      return '<tr class="'+cls+'">'+
+        '<td class="num">'+x.row+'</td>'+
+        '<td><b>'+esc(x.l)+'</b></td><td>'+esc(x.t)+'</td><td>'+esc(x.m)+'</td>'+
+        '<td class="num'+f+'">'+n2(x.vu)+'</td><td class="num'+f+'">'+n2(x.moh)+'</td>'+
+        '<td class="num'+f+'">'+n2(x.moe)+'</td><td class="num'+f+'">'+n2(x.st)+'</td>'+
+        '<td>'+pill(x.statut)+'</td>'+
+        '<td>'+esc(x.remplis)+'</td>'+
+        '<td class="num">'+(x.nb||'')+'</td>'+
+        '<td class="num">'+(x.vuMin!==''?n2(x.vuMin)+' – '+n2(x.vuMax):'')+'</td>'+
+        '<td class="alerte">'+esc(x.alerte)+'</td>'+
+        '<td class="src">'+esc(x.source)+'</td></tr>';
+    }).join('')+'</tbody>';
+    document.getElementById('tbl').innerHTML=head+body;
+  }
+
+  // ---- Écriture directe dans le PTR (macros préservées) ----
+  async function telechargerPTRRempli(){
+    var btn=document.getElementById('fill'), lbl=btn.textContent;
+    if(!PTR_BUF||!PTR_SHEET||!PTR_COLS){ alert("Le PTR d'origine n'est plus disponible. Rechargez-le."); return; }
+    btn.disabled=true; btn.textContent='⏳ Écriture…';
+    try{
+      // colonnes Excel (1-based) = index détecté + 1
+      var cVU=PTR_COLS.iVU+1, cMH=PTR_COLS.iMH+1, cME=PTR_COLS.iME+1, cST=PTR_COLS.iST+1;
+      var edits=[];
+      RES.rapport.forEach(function(x){
+        if(!x.aRemplir) return;                 // on n'écrit QUE les lignes à compléter
+        var remp=x.remplis||'', exclu=x.alerte&&x.alerte.indexOf('Exclu:')===0;
+        if(exclu){ edits.push({row:x.row,col:cVU,value:0}); return; }   // exclusion : prix = 0
+        if(remp.indexOf('Prix')>=0)     edits.push({row:x.row,col:cVU,value:x.vu});
+        if(remp.indexOf('M.O.(h)')>=0)  edits.push({row:x.row,col:cMH,value:x.moh});
+        if(remp.indexOf('M.O.(\u20ac)')>=0) edits.push({row:x.row,col:cME,value:x.moe});
+        if(remp.indexOf('S/T')>=0)      edits.push({row:x.row,col:cST,value:x.st});
+      });
+      if(!edits.length){ alert('Aucune valeur à écrire.'); btn.disabled=false; btn.textContent=lbl; return; }
+      var res=await ecrireCellules(PTR_BUF, PTR_SHEET, edits);
+      var estXlsm=/\.xlsm$/i.test(NOM_PTR);
+      var type=estXlsm?'application/vnd.ms-excel.sheet.macroEnabled.12'
+                      :'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      var blob=new Blob([res.buf],{type:type});
+      var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      var ext=estXlsm?'.xlsm':'.xlsx';
+      a.download=NOM_PTR.replace(/\.[^.]+$/,'')+'_REMPLI'+ext;
+      a.click(); URL.revokeObjectURL(a.href);
+    }catch(err){
+      alert("Impossible d'écrire dans le fichier : "+err.message+"\n\nUtilisez l'export du tableau des valeurs.");
+    }
+    btn.disabled=false; btn.textContent=lbl;
+  }
+
+  async function exportExcel(){
+    var wb=new ExcelJS.Workbook();
+    var ws=wb.addWorksheet('Valeurs à recopier');
+    ws.columns=[{header:'Ligne Excel',width:11},{header:'Libellé',width:38},{header:'Type',width:24},{header:'Marque',width:18},
+      {header:'Prix unitaire',width:14},{header:'M.O. (h)',width:10},{header:'M.O. (€)',width:11},{header:'S/T',width:11},
+      {header:'Correspondance',width:24},{header:'Champs remplis',width:20},{header:'Nb sources',width:11},
+      {header:'Prix min',width:11},{header:'Prix max',width:11},{header:'À vérifier',width:22},{header:'Équipement source',width:34}];
+    RES.rapport.forEach(function(x){
+      var row=ws.addRow([x.row,x.l,x.t,x.m,x.vu,x.moh,x.moe,x.st,x.statut,x.remplis,x.nb||'',x.vuMin,x.vuMax,x.alerte,x.source]);
+      var fill=null;
+      if(x.statut.indexOf('Aucune')===0) fill='FFFEE2E2';
+      else if(x.alerte&&x.aRemplir) fill='FFFEF3C7';
+      else if(x.statut.indexOf('Non chiffré')===0) fill='FFF1F5F9';
+      else if(x.aRemplir) fill='FFEAF7EE';
+      row.eachCell(function(c){c.font={name:'Calibri',size:10};c.alignment={vertical:'top',wrapText:true};
+        if(fill)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:fill}};});
+    });
+    var hr=ws.getRow(1); hr.height=20;
+    for(var c=1;c<=15;c++){var cell=hr.getCell(c);
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF182F52'}};
+      cell.font={name:'Calibri',bold:true,color:{argb:'FFFFFFFF'},size:11};
+      cell.alignment={vertical:'middle',wrapText:true};}
+    ws.autoFilter='A1:O'+ws.rowCount; ws.views=[{state:'frozen',ySplit:1}];
+    var buf=await wb.xlsx.writeBuffer();
+    var blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=NOM_PTR.replace(/\.[^.]+$/,'')+'_VALEURS.xlsx'; a.click(); URL.revokeObjectURL(a.href);
+  }
+})();
+</script>
+</body>
+</html>
