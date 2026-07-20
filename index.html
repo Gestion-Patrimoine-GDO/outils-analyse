@@ -48,7 +48,18 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .count{font-family:var(--mono);font-size:12px;color:var(--faint);margin:14px 0 18px}
 
 /* grille de cartes */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 24px}
+.tab{font-family:var(--disp);font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:99px;
+  border:1.5px solid var(--line-2);background:var(--panel);color:var(--muted);cursor:pointer;
+  transition:all .18s;user-select:none;white-space:nowrap}
+.tab:hover{border-color:var(--accent);color:var(--accent);background:#F5F9FF}
+.tab.active{background:linear-gradient(135deg,var(--accent),#1559BE);color:#fff;border-color:transparent;
+  box-shadow:0 4px 14px rgba(27,111,232,.28)}
+.tab .tc{font-family:var(--mono);font-size:10.5px;margin-left:5px;opacity:.7}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+.tool{opacity:1;transform:translateY(0);transition:opacity .25s,transform .25s}
+.tool.fade-in{animation:fadeUp .32s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .tool{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;
   overflow:hidden;box-shadow:var(--shadow);transition:transform .13s,box-shadow .18s,border-color .18s;text-decoration:none;color:inherit}
 .tool:hover{transform:translateY(-3px);box-shadow:0 12px 34px rgba(27,111,232,.16);border-color:var(--accent)}
@@ -58,6 +69,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-ptr  .band{background:linear-gradient(90deg,#D9770F,#F59E0B)}
 .tool.t-rad  .band{background:linear-gradient(90deg,#6366F1,#8B5CF6)}
 .tool.t-fill .band{background:linear-gradient(90deg,#DB2777,#F43F5E)}
+.tool.t-eau  .band{background:linear-gradient(90deg,#059669,#10B981)}
 .tool .body{padding:22px 22px 20px;display:flex;flex-direction:column;flex:1}
 .tool .top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
 .tool .emoji{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:26px;flex:none;
@@ -66,6 +78,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-ptr  .emoji{background:rgba(217,119,15,.10)}
 .tool.t-rad  .emoji{background:rgba(99,102,241,.10)}
 .tool.t-fill .emoji{background:rgba(219,39,119,.10)}
+.tool.t-eau  .emoji{background:rgba(5,150,105,.10)}
 .tool h2{font-family:var(--disp);font-size:18px;font-weight:700;color:#132446;margin-bottom:3px}
 .tool .sub{font-family:var(--mono);font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
 .tool .desc{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:16px}
@@ -76,6 +89,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-ptr  .tag{color:#B45309;background:rgba(217,119,15,.10)}
 .tool.t-rad  .tag{color:#5B54D6;background:rgba(99,102,241,.10)}
 .tool.t-fill .tag{color:#BE185D;background:rgba(219,39,119,.10)}
+.tool.t-eau  .tag{color:#047857;background:rgba(5,150,105,.10)}
 .tool .open{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
   background:linear-gradient(135deg,var(--accent),#1559BE);color:#fff;border-radius:10px;padding:11px 16px;
   font-weight:600;font-size:13.5px;box-shadow:0 3px 12px rgba(27,111,232,.26)}
@@ -83,6 +97,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-ptr  .open{background:linear-gradient(135deg,#D9770F,#B45309);box-shadow:0 3px 12px rgba(217,119,15,.26)}
 .tool.t-rad  .open{background:linear-gradient(135deg,#6366F1,#4F46E5);box-shadow:0 3px 12px rgba(99,102,241,.26)}
 .tool.t-fill .open{background:linear-gradient(135deg,#DB2777,#BE185D);box-shadow:0 3px 12px rgba(219,39,119,.26)}
+.tool.t-eau  .open{background:linear-gradient(135deg,#059669,#047857);box-shadow:0 3px 12px rgba(5,150,105,.26)}
 .tool:hover .open{filter:brightness(1.05)}
 
 .empty{display:none;text-align:center;color:var(--muted);padding:50px 0;font-size:14px}
@@ -116,10 +131,11 @@ footer .dot{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
 
     <div class="searchbar">
       <span class="ic">🔎</span>
-      <input id="search" type="search" placeholder="Rechercher un outil… (ex : comparer, projections, prix, RAD, remplir)">
+      <input id="search" type="search" placeholder="Rechercher un outil… (ex : comparer, projections, prix, RAD, remplir, eaux)">
     </div>
   </div>
 
+  <div class="tabs" id="tabs"></div>
   <div class="count" id="count"></div>
   <div class="grid" id="grid"></div>
   <div class="empty" id="empty">Aucun outil ne correspond à votre recherche.</div>
@@ -147,6 +163,7 @@ footer .dot{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
 const OUTILS=[
   {
     cls:'t-diff',
+    rubrique:'Outils IPOP',
     emoji:'🔍',
     titre:'Comparateur R210 (T0 → T1)',
     sous:'Comparaison d\u2019inventaires',
@@ -157,6 +174,7 @@ const OUTILS=[
   },
   {
     cls:'t-dash',
+    rubrique:'Outils IPOP',
     emoji:'📊',
     titre:'Dashboard R210',
     sous:'Analyse & suivi d\u2019un inventaire',
@@ -167,6 +185,7 @@ const OUTILS=[
   },
   {
     cls:'t-ptr',
+    rubrique:'Outils PTR',
     emoji:'💰',
     titre:'Base de prix PTR',
     sous:'Prix de renouvellement Eau / Assainissement',
@@ -177,6 +196,7 @@ const OUTILS=[
   },
   {
     cls:'t-rad',
+    rubrique:'Outils Directions Techniques',
     emoji:'📑',
     titre:'Comparateur RAD (Word)',
     sous:'Rapports Annuels du Délégataire',
@@ -187,6 +207,7 @@ const OUTILS=[
   },
   {
     cls:'t-fill',
+    rubrique:'Outils PTR',
     emoji:'✍️',
     titre:'Remplissage PTR',
     sous:'Chiffrage automatique d\u2019un PTR vierge',
@@ -195,21 +216,34 @@ const OUTILS=[
     tags:['Remplit le PTR','Macros préservées','Exclusions','Points à vérifier','Rapport Excel'],
     mots:'remplir remplissage ptr vierge prix mo main oeuvre sous traitance chiffrage automatique macros exclusions correspondance'
   }
+  ,{
+    cls:'t-eau',
+    rubrique:'Outils Directions Techniques',
+    emoji:'💧',
+    titre:'Analyse Eaux Parasites',
+    sous:'Contr\u00f4le qualit\u00e9 des donn\u00e9es Aquacalc',
+    href:'_Outils/Analyse_Eaux_Parasites.html',
+    desc:'D\u00e9pose un ou plusieurs bilans Aquacalc (.xlsm) et d\u00e9tecte les anomalies de l\u2019onglet Data : trous, dates en double, n\u00e9gatifs, valeurs fig\u00e9es, incoh\u00e9rences TS>TT, pics extr\u00eames. S\u00e9pare les alertes certaines des points \u00e0 v\u00e9rifier.',
+    tags:['Multi-fichiers','Alertes & \u00e0 v\u00e9rifier','Export Excel','Aquacalc'],
+    mots:'eaux parasites aquacalc anomalies t\u00e9l\u00e9m\u00e9trie data pluviom\u00e9trie volume temps sec tous temps ecpp ecm survolume n\u00e9gatif fig\u00e9 pic trou alerte'
+  }
   /* Pour ajouter un futur outil, dupliquez un bloc ci-dessus (sans oublier la virgule). */
 ];
 
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const grid=document.getElementById('grid');
 
-function rendre(filtre){
-  const q=(filtre||'').trim().toLowerCase();
-  const liste=OUTILS.filter(o=>!q
-    || o.titre.toLowerCase().includes(q)
-    || o.desc.toLowerCase().includes(q)
-    || o.mots.toLowerCase().includes(q)
-    || o.tags.some(t=>t.toLowerCase().includes(q)));
-  grid.innerHTML=liste.map(o=>`
-    <a class="tool ${o.cls}" href="${esc(o.href)}" target="_blank" rel="noopener">
+var activeTab='all';
+var RUBRIQUES=[]; // calculé dynamiquement depuis les données
+function initRubriques(){
+  const seen=new Set(); RUBRIQUES=[];
+  for(const o of OUTILS){ const r=o.rubrique||'Autres';
+    if(!seen.has(r)){seen.add(r);RUBRIQUES.push(r);}}
+}
+initRubriques();
+
+function carteHtml(o,i){
+  return `<a class="tool ${o.cls} fade-in" href="${esc(o.href)}" target="_blank" rel="noopener" style="animation-delay:${i*0.06}s">
       <div class="band"></div>
       <div class="body">
         <div class="top">
@@ -221,9 +255,35 @@ function rendre(filtre){
         </div>
         <div class="desc">${esc(o.desc)}</div>
         <div class="tags">${o.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
-        <span class="open">Ouvrir l\u2019outil →</span>
+        <span class="open">Ouvrir l\u2019outil \u2192</span>
       </div>
-    </a>`).join('');
+    </a>`;
+}
+
+function rendreTabs(liste){
+  const tabs=document.getElementById('tabs');
+  const counts={all:liste.length};
+  for(const r of RUBRIQUES) counts[r]=liste.filter(o=>(o.rubrique||'Autres')===r).length;
+  tabs.innerHTML=`<div class="tab${activeTab==='all'?' active':''}" data-r="all">Tout<span class="tc">${counts.all}</span></div>`
+    +RUBRIQUES.map(r=>`<div class="tab${activeTab===r?' active':''}" data-r="${esc(r)}">${esc(r)}<span class="tc">${counts[r]||0}</span></div>`).join('');
+  tabs.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',function(){
+      activeTab=this.getAttribute('data-r');
+      rendre(document.getElementById('search').value);
+    });
+  });
+}
+
+function rendre(filtre){
+  const q=(filtre||'').trim().toLowerCase();
+  let liste=OUTILS.filter(o=>!q
+    || o.titre.toLowerCase().includes(q)
+    || o.desc.toLowerCase().includes(q)
+    || o.mots.toLowerCase().includes(q)
+    || o.tags.some(t=>t.toLowerCase().includes(q)));
+  rendreTabs(liste);
+  if(activeTab!=='all') liste=liste.filter(o=>(o.rubrique||'Autres')===activeTab);
+  grid.innerHTML=liste.map((o,i)=>carteHtml(o,i)).join('');
   document.getElementById('empty').style.display=liste.length?'none':'block';
   document.getElementById('count').textContent=
     liste.length===OUTILS.length?`${OUTILS.length} outil${OUTILS.length>1?'s':''} disponible${OUTILS.length>1?'s':''}`
@@ -234,11 +294,31 @@ document.getElementById('year').textContent=new Date().getFullYear();
 rendre('');
 </script>
 
-<!-- ===== NUMERO DE VERSION (modifier ici a chaque mise a jour) ===== -->
+<!-- ===== VERSION + SIGNALEMENT (modifier le numero de version ici) ===== -->
 <style>
-.__ver-badge{position:fixed;right:10px;bottom:9px;z-index:40;font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;color:#93A2B8;background:rgba(255,255,255,.82);border:1px solid #E4EAF3;border-radius:7px;padding:3px 9px;pointer-events:none;user-select:none;backdrop-filter:blur(3px);box-shadow:0 1px 3px rgba(15,35,70,.06)}
+.__ver-badge{position:fixed;right:10px;bottom:9px;z-index:40;display:flex;align-items:center;gap:8px;
+ font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;
+ background:rgba(255,255,255,.86);border:1px solid #E4EAF3;border-radius:8px;
+ padding:3px 5px 3px 10px;backdrop-filter:blur(3px);box-shadow:0 1px 3px rgba(15,35,70,.06)}
+.__ver-txt{color:#93A2B8;user-select:none}
+.__ver-report{color:#B45309;background:rgba(217,119,6,.10);border:1px solid rgba(217,119,6,.22);
+ border-radius:6px;padding:2px 8px;text-decoration:none;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .12s}
+.__ver-report:hover{background:rgba(217,119,6,.18);border-color:rgba(217,119,6,.4)}
 @media print{.__ver-badge{display:none}}
 </style>
-<div class="__ver-badge">Portail Outils · v1.0 · juillet 2026</div>
+<div class="__ver-badge">
+  <span class="__ver-txt">Portail Outils · v1.0 · juillet 2026</span>
+  <a class="__ver-report" id="__report" title="Signaler un problème par mail">⚠ Signaler</a>
+</div>
+<script>
+(function(){
+  var nom='Portail Outils', ver='v1.0', date='juillet 2026', mail='tanguy.bayle@suez.com';
+  var a=document.getElementById("__report"); if(!a) return;
+  var corps="Bonjour Tanguy,\n\n"+"Outil : "+nom+"\n"+"Version : "+ver+" ("+date+")\n"+
+    "Navigateur : "+navigator.userAgent+"\n\n"+
+    "\u2014 Ce que je faisais :\n\n\n"+"\u2014 Ce qui s\u2019est pass\u00e9 :\n\n\n"+"Merci !";
+  a.href="mailto:"+mail+"?subject="+encodeURIComponent("Signalement \u2014 "+nom+" "+ver)+"&body="+encodeURIComponent(corps);
+})();
+</script>
 </body>
 </html>
