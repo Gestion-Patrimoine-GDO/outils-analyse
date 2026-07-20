@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyse Eaux Parasites — SUEZ Gestion d'Actif</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+:root{--bg:#F4F7FB;--panel:#fff;--panel2:#F8FAFD;--line:#E4EAF3;--line2:#CBD7E6;
+ --txt:#1E293B;--muted:#5B6B82;--faint:#93A2B8;--accent:#1B6FE8;--teal:#0D9488;--navy:#132446;
+ --red:#DC2626;--amber:#D97706;--green:#16A34A;
+ --shadow:0 1px 2px rgba(15,35,70,.05),0 10px 30px rgba(15,35,70,.06);
+ --mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--disp:'Space Grotesk','Inter',sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
+.wrap{max-width:1340px;margin:0 auto;padding:0 24px 70px}
+.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:22px}
+.top::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--teal))}
+.top .inner{max-width:1340px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none;
+ background:linear-gradient(135deg,var(--accent),var(--teal));color:#fff;font-family:var(--mono);font-weight:600;font-size:17px;box-shadow:0 5px 14px rgba(27,111,232,.28)}
+.btit{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--navy)}
+.bsub{font-size:12px;color:var(--muted)}.sp{margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;
+ font-family:var(--sans);border:1px solid var(--line2);background:var(--panel);color:var(--txt);transition:all .12s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.teal{background:linear-gradient(135deg,var(--teal),#0B7C72);color:#fff;border:none;box-shadow:0 3px 12px rgba(13,148,136,.26)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;box-shadow:var(--shadow)}
+.stat .v{font-family:var(--disp);font-size:25px;font-weight:700;color:var(--navy)}
+.stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+.stat.k-red .v{color:var(--red)}.stat.k-amber .v{color:var(--amber)}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.bar input[type=search]{flex:1;min-width:220px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:10px 13px;font-family:var(--sans);font-size:13px}
+.bar select{background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-family:var(--sans);font-size:13px;color:var(--txt)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.scroll{overflow:auto;max-height:66vh}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,#20406B,#182F52);color:#EAF1FB;font-family:var(--mono);
+ font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;text-align:left;padding:10px 11px;white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{background:#20406B}
+thead th .ar{opacity:.5;font-size:9px;margin-left:3px}
+tbody td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--panel2)}
+tbody tr:hover td{background:#EAF3FE}
+.cat{font-family:var(--mono);font-size:10px;font-weight:600;border-radius:5px;padding:2px 8px;white-space:nowrap}
+.c-alerte{color:#B91C1C;background:#FEE2E2}.c-verif{color:#B45309;background:#FEF3C7}
+.ano{font-weight:600}
+.tt{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.ctx{color:var(--faint);font-size:11.5px}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+/* écran de chargement */
+#loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg);font-family:var(--sans)}
+#loader::before{content:'';position:absolute;inset:0;pointer-events:none;
+ background:radial-gradient(900px 440px at 82% -8%,rgba(27,111,232,.08),transparent 60%),radial-gradient(720px 400px at 4% 0%,rgba(13,148,136,.07),transparent 60%)}
+#loader .box{position:relative;width:min(620px,93vw);background:#fff;border:1px solid var(--line);border-radius:18px;
+ box-shadow:0 1px 2px rgba(15,35,70,.05),0 18px 50px rgba(15,35,70,.12);padding:26px 30px}
+.bl{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.bl .bt{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--navy)}
+.bl .bs{font-size:12px;color:var(--muted)}
+.bl .au{margin-left:auto;font-size:12px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),#1559BE);border-radius:99px;padding:7px 15px;box-shadow:0 4px 14px rgba(27,111,232,.28)}
+#loader .ti{font-family:var(--disp);font-size:25px;font-weight:700;color:var(--navy);margin-bottom:8px}
+#loader .de{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.drop{display:block;border:1.5px dashed var(--line2);border-radius:14px;background:var(--panel2);padding:26px 20px;text-align:center;cursor:pointer;transition:all .15s}
+.drop:hover{border-color:var(--accent);background:#FBFDFF}
+.drop .t{font-size:13px;color:#334155;font-weight:600}.drop .s{font-size:12px;color:var(--faint);margin-top:4px}
+#loader.drag .drop{border-color:var(--accent);background:#eff5fe}
+#log{margin-top:14px;font-family:var(--mono);font-size:11.5px;color:var(--muted);max-height:140px;overflow:auto;line-height:1.7}
+#log .ok{color:var(--green)}#log .err{color:var(--red)}
+.note{margin-top:12px;font-size:11.5px;color:var(--faint);line-height:1.6}
+#app{display:none}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="box">
+    <div class="bl"><div class="logo">▤</div>
+      <div><div class="bt">SUEZ — Gestion d'Actif</div><div class="bs">Contrôle qualité des données Eaux Parasites</div></div>
+      <span class="au">Tanguy BAYLE</span></div>
+    <div class="ti">Analyse Eaux Parasites</div>
+    <div class="de">Déposez un ou plusieurs bilans Aquacalc (.xlsm). L'outil lit l'onglet <b>Data</b> et liste les anomalies de données. Tout se passe dans votre navigateur.</div>
+    <label class="drop" for="fi">
+      <div style="font-size:26px;margin-bottom:6px">📊</div>
+      <div class="t">Glissez vos fichiers ici, ou cliquez pour choisir</div>
+      <div class="s">.xlsm · .xlsx — plusieurs fichiers possibles</div>
+      <input id="fi" type="file" accept=".xlsm,.xlsx,.xls" multiple style="display:none">
+    </label>
+    <div id="log"></div>
+    <div class="note">ℹ️ Les « Alertes » sont des défauts certains (dates, trous, valeurs impossibles). Les « À vérifier » sont des signaux à juger par vous (négatifs, valeurs figées, incohérences, pics).</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="top"><div class="inner">
+    <div class="logo">▤</div>
+    <div><div class="btit">Analyse Eaux Parasites</div><div class="bsub" id="sub">—</div></div>
+    <div class="sp"></div>
+    <button class="btn" id="reset">↺ Nouveau</button>
+    <button class="btn teal" id="xls">⬇ Export Excel</button>
+  </div></div>
+  <div class="wrap">
+    <div class="stats" id="stats"></div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="Rechercher un point, une mesure…">
+      <select id="fcat"><option value="">Toutes catégories</option><option>Alerte</option><option>À vérifier</option></select>
+      <select id="fano"><option value="">Toutes anomalies</option></select>
+      <select id="ffic"><option value="">Tous fichiers</option></select>
+    </div>
+    <div class="card"><div class="scroll"><table id="tbl"></table></div></div>
+  </div>
+</div>
+
+<script>
+// ===== Moteur d'analyse des anomalies — export Aquacalc (onglet Data) =====
+function _num(v){return typeof v==='number'?v:(v==null||v===''?null:parseFloat(String(v).replace(',','.')));}
+function _estDateVal(x){return typeof x==='number'&&x>=45000&&x<=47500;}
+function _serieToDate(n){ // n° série Excel -> 'JJ/MM/AAAA'
+  if(n==null||!isFinite(n))return '';
+  const d=new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000);
+  return ('0'+d.getUTCDate()).slice(-2)+'/'+('0'+(d.getUTCMonth()+1)).slice(-2)+'/'+d.getUTCFullYear();
+}
+function typeMesure(n){const s=(n||'').toLowerCase();
+  if(/ecpp/.test(s))return 'ECPP'; if(/ecm/.test(s))return 'ECM';
+  if(/\bts\b|temps sec/.test(s))return 'TS';
+  if(/\btt\b|tous temps|transit/.test(s))return 'TT';
+  if(/survolume/.test(s))return 'Survolume';
+  if(/pluvio|cumul de pluie|\bpluie\b/.test(s))return 'Pluie';
+  if(/horaire/.test(s))return 'Horaire'; return 'Autre';}
+function pointDe(n){const m=(n||'').match(/\b(STEU|PR)\b[^(]*/i);return m?m[0].replace(/\s+/g,' ').trim():(n||'').slice(0,40);}
+
+// Lecture de l'onglet Data en blocs de mesures (date + valeurs)
+function lireDataAnomalies(aoa){
+  const noms=aoa[1]||[], labels=aoa[3]||[];
+  const nbCol=Math.max(noms.length,(aoa[4]||[]).length);
+  const estDate=c=>{let d=0,v=0;for(let r=4;r<aoa.length;r++){const x=aoa[r]&&aoa[r][c];
+    if(typeof x!=='number')continue; if(_estDateVal(x))d++; else v++;} return d>v&&d>0;};
+  const mesures=[]; let dc=null;
+  for(let c=0;c<nbCol;c++){
+    if(estDate(c)){dc=c;continue;}
+    const nom=noms[c]?String(noms[c]).trim():''; if(!nom)continue;
+    const pts=[];
+    for(let r=4;r<aoa.length;r++){
+      const raw=aoa[r]?aoa[r][c]:null; if(raw==null||raw==='')continue;
+      pts.push({v:_num(raw),raw,d:dc!=null&&aoa[r]?aoa[r][dc]:null,row:r+1});
+    }
+    if(pts.length) mesures.push({col:c,nom,label:labels[c]?String(labels[c]).trim():'',
+      type:typeMesure(nom),point:pointDe(nom),dateCol:dc,pts});
+  }
+  return mesures;
+}
+
+// Analyse -> liste plate d'anomalies
+function analyser(aoa, opts){
+  opts=opts||{}; const RUN=opts.figeMin||6, KIQR=opts.kIqr||3;
+  const mes=lireDataAnomalies(aoa);
+  const A=[]; // anomalies
+  const add=(o)=>A.push(o);
+  for(const m of mes){
+    const base={point:m.point,mesure:m.nom,type:m.type};
+    const nums=m.pts.filter(p=>Number.isFinite(p.v));
+    // -- CERTAIN : valeur non numérique (impossible) --
+    for(const p of m.pts){ if(!Number.isFinite(p.v))
+      add(Object.assign({},base,{categorie:'Alerte',anomalie:'Valeur non numérique',
+        date:_serieToDate(p.d),ligne:p.row,valeur:String(p.raw).slice(0,30),contexte:''})); }
+    // -- CERTAIN : dates en double / désordre / trous --
+    if(m.dateCol!=null){
+      const ds=m.pts.map(p=>p.d).filter(x=>_estDateVal(x));
+      const vus=new Map();
+      for(const p of m.pts){ if(!_estDateVal(p.d))continue;
+        if(vus.has(p.d)) add(Object.assign({},base,{categorie:'Alerte',anomalie:'Date en double',
+          date:_serieToDate(p.d),ligne:p.row,valeur:'',contexte:''}));
+        else vus.set(p.d,p.row); }
+      // désordre
+      for(let i=1;i<ds.length;i++){ if(ds[i]<ds[i-1]){
+        add(Object.assign({},base,{categorie:'Alerte',anomalie:'Dates non ordonnées',
+          date:_serieToDate(ds[i]),ligne:'',valeur:'',contexte:'après '+_serieToDate(ds[i-1])})); break; } }
+      // trous : écart > 1 jour entre deux dates consécutives (séries journalières)
+      const journ = ds.length>=20 && (ds[ds.length-1]-ds[0])/ds.length < 2;
+      if(journ){ let trous=0,ex='';
+        for(let i=1;i<ds.length;i++){const gap=Math.round(ds[i]-ds[i-1]); if(gap>1){trous+=gap-1; if(!ex)ex=_serieToDate(ds[i-1])+' → '+_serieToDate(ds[i]);}}
+        if(trous) add(Object.assign({},base,{categorie:'Alerte',anomalie:'Trou dans la série',
+          date:'',ligne:'',valeur:trous+' jour(s) manquant(s)',contexte:ex})); }
+    }
+    if(!nums.length) continue;
+    // -- À VÉRIFIER : négatifs --
+    const neg=nums.filter(p=>p.v<0);
+    if(neg.length) add(Object.assign({},base,{categorie:'À vérifier',anomalie:'Valeur(s) négative(s)',
+      date:_serieToDate(neg[0].d),ligne:neg[0].row,valeur:neg.length+' négatif(s)',
+      contexte:'ex: '+neg.slice(0,3).map(p=>p.v).join(', ')}));
+    // -- À VÉRIFIER : valeurs figées (même valeur ≥ RUN fois de suite) --
+    let run=1,maxRun=1,maxVal=nums[0].v,maxAt=nums[0];
+    for(let i=1;i<nums.length;i++){ if(nums[i].v===nums[i-1].v){run++; if(run>maxRun){maxRun=run;maxVal=nums[i].v;maxAt=nums[i-1];}} else run=1; }
+    if(maxRun>=RUN && maxVal!==0) add(Object.assign({},base,{categorie:'À vérifier',anomalie:'Valeur figée',
+      date:_serieToDate(maxAt.d),ligne:maxAt.row,valeur:maxVal,contexte:maxRun+'× d\u2019affilée'}));
+    // -- À VÉRIFIER : pics extrêmes (> Q3 + K*IQR) --
+    const x=nums.map(p=>p.v).sort((a,b)=>a-b),n=x.length;
+    if(n>=10 && m.type!=='Pluie'){const q1=x[Math.floor((n-1)*.25)],q3=x[Math.floor((n-1)*.75)],iqr=q3-q1;
+      if(iqr>0){const lim=q3+KIQR*iqr; const pics=nums.filter(p=>p.v>lim);
+        if(pics.length){const pk=pics.slice().sort((a,b)=>b.v-a.v)[0];
+          add(Object.assign({},base,{categorie:'À vérifier',anomalie:'Pic extrême',
+            date:_serieToDate(pk.d),ligne:pk.row,valeur:pk.v,contexte:pics.length+' pic(s) > '+Math.round(lim)}));}}}
+  }
+  // -- À VÉRIFIER : incohérence TS > TT (même point, même date) --
+  const parPoint={};
+  for(const m of mes){ if(!['TT','TS'].includes(m.type))continue;
+    (parPoint[m.point]=parPoint[m.point]||{})[m.type]=m; }
+  for(const [pt,o] of Object.entries(parPoint)){
+    if(!o.TT||!o.TS)continue;
+    const mapTT=new Map(); for(const p of o.TT.pts) if(_estDateVal(p.d)) mapTT.set(p.d,p.v);
+    const cas=[];
+    for(const p of o.TS.pts){ const tt=mapTT.get(p.d);
+      if(tt!=null&&Number.isFinite(p.v)&&Number.isFinite(tt)&&p.v>tt+0.01) cas.push({d:p.d,ts:p.v,tt,row:p.row}); }
+    if(cas.length) A.push({point:pt,mesure:'TS vs TT',type:'Cohérence',categorie:'À vérifier',
+      anomalie:'Temps sec > Tous temps',date:_serieToDate(cas[0].d),ligne:cas[0].row,
+      valeur:cas.length+' jour(s)',contexte:'ex: TS='+cas[0].ts+' > TT='+cas[0].tt});
+  }
+  return {mesures:mes.length, points:[...new Set(mes.map(m=>m.point))].length, anomalies:A};
+}
+
+</script>
+<script>
+(function(){
+  var ANOMALIES=[], loader=document.getElementById('loader'), logEl=document.getElementById('log');
+  function log(m,c){var d=document.createElement('div');if(c)d.className=c;d.textContent=m;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
+  var input=document.getElementById('fi');
+  input.addEventListener('change',function(){if(input.files.length)traiter(input.files);});
+  ['dragenter','dragover'].forEach(function(e){loader.addEventListener(e,function(ev){ev.preventDefault();loader.classList.add('drag');});});
+  ['dragleave','drop'].forEach(function(e){loader.addEventListener(e,function(ev){ev.preventDefault();loader.classList.remove('drag');});});
+  loader.addEventListener('drop',function(ev){if(ev.dataTransfer.files.length)traiter(ev.dataTransfer.files);});
+  document.getElementById('reset').addEventListener('click',function(){location.reload();});
+
+  function traiter(fl){
+    var files=[].slice.call(fl).filter(function(f){return /\.(xlsm|xlsx|xls)$/i.test(f.name)&&!/^~\$/.test(f.name);});
+    if(!files.length){log('Aucun fichier Excel valide.','err');return;}
+    logEl.innerHTML=''; log('Analyse de '+files.length+' fichier(s)…');
+    ANOMALIES=[]; var i=0;
+    (function suite(){
+      if(i>=files.length){terminer();return;}
+      var f=files[i], fr=new FileReader();
+      fr.onload=function(e){
+        try{
+          var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+          var sh=wb.SheetNames.find(function(n){return /^data$/i.test(n);})||wb.SheetNames.find(function(n){return /data/i.test(n);});
+          if(!sh){log('  ✗ '+f.name+' : onglet Data introuvable','err');}
+          else{
+            var aoa=XLSX.utils.sheet_to_json(wb.Sheets[sh],{header:1,defval:null,raw:true});
+            var R=analyser(aoa);
+            R.anomalies.forEach(function(a){a.fichier=f.name;});
+            ANOMALIES=ANOMALIES.concat(R.anomalies);
+            log('  ✓ '+f.name+' — '+R.mesures+' mesures, '+R.points+' points, '+R.anomalies.length+' anomalies','ok');
+          }
+        }catch(err){log('  ✗ '+f.name+' : '+err.message,'err');}
+        i++; setTimeout(suite,10);
+      };
+      fr.readAsArrayBuffer(f);
+    })();
+  }
+
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var SORT={key:'categorie',dir:1};
+
+  function terminer(){
+    if(!ANOMALIES.length){log('Aucune anomalie détectée (ou aucun onglet Data lisible).','err');
+      setTimeout(function(){loader.style.display='none';document.getElementById('app').style.display='block';
+        document.getElementById('tbl').innerHTML='<tbody><tr><td class="empty">Aucune anomalie détectée. 🎉</td></tr></tbody>';
+        document.getElementById('sub').textContent='0 anomalie';},300);
+      return;}
+    // remplir les filtres
+    var anos=[...new Set(ANOMALIES.map(function(a){return a.anomalie;}))].sort();
+    document.getElementById('fano').innerHTML='<option value="">Toutes anomalies</option>'+anos.map(function(a){return '<option>'+esc(a)+'</option>';}).join('');
+    var fics=[...new Set(ANOMALIES.map(function(a){return a.fichier;}))].sort();
+    document.getElementById('ffic').innerHTML='<option value="">Tous fichiers</option>'+fics.map(function(f){return '<option>'+esc(f)+'</option>';}).join('');
+    rendre();
+    loader.style.display='none'; document.getElementById('app').style.display='block';
+  }
+
+  function rendre(){
+    var al=ANOMALIES.filter(function(a){return a.categorie==='Alerte';}).length;
+    var av=ANOMALIES.length-al;
+    var pts=[...new Set(ANOMALIES.map(function(a){return a.fichier+'|'+a.point;}))].length;
+    document.getElementById('sub').textContent=ANOMALIES.length+' anomalies · '+al+' alertes';
+    document.getElementById('stats').innerHTML=
+      stat(ANOMALIES.length,'Anomalies au total','')+
+      stat(al,'Alertes (certaines)','k-red')+
+      stat(av,'À vérifier','k-amber')+
+      stat([...new Set(ANOMALIES.map(function(a){return a.fichier;}))].length,'Fichiers','')+
+      stat(pts,'Points concernés','');
+    ['q','fcat','fano','ffic'].forEach(function(id){var el=document.getElementById(id);
+      el.oninput=el.onchange=filtrer;});
+    document.getElementById('xls').onclick=exportExcel;
+    filtrer();
+  }
+  function stat(v,l,c){return '<div class="stat '+(c||'')+'"><div class="v">'+v+'</div><div class="l">'+l+'</div></div>';}
+
+  var COLS=[['categorie','Catégorie'],['anomalie','Anomalie'],['fichier','Fichier'],['point','Point'],
+    ['mesure','Mesure'],['date','Date'],['valeur','Valeur / nombre'],['contexte','Contexte']];
+  function filtrer(){
+    var q=(document.getElementById('q').value||'').toLowerCase();
+    var fc=document.getElementById('fcat').value, fa=document.getElementById('fano').value, ff=document.getElementById('ffic').value;
+    var rows=ANOMALIES.filter(function(a){
+      if(fc&&a.categorie!==fc)return false; if(fa&&a.anomalie!==fa)return false; if(ff&&a.fichier!==ff)return false;
+      if(q&&(a.point+' '+a.mesure+' '+a.anomalie+' '+a.contexte).toLowerCase().indexOf(q)<0)return false;
+      return true;});
+    rows.sort(function(x,y){var a=x[SORT.key]||'',b=y[SORT.key]||'';
+      if(typeof a==='number'&&typeof b==='number')return (a-b)*SORT.dir;
+      return String(a).localeCompare(String(b),'fr')*SORT.dir;});
+    var head='<thead><tr>'+COLS.map(function(c){var ar=SORT.key===c[0]?'<span class="ar">'+(SORT.dir>0?'▲':'▼')+'</span>':'';
+      return '<th data-k="'+c[0]+'">'+c[1]+ar+'</th>';}).join('')+'</tr></thead>';
+    var body='<tbody>'+(rows.length?rows.map(function(a){
+      return '<tr><td><span class="cat '+(a.categorie==='Alerte'?'c-alerte':'c-verif')+'">'+esc(a.categorie)+'</span></td>'+
+        '<td class="ano">'+esc(a.anomalie)+'</td><td class="tt">'+esc(a.fichier).slice(0,26)+'</td>'+
+        '<td>'+esc(a.point)+'</td><td>'+esc(a.mesure)+'</td>'+
+        '<td class="tt">'+esc(a.date)+'</td><td>'+esc(a.valeur)+'</td><td class="ctx">'+esc(a.contexte)+'</td></tr>';
+    }).join(''):'<tr><td class="empty" colspan="8">Aucune anomalie ne correspond aux filtres.</td></tr>')+'</tbody>';
+    var t=document.getElementById('tbl'); t.innerHTML=head+body;
+    t.querySelectorAll('th').forEach(function(th){th.onclick=function(){var k=th.getAttribute('data-k');
+      if(SORT.key===k)SORT.dir*=-1;else{SORT.key=k;SORT.dir=1;}filtrer();};});
+  }
+
+  async function exportExcel(){
+    var wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('Anomalies');
+    ws.columns=COLS.map(function(c){return {header:c[1],key:c[0],width:c[0]==='mesure'||c[0]==='contexte'?38:(c[0]==='fichier'?30:16)};});
+    ANOMALIES.forEach(function(a){var row=ws.addRow(a);
+      var fill=a.categorie==='Alerte'?'FFFEE2E2':'FFFEF3C7';
+      row.eachCell(function(c){c.font={name:'Calibri',size:10};c.alignment={vertical:'top',wrapText:true};});
+      row.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:fill}};});
+    var hr=ws.getRow(1);hr.height=18;
+    hr.eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF182F52'}};
+      c.font={name:'Calibri',bold:true,color:{argb:'FFFFFFFF'},size:11};c.alignment={vertical:'middle'};});
+    ws.autoFilter='A1:H1'; ws.views=[{state:'frozen',ySplit:1}];
+    var buf=await wb.xlsx.writeBuffer();
+    var d=new Date(),ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    a.download='Anomalies_Eaux_Parasites_'+ds+'.xlsx';a.click();URL.revokeObjectURL(a.href);
+  }
+})();
+</script>
+<!-- ===== VERSION + SIGNALEMENT ===== -->
+<style>
+.__ver-badge{position:fixed;right:10px;bottom:9px;z-index:40;display:flex;align-items:center;gap:8px;
+ font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;
+ background:rgba(255,255,255,.86);border:1px solid #E4EAF3;border-radius:8px;padding:3px 5px 3px 10px;backdrop-filter:blur(3px);box-shadow:0 1px 3px rgba(15,35,70,.06)}
+.__ver-txt{color:#93A2B8;user-select:none}
+.__ver-report{color:#B45309;background:rgba(217,119,6,.10);border:1px solid rgba(217,119,6,.22);border-radius:6px;padding:2px 8px;text-decoration:none;font-weight:600;cursor:pointer;white-space:nowrap}
+.__ver-report:hover{background:rgba(217,119,6,.18)}
+@media print{.__ver-badge{display:none}}
+</style>
+<div class="__ver-badge">
+  <span class="__ver-txt">Analyse Eaux Parasites · v1.0 · juillet 2026</span>
+  <a class="__ver-report" id="__report" title="Signaler un problème par mail">⚠ Signaler</a>
+</div>
+<script>
+(function(){
+  var nom="Analyse Eaux Parasites", ver="v1.0", date="juillet 2026", mail="tanguy.bayle@suez.com";
+  var a=document.getElementById("__report"); if(!a) return;
+  var corps="Bonjour Tanguy,\n\n"+"Outil : "+nom+"\n"+"Version : "+ver+" ("+date+")\n"+"Navigateur : "+navigator.userAgent+"\n\n"+
+    "\u2014 Ce que je faisais :\n\n\n"+"\u2014 Ce qui s\u2019est passé :\n\n\n"+"Merci !";
+  a.href="mailto:"+mail+"?subject="+encodeURIComponent("Signalement \u2014 "+nom+" "+ver)+"&body="+encodeURIComponent(corps);
+})();
+</script>
+</body>
+</html>

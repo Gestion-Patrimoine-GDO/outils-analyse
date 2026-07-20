@@ -421,6 +421,7 @@ function appliquerFiltres(){
 /* ================= NAVIGATION ================= */
 const VUES=[
   {id:'overview', ic:'📊', label:"Vue d'ensemble"},
+  {id:'contrats', ic:'🗂️', label:'Comparaison contrats'},
   {id:'sante',    ic:'🏥', label:'Santé du parc'},
   {id:'projections',ic:'📅',label:'Projections'},
   {id:'fabricants',ic:'🏭',label:'Fabricants'},
@@ -580,13 +581,6 @@ document.getElementById('s').addEventListener('input',function(e){
   document.getElementById('cnt').textContent=n.toLocaleString('fr-FR')+' / '+rowsAll.length.toLocaleString('fr-FR')+' lignes';
 });
 </${'scr'+'ipt'}>
-
-<!-- ===== NUMERO DE VERSION (modifier ici a chaque mise a jour) ===== -->
-<style>
-.__ver-badge{position:fixed;right:10px;bottom:9px;z-index:40;font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;color:#93A2B8;background:rgba(255,255,255,.82);border:1px solid #E4EAF3;border-radius:7px;padding:3px 9px;pointer-events:none;user-select:none;backdrop-filter:blur(3px);box-shadow:0 1px 3px rgba(15,35,70,.06)}
-@media print{.__ver-badge{display:none}}
-</style>
-<div class="__ver-badge">Dashboard R210 · v1.0 · juillet 2026</div>
 </body></html>`;
   const w=window.open('','_blank','width=1200,height=800');
   if(!w){ alert("La fenêtre détachée a été bloquée par le navigateur. Autorisez les pop-ups pour ce fichier."); return; }
@@ -759,6 +753,126 @@ VIEWS.overview=function(c){
         {label:'Exploités',data:exp,borderColor:C.add,backgroundColor:'rgba(22,163,74,.15)',fill:true,tension:.3},
         {label:'Sortis/Abandonnés',data:sor,borderColor:C.del,backgroundColor:'rgba(220,38,38,.12)',fill:true,tension:.3}]},
       {plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}}}, null, null, true));
+  }
+};
+
+/* ---- Comparaison des contrats (vue multi-contrats) ---- */
+VIEWS.contrats=function(c){
+  const rows=S.rows; // toutes les données : on compare TOUS les contrats du fichier
+  const colContrat='Code contrat avenant (Code Banco)';
+  const colDesc='Description du contrat';
+  c.innerHTML=`<div class="view-title">🗂️ Comparaison des contrats</div>`;
+  if(!S.cols.includes(colContrat)){
+    c.innerHTML+=`<div class="card"><p style="color:var(--muted)">La colonne « ${esc(colContrat)} » est absente de ce fichier.<br>
+      Cette vue compare les contrats présents dans un export contenant plusieurs contrats.</p></div>`;
+    return;
+  }
+  // regrouper par code contrat
+  const groupes=new Map();
+  for(const r of rows){ const code=norm(r[colContrat]); if(code==='') continue;
+    if(!groupes.has(code)) groupes.set(code,[]); groupes.get(code).push(r); }
+  if(groupes.size===0){
+    c.innerHTML+=`<div class="card"><p style="color:var(--muted)">Aucun code contrat trouvé dans les données.</p></div>`; return;
+  }
+  const cy=new Date().getFullYear();
+  const hasType=S.cols.includes('Type Equipement');
+  const attrs=['Fabricant','Modèle','Numéro de Série'].filter(x=>S.cols.includes(x));
+  const peutRenouv=S.cols.includes('Date de 1ère installation') && S.cols.includes("Libellé Type d'équipement");
+  const contrats=[];
+  for(const [code,grp] of groupes){
+    const dRow=grp.find(r=>norm(r[colDesc])!=='');
+    const description=dRow?norm(dRow[colDesc]):code;
+    let ep=0,as=0; for(const r of grp){ if((r.__domaine||'Eau Potable')==='Assainissement')as++; else ep++; }
+    const domaine=(ep&&as)?'Mixte':(as?'Assainissement':'Eau Potable');
+    let compl=null;
+    if(attrs.length){ let s=0; for(const a of attrs) s+=nbRenseigne(grp,a)/grp.length; compl=Math.round(100*s/attrs.length); }
+    const exploites=grp.filter(r=>norm(r['Statut'])==='EXPLOITE').length;
+    let renouv5=null;
+    if(peutRenouv){ renouv5=0;
+      for(const r of grp){ if(norm(r['Statut'])!=='EXPLOITE') continue;
+        const y=annee(r['Date de 1ère installation']); if(y==null) continue;
+        if(norm(r["Libellé Type d'équipement"])==='') continue;
+        const code2=hasType?norm(r['Type Equipement']):'';
+        const fin=y+dureeVie(code2,r.__domaine||'Eau Potable');
+        if(fin>=cy && fin<cy+5) renouv5++; }
+    }
+    contrats.push({code,description,domaine,n:grp.length,exploites,compl,renouv5,grp});
+  }
+  contrats.sort((a,b)=>b.n-a.n);
+  contrats.forEach((ct,i)=>ct.couleur=C.set[i%C.set.length]);
+
+  // ---- KPI consolidés ----
+  const tot=rows.length;
+  const totRenouv=contrats.every(x=>x.renouv5!=null)?contrats.reduce((s,x)=>s+x.renouv5,0):null;
+  const complPond=attrs.length?Math.round(contrats.reduce((s,x)=>s+(x.compl||0)*x.n,0)/tot):null;
+  const kpis=document.createElement('div'); kpis.className='kpis'; c.appendChild(kpis);
+  kpis.appendChild(kpiCard(fmtN(tot),'Équipements au total',`sur ${contrats.length} contrat${contrats.length>1?'s':''}`,''));
+  kpis.appendChild(kpiCard(fmtN(contrats.length),'Contrats','codes Banco distincts','k-teal'));
+  if(complPond!=null) kpis.appendChild(kpiCard(complPond+' %','Complétion moyenne','pondérée par le parc','k-amber'));
+  if(totRenouv!=null) kpis.appendChild(kpiCard(fmtN(totRenouv),'À renouveler ≤ 5 ans',`${tot?Math.round(100*totRenouv/tot):0}% du parc`,'k-green'));
+
+  // ---- Tableau comparatif ----
+  const card=document.createElement('div'); card.className='card'; c.appendChild(card);
+  const tHead=`<tr><th>Contrat</th><th>Domaine</th><th class="num">Équipements</th><th class="num">Exploités</th>`
+    +(attrs.length?`<th>Complétion</th>`:``)+(peutRenouv?`<th class="num">Renouv. ≤5 ans</th>`:``)+`</tr>`;
+  const tBody=contrats.map(ct=>{
+    const dcls=ct.domaine==='Assainissement'?'d-ass':(ct.domaine==='Mixte'?'d-mix':'d-ep');
+    const dlbl=ct.domaine==='Assainissement'?'Assainist.':(ct.domaine==='Mixte'?'Mixte':'Eau potable');
+    const barre=ct.compl==null?'':`<div style="display:flex;align-items:center;gap:9px">
+        <div class="cbar"><span style="width:${ct.compl}%;background:${ct.couleur}"></span></div>
+        <span class="cpct" style="color:${ct.couleur}">${ct.compl}%</span></div>`;
+    return `<tr class="crow" data-code="${esc(ct.code)}">
+      <td><span class="cdot" style="background:${ct.couleur}"></span><b>${esc(ct.description)}</b><div class="ccode">${esc(ct.code)}</div></td>
+      <td><span class="ctag ${dcls}">${dlbl}</span></td>
+      <td class="num">${fmtN(ct.n)}</td>
+      <td class="num">${fmtN(ct.exploites)}</td>`
+      +(attrs.length?`<td>${barre}</td>`:``)
+      +(peutRenouv?`<td class="num">${ct.renouv5==null?'—':fmtN(ct.renouv5)}</td>`:``)+`</tr>`;
+  }).join('');
+  card.innerHTML=`<div class="chd">Tableau comparatif <span class="chint">cliquez une ligne pour la liste des équipements du contrat</span></div>
+    <div class="cbd"><table class="ctab"><thead>${tHead}</thead><tbody>${tBody}</tbody></table></div>`;
+  card.querySelectorAll('tr.crow').forEach(tr=>{
+    tr.addEventListener('click',()=>{ const code=tr.getAttribute('data-code');
+      const ct=contrats.find(x=>x.code===code);
+      openTable(`Contrat : ${ct.description}`,ct.grp,colsDispo(COLS_DETAIL)); });
+  });
+
+  // ---- Graphiques comparatifs ----
+  const grid=document.createElement('div'); grid.className='gridcards'; c.appendChild(grid);
+  grid.appendChild(cardChart('Nombre d\u2019équipements par contrat','bar',
+    {labels:contrats.map(x=>x.description),datasets:[{data:contrats.map(x=>x.n),
+      backgroundColor:contrats.map(x=>x.couleur),borderRadius:5}]},
+    {indexAxis:'y',plugins:{legend:{display:false}}}, null));
+  if(attrs.length) grid.appendChild(cardChart('Taux de complétion par contrat','bar',
+    {labels:contrats.map(x=>x.description),datasets:[{data:contrats.map(x=>x.compl),
+      backgroundColor:contrats.map(x=>x.couleur),borderRadius:5}]},
+    {indexAxis:'y',scales:{x:{max:100,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'% complété'}}}}, null));
+
+  // ---- styles propres à la vue (injectés une fois) ----
+  if(!document.getElementById('css-contrats')){
+    const st=document.createElement('style'); st.id='css-contrats';
+    st.textContent=`
+      .ctab{width:100%;border-collapse:collapse;font-size:13px}
+      .ctab thead th{text-align:left;font-family:var(--mono,monospace);font-size:10px;text-transform:uppercase;
+        letter-spacing:.04em;color:var(--muted);padding:9px 11px;border-bottom:2px solid var(--line)}
+      .ctab tbody td{padding:10px 11px;border-bottom:1px solid var(--line);vertical-align:middle}
+      .ctab .num{text-align:right;font-family:var(--mono,monospace)}
+      .ctab tr.crow{cursor:pointer}
+      .ctab tr.crow:hover td{background:#EAF3FE}
+      .cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+      .ccode{font-family:var(--mono,monospace);font-size:10.5px;color:var(--faint);margin-top:1px;margin-left:16px}
+      .cbar{flex:1;min-width:70px;height:7px;border-radius:4px;background:var(--line);overflow:hidden}
+      .cbar span{display:block;height:100%;border-radius:4px}
+      .cpct{font-family:var(--mono,monospace);font-size:12px;font-weight:600;min-width:38px;text-align:right}
+      .ctag{font-family:var(--mono,monospace);font-size:10px;font-weight:600;border-radius:5px;padding:2px 7px}
+      .d-ep{color:#1559BE;background:rgba(27,111,232,.10)}
+      .d-ass{color:#0B7C72;background:rgba(13,148,136,.12)}
+      .d-mix{color:#7C3AED;background:rgba(124,58,237,.10)}
+      .chd{padding:15px 18px;border-bottom:1px solid var(--line);font-weight:700;color:var(--navy,#132446);font-size:14.5px}
+      .chint{font-weight:400;font-size:12px;color:var(--faint);margin-left:8px}
+      .cbd{padding:6px 4px 4px}`;
+    document.head.appendChild(st);
   }
 };
 
@@ -1296,6 +1410,33 @@ function cardChart(titre,type,data,opts,onClick,hintClick,full){
 /* démarrage : rien tant qu'aucun fichier */
 if(typeof XLSX==='undefined')
   setStatus("La librairie de lecture Excel n'a pas pu être chargée (réseau).",true);
+</script>
+
+<!-- ===== VERSION + SIGNALEMENT ===== -->
+<style>
+.__ver-badge{position:fixed;right:10px;bottom:9px;z-index:40;display:flex;align-items:center;gap:8px;
+ font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;
+ background:rgba(255,255,255,.86);border:1px solid #E4EAF3;border-radius:8px;
+ padding:3px 5px 3px 10px;backdrop-filter:blur(3px);box-shadow:0 1px 3px rgba(15,35,70,.06)}
+.__ver-txt{color:#93A2B8;user-select:none}
+.__ver-report{color:#B45309;background:rgba(217,119,6,.10);border:1px solid rgba(217,119,6,.22);
+ border-radius:6px;padding:2px 8px;text-decoration:none;font-weight:600;cursor:pointer;white-space:nowrap}
+.__ver-report:hover{background:rgba(217,119,6,.18)}
+@media print{.__ver-badge{display:none}}
+</style>
+<div class="__ver-badge">
+  <span class="__ver-txt">Dashboard R210 · v1.1 · juillet 2026</span>
+  <a class="__ver-report" id="__report" title="Signaler un problème par mail">⚠ Signaler</a>
+</div>
+<script>
+(function(){
+  var nom="Dashboard R210", ver="v1.1", date="juillet 2026", mail="tanguy.bayle@suez.com";
+  var a=document.getElementById("__report"); if(!a) return;
+  var corps="Bonjour Tanguy,\n\n"+"Outil : "+nom+"\n"+"Version : "+ver+" ("+date+")\n"+
+    "Navigateur : "+navigator.userAgent+"\n\n"+
+    "\u2014 Ce que je faisais :\n\n\n"+"\u2014 Ce qui s\u2019est passé :\n\n\n"+"Merci !";
+  a.href="mailto:"+mail+"?subject="+encodeURIComponent("Signalement \u2014 "+nom+" "+ver)+"&body="+encodeURIComponent(corps);
+})();
 </script>
 </body>
 </html>
