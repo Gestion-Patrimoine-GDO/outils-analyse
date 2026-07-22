@@ -183,7 +183,7 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
           var moy=rnd2(vals.reduce(function(s,v){return s+v;},0)/vals.length);var ratio=moy>0?rnd2(pk.v/moy):0;
           A.push(Object.assign({},base,{anomalie:'Pic sans pluviométrie',niveau:'Alerte',date:fmtDate(pk.d),valeur:'pic max : '+rnd2(pk.v),
             contexte:pics.length+' pic(s) sans pluie — moy '+moy+', max '+rnd2(pk.v)+(ratio>=2?' (×'+ratio+')':''),
-            conseil:MESSAGES['Pic sans pluviométrie'].msg}));}}}}
+            conseil:MESSAGES['Pic sans pluviométrie'].msg,seuilPic:rnd2(lim)}));}}}}
     // PROFILS PLATS
     if(isVol&&nums.length>=SEUIL_FIGE){var run=1,runs=[];
       for(var j=1;j<nums.length;j++){if(nums[j].v===nums[j-1].v&&nums[j].v!==0)run++;
@@ -272,7 +272,13 @@ return '<tr><td><span class="dcat '+(ip?'dcat-pluvio':'dcat-vol')+'">'+(ip?'Pluv
 '<td><div style="display:flex;align-items:center;gap:9px"><div class="dbar"><span style="width:'+d.taux+'%;background:'+bc+'"></span></div><span class="dpct '+d.fiab+'">'+d.taux+'%</span></div></td>'+
 '<td><span class="dbadge '+d.fiab+'">'+d.fiabTxt+'</span></td><td class="dnum'+(d.vide?' dmanq':'')+'">'+(d.vide?d.vide+' / '+d.total:'---')+'</td></tr>';}).join('')+'</tbody>';}
 var SORT={key:'niveau',dir:1},activeFilter=null;
-var PALETTE=['#E8734A','#F5A623','#4A90D9','#2EAD9A','#9B72CF','#E06B9F','#5CB87A','#7C8CF5','#D4A03C','#45B89C'];
+var COULEURS_FIXES={
+    'Coupure volume':'#E8734A','Pic sans pluviométrie':'#F5A623',
+    'Décalage TS / Volume > 15%':'#4A90D9','Coupure pluvio':'#2EAD9A',
+    'Profil plat (temps sec)':'#9B72CF','Profil plat (temps de pluie)':'#E06B9F',
+    'Volume négatif':'#D4A03C','Pluvio négative':'#5CB87A'};
+  var PALETTE_FALLBACK=['#7C8CF5','#45B89C','#E8734A','#F5A623'];
+  function couleurType(t){return COULEURS_FIXES[t]||PALETTE_FALLBACK[Object.keys(COULEURS_FIXES).length%PALETTE_FALLBACK.length];}
 function rendreAnomalies(){
 var cr=ANOMALIES.filter(function(a){return a.niveau==='Critique';}).length,al=ANOMALIES.length-cr;
 var s=document.getElementById('stats');
@@ -293,14 +299,20 @@ function rendreCharts(){var ch=document.getElementById('charts');if(!ANOMALIES.l
 ch.innerHTML='<div class="chartcard"><div class="cht">Par type</div><canvas id="cType"></canvas></div><div class="chartcard"><div class="cht">Par point</div><canvas id="cPoint"></canvas></div>';
 var types={};ANOMALIES.forEach(function(a){types[a.anomalie]=(types[a.anomalie]||0)+1;});
 var tL=Object.keys(types).sort(function(a,b){return types[b]-types[a];});
-var tC={};tL.forEach(function(t,i){tC[t]=PALETTE[i%PALETTE.length];});
-if(cT)cT.destroy();cT=new Chart(document.getElementById('cType'),{type:'doughnut',data:{labels:tL,datasets:[{data:tL.map(function(t){return types[t];}),backgroundColor:tL.map(function(t){return tC[t];}),borderWidth:2,borderColor:'#fff'}]},
+var tC={};tL.forEach(function(t){tC[t]=couleurType(t);});
+if(cT)cT.destroy();cT=new Chart(document.getElementById('cType'),{type:'doughnut',data:{labels:tL,datasets:[{data:tL.map(function(t){return types[t];}),backgroundColor:tL.map(function(t){return couleurType(t);}),borderWidth:2,borderColor:'#fff'}]},
 options:{plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10}}},onClick:function(e,els){if(!els.length)return;var sel=document.getElementById('fano');var l=tL[els[0].index];sel.value=sel.value===l?'':l;filtrer();},cutout:'55%',animation:{duration:500}}});
 var pts={};ANOMALIES.forEach(function(a){pts[a.point]=(pts[a.point]||0)+1;});
 var pL=Object.keys(pts).sort(function(a,b){return pts[b]-pts[a];}).slice(0,8);
 var ds=tL.map(function(t){return{label:t,data:pL.map(function(p){return ANOMALIES.filter(function(a){return a.point===p&&a.anomalie===t;}).length;}),backgroundColor:tC[t],borderRadius:3};});
 if(cP)cP.destroy();cP=new Chart(document.getElementById('cPoint'),{type:'bar',data:{labels:pL.map(function(p){return p.length>20?p.slice(0,18)+'...':p;}),datasets:ds},
-options:{indexAxis:'y',plugins:{legend:{display:true,position:'bottom',labels:{font:{size:9},boxWidth:8}}},onClick:function(e,els){if(!els.length)return;var q=document.getElementById('q');var l=pL[els[0].index];q.value=q.value===l?'':l;filtrer();},scales:{x:{stacked:true,ticks:{stepSize:1}},y:{stacked:true,ticks:{font:{size:10}}}},animation:{duration:400}}});}
+options:{indexAxis:'y',plugins:{legend:{display:true,position:'bottom',labels:{font:{size:9},boxWidth:8}}},onClick:function(e,els){if(!els.length)return;
+          var idx=els[0].index,dsIdx=els[0].datasetIndex;
+          var q=document.getElementById('q'),fa=document.getElementById('fano');
+          var pt=pL[idx],tp=tL[dsIdx];
+          if(q.value===pt&&fa.value===tp){q.value='';fa.value='';}
+          else{q.value=pt;fa.value=tp;}
+          activeFilter=null;filtrer();},scales:{x:{stacked:true,ticks:{stepSize:1}},y:{stacked:true,ticks:{font:{size:10}}}},animation:{duration:400}}});}
 var COLS=[['niveau','Niveau'],['anomalie','Anomalie'],['point','Point'],['mesure','Mesure'],['date','Date'],['valeur','D\u00e9tail'],['contexte','Contexte']];
 var expandedId=null,detailChart=null;
 function filtrer(){var q=(document.getElementById('q').value||'').toLowerCase(),fc=document.getElementById('fcat').value,fa=document.getElementById('fano').value;
@@ -317,7 +329,7 @@ var id=anom.mesure+'|'+anom.anomalie+'|'+anom.date;
 var old=document.querySelector('.detail-row');if(old)old.remove();
 document.querySelectorAll('.drow.expanded').forEach(function(r){r.classList.remove('expanded');});
 if(detailChart){detailChart.destroy();detailChart=null;}
-if(expandedId===id){expandedId=null;return;}expandedId=id;tr.classList.add('expanded');
+if(expandedId===id){expandedId=null;return;}expandedId=id;tr.classList.add('expanded');window._ppRange=null;
 var dtr=document.createElement('tr');dtr.className='detail-row';var dtd=document.createElement('td');dtd.colSpan=7;
 var panel=document.createElement('div');panel.className='detail-panel';dtd.appendChild(panel);dtr.appendChild(dtd);
 tr.parentNode.insertBefore(dtr,tr.nextSibling);
@@ -345,10 +357,17 @@ var maxP=600,step=pts.length>maxP?Math.ceil(pts.length/maxP):1;
 var labels=[],vals=[],colors=[],radii=[];
 for(var i=0;i<pts.length;i+=step){var p=pts[i];labels.push(serie.pas<=5?fmtDH(p.d):fmtDate(p.d));vals.push(rnd2(p.v));
 var isA=false;if(anom.anomalie.indexOf('gatif')>=0&&p.v<0)isA=true;
-if(anom.anomalie.indexOf('Profil plat')>=0&&p.v===parseFloat(anom.valeur))isA=true;
-if(anom.anomalie.indexOf('Pic')>=0){var so=pts.map(function(x){return x.v;}).sort(function(a,b){return a-b;});var n2=so.length;if(n2>=10){var q1=so[Math.floor((n2-1)*.25)],q3=so[Math.floor((n2-1)*.75)],iq=q3-q1;if(iq>0&&p.v>q3+3*iq)isA=true;}}
-if(anom.date&&fmtDate(p.d)===anom.date)isA=true;
-colors.push(isA?'#DC2626':'transparent');radii.push(isA?5:0);}
+if(anom.anomalie.indexOf('Profil plat')>=0){
+        // colorer uniquement la plage figée, pas tous les points avec la même valeur
+        if(!window._ppRange){window._ppRange=null;
+          var rm=anom.contexte.match(/(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2}).*?(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})/);
+          if(rm){var p1=rm[1].split('/'),p2=rm[3].split('/');
+            window._ppRange={s:new Date(Date.UTC(+p1[2],p1[1]-1,+p1[0],+rm[2].split(':')[0],+rm[2].split(':')[1])),
+              e:new Date(Date.UTC(+p2[2],p2[1]-1,+p2[0],+rm[4].split(':')[0],+rm[4].split(':')[1]))};}}
+        if(window._ppRange&&p.d>=window._ppRange.s&&p.d<=window._ppRange.e&&p.v===parseFloat(anom.valeur.replace(/[^\d.-]/g,'')))isA=true;}
+if(anom.anomalie.indexOf('Pic')>=0&&anom.seuilPic&&p.v>anom.seuilPic)isA=true;
+if(anom.date&&fmtDate(p.d)===anom.date&&anom.anomalie.indexOf('Profil plat')<0&&anom.anomalie.indexOf('Coupure')<0)isA=true;
+colors.push(isA?couleurType(anom.anomalie):'transparent');radii.push(isA?5:0);}
 var gapZones=[];
 if(isTrou){var pasJ=serie.pas/(24*60);var nL=[],nV=[],nC=[],nR=[];
 for(var si=0;si<labels.length;si++){nL.push(labels[si]);nV.push(vals[si]);nC.push(colors[si]);nR.push(radii[si]);
