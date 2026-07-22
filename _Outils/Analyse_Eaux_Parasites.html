@@ -138,7 +138,7 @@ function calculerDispo(mesures,dS,dE){
 }
 function agregerPluvioHoraire(p5,dS,dE){
   var map=new Map();if(!p5)return map;
-  p5.pts.filter(function(p){return p.d>=dS&&p.d<=dE&&p.v!=null;}).forEach(function(p){var h=Math.floor(p.dRaw*24)/24;map.set(h,(map.get(h)||0)+p.v);});
+  p5.pts.filter(function(p){return p.d>=dS&&p.d<=dE&&p.v!=null&&p.v>=0;}).forEach(function(p){var h=Math.floor(p.dRaw*24)/24;map.set(h,(map.get(h)||0)+p.v);});
   return map;
 }
 function analyserComplet(mesures,dS,dE,seuilPlatH){
@@ -146,6 +146,12 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
   var p5=mesures.find(function(m){return m.type==='PLUVIO_5MIN';});
   var plH=agregerPluvioHoraire(p5,dS,dE);
   function estPluie(dR){return(plH.get(Math.floor(dR*24)/24)||0)>0.1;}
+  // temps sec = somme des pluies sur les 24h précédentes < 0.2 mm
+  function estTempsSec24h(dR){
+    var somme=0;
+    for(var hh=0;hh<24;hh++){var clef=Math.floor((dR-hh/24)*24)/24;somme+=(plH.get(clef)||0);}
+    return somme<0.2;
+  }
   for(var i=0;i<mesures.length;i++){var m=mesures[i];
     var pts=m.pts.filter(function(p){return p.d>=dS&&p.d<=dE;});if(!pts.length)continue;
     var base={point:m.point,mesure:m.nom,mType:m.type};
@@ -167,21 +173,24 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
       A.push(Object.assign({},base,{anomalie:at,niveau:MESSAGES[at].niveau,date:fmtDate(neg[0].d),
         valeur:neg.length+' valeurs négatives',contexte:'ex: '+neg.slice(0,3).map(function(p){return rnd2(p.v);}).join(', '),conseil:MESSAGES[at].msg}));}
     // PICS SANS PLUIE
-    if(isVol&&vals.length>=10){var so=vals.slice().sort(function(a,b){return a-b;});
+    if(isVol&&vals.length>=10){
+      // IQR calculé uniquement sur les heures SANS pluie (plus sensible aux pics anormaux)
+      var valsSec=nums.filter(function(p){return !estPluie(p.dRaw);}).map(function(p){return p.v;});
+      if(valsSec.length>=10){var so=valsSec.slice().sort(function(a,b){return a-b;});
       var n=so.length,q1=so[Math.floor((n-1)*.25)],q3=so[Math.floor((n-1)*.75)],iqr=q3-q1;
       if(iqr>0){var lim=q3+K_IQR*iqr;var pics=nums.filter(function(p){return p.v>lim&&!estPluie(p.dRaw);});
         if(pics.length){var pk=pics.sort(function(a,b){return b.v-a.v;})[0];
           var moy=rnd2(vals.reduce(function(s,v){return s+v;},0)/vals.length);var ratio=moy>0?rnd2(pk.v/moy):0;
           A.push(Object.assign({},base,{anomalie:'Pic sans pluviométrie',niveau:'Alerte',date:fmtDate(pk.d),valeur:'pic max : '+rnd2(pk.v),
             contexte:pics.length+' pic(s) sans pluie — moy '+moy+', max '+rnd2(pk.v)+(ratio>=2?' (×'+ratio+')':''),
-            conseil:MESSAGES['Pic sans pluviométrie'].msg}));}}}
+            conseil:MESSAGES['Pic sans pluviométrie'].msg}));}}}}
     // PROFILS PLATS
     if(isVol&&nums.length>=SEUIL_FIGE){var run=1,runs=[];
       for(var j=1;j<nums.length;j++){if(nums[j].v===nums[j-1].v&&nums[j].v!==0)run++;
         else{if(run>=SEUIL_FIGE)runs.push({from:j-run,to:j-1,val:nums[j-1].v,len:run});run=1;}}
       if(run>=SEUIL_FIGE)runs.push({from:nums.length-run,to:nums.length-1,val:nums[nums.length-1].v,len:run});
       for(var k=0;k<runs.length;k++){var r=runs[k],mp=nums[Math.floor((r.from+r.to)/2)];
-        var pl=estPluie(mp.dRaw);var at=pl?'Profil plat (temps de pluie)':'Profil plat (temps sec)';
+        var sec=estTempsSec24h(nums[r.from].dRaw);var at=sec?'Profil plat (temps sec)':'Profil plat (temps de pluie)';
         A.push(Object.assign({},base,{anomalie:at,niveau:'Alerte',date:fmtDate(nums[r.from].d),valeur:'fixe à '+rnd2(r.val),
           contexte:'valeur '+rnd2(r.val)+' répétée '+r.len+' fois ('+fmtDH(nums[r.from].d)+' → '+fmtDH(nums[r.to].d)+')',
           conseil:MESSAGES[at].msg}));}}
