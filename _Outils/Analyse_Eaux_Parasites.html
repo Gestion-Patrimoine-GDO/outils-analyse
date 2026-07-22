@@ -146,10 +146,10 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
   var p5=mesures.find(function(m){return m.type==='PLUVIO_5MIN';});
   var plH=agregerPluvioHoraire(p5,dS,dE);
   function estPluie(dR){return(plH.get(Math.floor(dR*24)/24)||0)>0.1;}
-  // temps sec = somme des pluies sur les 24h précédentes < 0.2 mm
-  function estTempsSec24h(dR){
+  // temps sec = somme des pluies sur les 6h précédentes < 0.2 mm
+  function estTempsSec6h(dR){
     var somme=0;
-    for(var hh=0;hh<24;hh++){var clef=Math.floor((dR-hh/24)*24)/24;somme+=(plH.get(clef)||0);}
+    for(var hh=0;hh<6;hh++){var clef=Math.floor((dR-hh/24)*24)/24;somme+=(plH.get(clef)||0);}
     return somme<0.2;
   }
   for(var i=0;i<mesures.length;i++){var m=mesures[i];
@@ -190,27 +190,34 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
         else{if(run>=SEUIL_FIGE)runs.push({from:j-run,to:j-1,val:nums[j-1].v,len:run});run=1;}}
       if(run>=SEUIL_FIGE)runs.push({from:nums.length-run,to:nums.length-1,val:nums[nums.length-1].v,len:run});
       for(var k=0;k<runs.length;k++){var r=runs[k],mp=nums[Math.floor((r.from+r.to)/2)];
-        var sec=estTempsSec24h(nums[r.from].dRaw);var at=sec?'Profil plat (temps sec)':'Profil plat (temps de pluie)';
+        var sec=estTempsSec6h(nums[r.from].dRaw);var at=sec?'Profil plat (temps sec)':'Profil plat (temps de pluie)';
         A.push(Object.assign({},base,{anomalie:at,niveau:'Alerte',date:fmtDate(nums[r.from].d),valeur:'fixe à '+rnd2(r.val),
           contexte:'valeur '+rnd2(r.val)+' répétée '+r.len+' fois ('+fmtDH(nums[r.from].d)+' → '+fmtDH(nums[r.to].d)+')',
           conseil:MESSAGES[at].msg}));}}
   }
-  // DÉCALAGE TS/VOLUME
+  // DÉCALAGE CHRONIQUE TS / VOLUME HORAIRE (par heure, en temps sec 6h < 0.2mm)
   var parPt={};for(var i=0;i<mesures.length;i++){var m=mesures[i];
     if(m.type==='VOL_HORAIRE'||m.type==='VOL_TOTAL'||m.type==='DEBIT_TS'){
       if(!parPt[m.point])parPt[m.point]={};if(m.type==='DEBIT_TS')parPt[m.point].ts=m;else if(!parPt[m.point].vol)parPt[m.point].vol=m;}}
   for(var pt in parPt){var o=parPt[pt];if(!o.vol||!o.ts)continue;
-    var vP=o.vol.pts.filter(function(p){return p.d>=dS&&p.d<=dE&&p.v!=null;});
-    var tsM=new Map();o.ts.pts.filter(function(p){return p.d>=dS&&p.d<=dE&&p.v!=null;}).forEach(function(p){tsM.set(Math.round(p.dRaw*2400)/2400,p.v);});
-    var ecs=[],nS=0,sE=0;
-    for(var j=0;j<vP.length;j++){var p=vP[j];if(estPluie(p.dRaw))continue;
-      var tv=tsM.get(Math.round(p.dRaw*2400)/2400);if(tv==null)continue;nS++;
-      if(p.v>0){var ec=Math.abs(tv-p.v)/p.v;sE+=ec;ecs.push({d:p.d,vol:p.v,ts:tv,ec:ec});}}
-    if(nS>10){var mE=sE/nS;if(mE>SEUIL_DEC){var pi=ecs.sort(function(a,b){return b.ec-a.ec;})[0];
-      A.push({point:pt,mesure:'Volume vs Chronique TS',mType:'CROISEMENT',anomalie:'Décalage TS / Volume > 15%',niveau:'Alerte',
-        date:'',valeur:Math.round(mE*100)+'% d\'écart moyen',
-        contexte:'sur '+nS+' heures en temps sec — ex: vol='+rnd2(pi.vol)+' vs TS='+rnd2(pi.ts)+' le '+fmtDate(pi.d),
-        conseil:MESSAGES['Décalage TS / Volume > 15%'].msg});}}}
+    var vP=o.vol.pts.filter(function(p){return p.d>=dS&&p.d<=dE&&p.v!=null&&p.v>0;});
+    var tsM=new Map();o.ts.pts.filter(function(p){return p.d>=dS&&p.d<=dE&&p.v!=null;}).forEach(function(p){tsM.set(Math.floor(p.dRaw*24)/24,p.v);});
+    var datesDec=[];
+    for(var j=0;j<vP.length;j++){var p=vP[j];
+      if(!estTempsSec6h(p.dRaw)) continue;
+      var tsVal=tsM.get(Math.floor(p.dRaw*24)/24); if(tsVal==null) continue;
+      if(tsVal>1.15*p.v || p.v>1.15*tsVal) datesDec.push({d:p.d,vol:rnd2(p.v),ts:rnd2(tsVal)});}
+    if(datesDec.length){
+      // calculer le nombre total d'heures en temps sec pour ce point
+      var nbSecTotal=vP.filter(function(p){return estTempsSec6h(p.dRaw);}).length;
+      var pctEcart=nbSecTotal?Math.round(datesDec.length/nbSecTotal*100):0;
+      // trouver le pire écart
+      var pire=datesDec.sort(function(a,b){return Math.abs(b.ts-b.vol)-Math.abs(a.ts-a.vol);})[0];
+      A.push({point:pt,mesure:'Volume vs Chronique TS',mType:'CROISEMENT',
+        anomalie:'Décalage TS / Volume > 15%',niveau:'Alerte',
+        date:fmtDate(pire.d),valeur:pctEcart+'% des heures en temps sec',
+        contexte:datesDec.length+'/'+nbSecTotal+' heures en écart — pire : vol='+pire.vol+' vs TS='+pire.ts+' le '+fmtDate(pire.d),
+        conseil:MESSAGES['Décalage TS / Volume > 15%'].msg});}}
   return A;
 }
 
