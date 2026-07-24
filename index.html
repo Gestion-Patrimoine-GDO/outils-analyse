@@ -70,6 +70,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-rad  .band{background:linear-gradient(90deg,#6366F1,#8B5CF6)}
 .tool.t-fill .band{background:linear-gradient(90deg,#DB2777,#F43F5E)}
 .tool.t-eau  .band{background:linear-gradient(90deg,#059669,#10B981)}
+.tool.t-h2s  .band{background:linear-gradient(90deg,#92400E,#B45309)}
 .tool .body{padding:22px 22px 20px;display:flex;flex-direction:column;flex:1}
 .tool .top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
 .tool .emoji{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:26px;flex:none;
@@ -79,6 +80,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-rad  .emoji{background:rgba(99,102,241,.10)}
 .tool.t-fill .emoji{background:rgba(219,39,119,.10)}
 .tool.t-eau  .emoji{background:rgba(5,150,105,.10)}
+.tool.t-h2s  .emoji{background:rgba(146,64,14,.10)}
 .tool h2{font-family:var(--disp);font-size:18px;font-weight:700;color:#132446;margin-bottom:3px}
 .tool .sub{font-family:var(--mono);font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
 .tool .desc{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:16px}
@@ -90,6 +92,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-rad  .tag{color:#5B54D6;background:rgba(99,102,241,.10)}
 .tool.t-fill .tag{color:#BE185D;background:rgba(219,39,119,.10)}
 .tool.t-eau  .tag{color:#047857;background:rgba(5,150,105,.10)}
+.tool.t-h2s  .tag{color:#92400E;background:rgba(146,64,14,.10)}
 .tool .open{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
   background:linear-gradient(135deg,var(--accent),#1559BE);color:#fff;border-radius:10px;padding:11px 16px;
   font-weight:600;font-size:13.5px;box-shadow:0 3px 12px rgba(27,111,232,.26)}
@@ -98,6 +101,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tool.t-rad  .open{background:linear-gradient(135deg,#6366F1,#4F46E5);box-shadow:0 3px 12px rgba(99,102,241,.26)}
 .tool.t-fill .open{background:linear-gradient(135deg,#DB2777,#BE185D);box-shadow:0 3px 12px rgba(219,39,119,.26)}
 .tool.t-eau  .open{background:linear-gradient(135deg,#059669,#047857);box-shadow:0 3px 12px rgba(5,150,105,.26)}
+.tool.t-h2s  .open{background:linear-gradient(135deg,#B45309,#92400E);box-shadow:0 3px 12px rgba(146,64,14,.26)}
 .tool:hover .open{filter:brightness(1.05)}
 
 .empty{display:none;text-align:center;color:var(--muted);padding:50px 0;font-size:14px}
@@ -226,6 +230,17 @@ const OUTILS=[
     desc:'D\u00e9pose un ou plusieurs bilans Aquacalc (.xlsm) et d\u00e9tecte les anomalies de l\u2019onglet Data : trous, dates en double, n\u00e9gatifs, valeurs fig\u00e9es, incoh\u00e9rences TS>TT, pics extr\u00eames. S\u00e9pare les alertes certaines des points \u00e0 v\u00e9rifier.',
     tags:['Multi-fichiers','Alertes & \u00e0 v\u00e9rifier','Export Excel','Aquacalc'],
     mots:'eaux parasites aquacalc anomalies t\u00e9l\u00e9m\u00e9trie data pluviom\u00e9trie volume temps sec tous temps ecpp ecm survolume n\u00e9gatif fig\u00e9 pic trou alerte'
+  },
+  {
+    cls:'t-h2s',
+    rubrique:'Outils Directions Techniques',
+    emoji:'🔬',
+    titre:'Diagnostic H\u2082S',
+    sous:'Analyse des mesures capteur H\u2082S',
+    href:'_Outils/Diagnostic_H2S.html',
+    desc:'D\u00e9posez un ou plusieurs exports capteur H\u2082S (.xlsx). Calcule les statistiques, visualise les concentrations et la temp\u00e9rature, croise avec les seuils INRS (olfactif, irritation, chronique, irr\u00e9versible, l\u00e9tal), d\u00e9tecte les anomalies capteur et compare les points de mesure.',
+    tags:['Multi-capteurs','Seuils INRS','Heatmap','Anomalies','Export Excel & PNG'],
+    mots:'h2s hydrog\u00e8ne sulfur\u00e9 capteur diagnostic seuils inrs concentration ppm temp\u00e9rature heatmap corrosion odeur poste refoulement pr fayoux redox'
   }
   /* Pour ajouter un futur outil, dupliquez un bloc ci-dessus (sans oublier la virgule). */
 ];
