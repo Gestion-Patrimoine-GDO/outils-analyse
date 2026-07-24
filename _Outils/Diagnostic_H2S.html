@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnostic H₂S — SUEZ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#F4F7FB;--panel:#fff;--panel2:#F8FAFD;--line:#E4EAF3;--line2:#CBD7E6;--txt:#1E293B;--muted:#5B6B82;--faint:#93A2B8;--accent:#1B6FE8;--teal:#0D9488;--navy:#132446;--red:#DC2626;--amber:#D97706;--green:#16A34A;--shadow:0 1px 2px rgba(15,35,70,.05),0 10px 30px rgba(15,35,70,.06);--mono:'JetBrains Mono',Consolas,monospace;--sans:'Inter',system-ui,'Segoe UI',sans-serif;--disp:'Space Grotesk','Inter',system-ui,sans-serif}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);line-height:1.5;min-height:100vh}
+.box{max-width:1340px;margin:0 auto;padding:20px 24px}
+.ti{font-family:var(--disp);font-size:22px;font-weight:700;color:var(--navy);margin:18px 0 8px}
+.de{font-size:13.5px;color:var(--muted);margin-bottom:18px;max-width:720px;line-height:1.6}
+.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:22px}.top::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--teal))}
+.top .inner{max-width:1340px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none;background:linear-gradient(135deg,var(--accent),var(--teal));color:#fff;font-family:var(--mono);font-weight:600;font-size:17px;box-shadow:0 5px 14px rgba(27,111,232,.28)}
+.bl{display:flex;align-items:center;gap:12px;margin-bottom:20px}.bl .bt{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--navy)}.bl .bs{font-size:12px;color:var(--muted)}.bl .au{margin-left:auto;font-size:12px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),#1559BE);border-radius:99px;padding:7px 15px}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);border:1px solid var(--line2);background:var(--panel);color:var(--txt);transition:all .12s}.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-accent{background:linear-gradient(135deg,var(--accent),#1559BE);color:#fff;border:none}.btn-accent:hover{opacity:.9;color:#fff}
+.btn-sm{font-size:11px;padding:6px 13px;border-radius:8px}
+.btn-reinit{background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;border:none;font-weight:700;box-shadow:0 3px 12px rgba(217,119,6,.3)}.btn-reinit:hover{filter:brightness(1.06)}
+.drop{display:block;border:1.5px dashed var(--line2);border-radius:14px;background:var(--panel2);padding:26px 20px;text-align:center;cursor:pointer;transition:all .15s}.drop:hover{border-color:var(--accent);background:#FBFDFF}.drop .t{font-size:13px;color:#334155;font-weight:600}.drop .s{font-size:12px;color:var(--faint);margin-top:4px}#loader.drag .drop{border-color:var(--accent);background:#eff5fe}
+.pbar{height:6px;border-radius:3px;background:#E4EAF3;margin:8px 0;overflow:hidden}.pbar span{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--teal));transition:width .3s}
+.note{margin-top:12px;font-size:11.5px;color:var(--faint);line-height:1.6}
+#app{display:none}
+.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;padding:6px;background:var(--panel2);border:1px solid var(--line);border-radius:12px}.tab{padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;color:var(--muted);transition:.15s;border:1px solid transparent;background:none;font-family:var(--sans)}.tab:hover{color:var(--txt);background:rgba(27,111,232,.06);border-color:var(--line)}.tab.active{color:#fff;background:linear-gradient(135deg,var(--accent),#1559BE);border-color:transparent;box-shadow:0 3px 10px rgba(27,111,232,.25)}
+.panel{display:none}.panel.vis{display:block}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:14px;margin-bottom:20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;box-shadow:var(--shadow)}.stat .v{font-family:var(--disp);font-size:24px;font-weight:700;color:var(--navy)}.stat .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+.stat.k-red .v{color:var(--red)}.stat.k-amber .v{color:var(--amber)}.stat.k-green .v{color:var(--green)}.stat.k-teal .v{color:var(--teal)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:18px}
+.card-title{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+.toolbar label{font-size:12px;font-weight:600;color:var(--muted)}
+.toolbar input[type=date]{border:1px solid var(--line2);border-radius:6px;padding:5px 10px;font-size:12px;font-family:var(--sans)}
+.dtab{width:100%;border-collapse:collapse;font-size:12.5px}.dtab thead th{background:linear-gradient(180deg,#20406B,#182F52);color:#EAF1FB;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;text-align:left;padding:10px 12px;white-space:nowrap}.dtab tbody td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}.dtab tbody tr:nth-child(even) td{background:var(--panel2)}
+/* Seuils INRS table */
+.seuil-table{width:100%;border-collapse:separate;border-spacing:0 4px;font-size:13px}
+.st-row{background:var(--st-bg);border-radius:8px;transition:.12s}.st-row:hover{filter:brightness(.97)}
+.st-row td{padding:11px 14px;border-top:1px solid var(--st-border);border-bottom:1px solid var(--st-border)}
+.st-row td:first-child{border-left:4px solid var(--st-color);border-top-left-radius:8px;border-bottom-left-radius:8px;border-left-width:4px;width:36px;text-align:center;font-size:15px;padding:11px 8px}
+.st-row td:last-child{border-right:1px solid var(--st-border);border-top-right-radius:8px;border-bottom-right-radius:8px}
+.st-name{font-weight:700;color:var(--st-color);white-space:nowrap}
+.st-desc{color:var(--muted);font-size:12px}
+.st-input{text-align:right;white-space:nowrap;color:var(--st-color);font-weight:600}
+.st-input input{width:72px;border:1px solid var(--st-border);border-radius:6px;padding:5px 8px;font-size:13px;font-family:var(--mono);text-align:right;background:var(--panel);color:var(--txt)}.st-input input:focus{outline:2px solid var(--st-color);outline-offset:1px}
+.st-input span{margin-left:4px;font-size:12px;color:var(--muted)}
+/* Filter seuil clickable rows */
+.dtab tbody tr.seuil-filter{cursor:pointer;transition:.12s}.dtab tbody tr.seuil-filter:hover td{background:rgba(27,111,232,.06)}.dtab tbody tr.seuil-filter.active-filter td{background:rgba(27,111,232,.10);box-shadow:inset 3px 0 0 var(--accent)}
+.heatmap{overflow-x:auto}.hm-grid{display:grid;gap:2px;margin-top:8px}.hm-cell{border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--mono);font-weight:600;min-height:28px;cursor:default;transition:.1s}.hm-cell:hover{outline:2px solid var(--accent);outline-offset:1px}.hm-head{font-size:10px;color:var(--muted);font-weight:600;display:flex;align-items:center;justify-content:center}.hm-cell.hm-dim{opacity:.15}
+.legend{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap;font-size:11px;color:var(--muted)}.legend-item{display:flex;align-items:center;gap:5px}.legend-sq{width:14px;height:14px;border-radius:3px}
+.verdict{display:inline-block;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--mono)}.v-nul{background:#D1FAE5;color:#065F46}.v-faible{background:#FEF3C7;color:#92400E}.v-important{background:#FED7AA;color:#9A3412}.v-critique{background:#FEE2E2;color:#991B1B}
+.anom-card{background:var(--panel);border-left:4px solid var(--amber);border-radius:0 10px 10px 0;padding:12px 16px;margin-bottom:10px;font-size:12.5px}.anom-card.crit{border-left-color:var(--red)}.anom-card .at{font-weight:700;color:var(--navy);margin-bottom:3px}.anom-card .ad{color:var(--muted)}
+.compare-bar{height:22px;border-radius:4px;display:flex;overflow:hidden;font-size:10px;font-family:var(--mono)}.compare-bar span{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;min-width:2px}
+.detail-list{max-height:300px;overflow-y:auto;margin-top:10px;border:1px solid var(--line);border-radius:8px}
+.detail-list table{width:100%;border-collapse:collapse;font-size:11.5px}.detail-list th{position:sticky;top:0;background:var(--navy);color:#EAF1FB;padding:7px 10px;font-family:var(--mono);font-size:10px;text-transform:uppercase}.detail-list td{padding:6px 10px;border-bottom:1px solid var(--line)}
+.comment-box{width:100%;min-height:90px;border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:13px;font-family:var(--sans);color:var(--txt);background:var(--panel2);resize:vertical;line-height:1.6;transition:.15s}.comment-box:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,111,232,.1);background:var(--panel)}.comment-box::placeholder{color:var(--faint)}
+.__ver-badge{position:fixed;right:10px;bottom:9px;z-index:40;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;background:rgba(255,255,255,.86);border:1px solid #E4EAF3;border-radius:8px;padding:3px 5px 3px 10px;backdrop-filter:blur(3px)}.__ver-txt{color:#93A2B8}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.tabs{gap:4px;padding:4px}.tab{padding:8px 12px;font-size:12px}}
+</style>
+</head>
+<body>
+<div id="loader"><div class="box">
+<div class="bl"><div class="logo">&#9636;</div><div><div class="bt">SUEZ — Gestion d'Actif</div><div class="bs">Diagnostic H₂S</div></div><span class="au">Tanguy BAYLE</span></div>
+<div class="ti">Diagnostic H₂S</div>
+<div class="de">Déposez un ou plusieurs exports capteur H₂S (.xlsx). L'outil calcule les <b>statistiques</b>, visualise les <b>concentrations</b> et la <b>température</b>, croise avec les <b>seuils INRS</b>, détecte les <b>anomalies capteur</b>, et compare les points de mesure.</div>
+<label class="drop" for="fi"><div style="font-size:26px;margin-bottom:6px">🔬</div><div class="t">Glissez vos fichiers ici, ou cliquez pour choisir</div><div class="s">.xlsx · un ou plusieurs fichiers</div><input id="fi" type="file" accept=".xlsx,.xls,.xlsm" multiple style="display:none"></label>
+<div id="log"></div>
+<div class="pbar" id="pbar" style="display:none"><span id="pfill" style="width:0%"></span></div>
+<div class="note">ℹ️ Tout se passe dans votre navigateur. Aucune donnée n'est envoyée sur internet.</div>
+
+<div class="card" style="margin-top:18px">
+<div class="card-title">Seuils INRS — modifiables</div>
+<table class="seuil-table">
+<tr class="st-row" style="--st-color:#16A34A;--st-bg:#F0FDF4;--st-border:#BBF7D0"><td class="st-dot">🟢</td><td class="st-name">Seuil olfactif</td><td class="st-desc">Détection par l'odeur</td><td class="st-input"><input id="s_olf" type="number" value="0.1" step="0.01" min="0"><span>ppm</span></td></tr>
+<tr class="st-row" style="--st-color:#CA8A04;--st-bg:#FEFCE8;--st-border:#FDE68A"><td class="st-dot">🟡</td><td class="st-name">Irritation / gêne</td><td class="st-desc">Irritation yeux, voies respiratoires</td><td class="st-input"><input id="s_irr" type="number" value="5" step="0.5" min="0"><span>ppm</span></td></tr>
+<tr class="st-row" style="--st-color:#EA580C;--st-bg:#FFF7ED;--st-border:#FED7AA"><td class="st-dot">🟠</td><td class="st-name">Exposition chronique</td><td class="st-desc">Céphalées, nausées, troubles mémoire</td><td class="st-input"><input id="s_chr" type="number" value="50" step="1" min="0"><span>ppm</span></td></tr>
+<tr class="st-row" style="--st-color:#DC2626;--st-bg:#FEF2F2;--st-border:#FECACA"><td class="st-dot">🔴</td><td class="st-name">Effets irréversibles (1h)</td><td class="st-desc">Perte de conscience, œdème pulmonaire</td><td class="st-input"><input id="s_irv" type="number" value="80" step="1" min="0"><span>ppm</span></td></tr>
+<tr class="st-row" style="--st-color:#991B1B;--st-bg:#FEF2F2;--st-border:#FCA5A5"><td class="st-dot">💀</td><td class="st-name">Effets létaux (1h)</td><td class="st-desc">Arrêt cardiaque en 5–10 min</td><td class="st-input"><input id="s_let" type="number" value="372" step="1" min="0"><span>ppm</span></td></tr>
+</table>
+</div>
+</div></div>
+
+<div id="app">
+<div class="top"><div class="inner">
+<div class="logo">&#9636;</div><div><div class="bt">SUEZ — Gestion d'Actif</div><div class="bs">Diagnostic H₂S</div></div>
+<button class="btn btn-sm btn-reinit" onclick="resetApp()">↻ Réinitialiser</button>
+<button class="btn btn-sm btn-accent" onclick="exportExcel()">📊 Export Excel</button>
+</div></div>
+<div class="box">
+<div class="tabs" id="tabs"></div>
+<div id="panels"></div>
+</div></div>
+
+<div class="__ver-badge"><span class="__ver-txt">Diagnostic H₂S · v1.1 · juillet 2026</span></div>
+
+<script>
+var CONFIG={VERSION:'v1.1'};
+function getSeuils(){return{
+  olfactif:parseFloat(document.getElementById('s_olf').value)||0.1,
+  irritation:parseFloat(document.getElementById('s_irr').value)||5,
+  chronique:parseFloat(document.getElementById('s_chr').value)||50,
+  irreversible:parseFloat(document.getElementById('s_irv').value)||80,
+  letal:parseFloat(document.getElementById('s_let').value)||372
+};}
+var FICHIERS=[],FILTERED=[];
+var rnd=function(v,d){d=d||1;var p=Math.pow(10,d);return Math.round(v*p)/p;};
+function fmtDH(d){if(!d)return'—';var dd=d.getDate(),mm=d.getMonth()+1,yy=d.getFullYear(),hh=d.getHours(),mi=d.getMinutes();return(dd<10?'0':'')+dd+'/'+(mm<10?'0':'')+mm+'/'+yy+' '+(hh<10?'0':'')+hh+':'+(mi<10?'0':'')+mi;}
+function fmtISO(d){return d.getFullYear()+'-'+((d.getMonth()+1)<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ===== PARSING =====
+function lireFichierH2S(wb,nom){
+  var sn=wb.SheetNames[0];var ws=wb.Sheets[sn];
+  var aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+  if(!aoa||aoa.length<3)return null;
+  var prName='';
+  var r0=aoa[0]||[];
+  for(var c=0;c<r0.length;c++){if(r0[c]&&typeof r0[c]==='string'&&r0[c].trim().length>1&&!/date|heure/i.test(r0[c])){prName=r0[c].trim();break;}}
+  var hRow=-1;
+  for(var r=0;r<Math.min(5,aoa.length);r++){var row=aoa[r];
+    if(row&&row.some(function(c){return typeof c==='string'&&/date|heure/i.test(c);})){hRow=r;break;}}
+  if(hRow<0)hRow=0;
+  var headers=(aoa[hRow]||[]).map(function(h){return h?String(h).toLowerCase():'';});
+  var iDate=-1,iTemp=-1,iGas=-1,iGSM=-1;
+  for(var c=0;c<headers.length;c++){
+    if(iDate<0&&/date|heure/.test(headers[c]))iDate=c;
+    else if(iTemp<0&&/temp/.test(headers[c]))iTemp=c;
+    else if(iGas<0&&/gas|h2s|ppm/.test(headers[c]))iGas=c;
+    else if(iGSM<0&&/gsm|dbm|signal/.test(headers[c]))iGSM=c;
+  }
+  if(iDate<0)iDate=0;if(iGas<0)iGas=2;if(iTemp<0)iTemp=1;
+  var pts=[];
+  for(var r=hRow+1;r<aoa.length;r++){var row=aoa[r];if(!row)continue;
+    var dR=row[iDate];if(dR==null||dR==='')continue;
+    var d;
+    if(typeof dR==='number'){d=new Date(Math.round((dR-25569)*86400000));}
+    else if(dR instanceof Date){d=dR;}
+    else{d=new Date(String(dR).replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1'));if(isNaN(d))continue;}
+    var gas=row[iGas]!=null&&row[iGas]!==''&&!isNaN(row[iGas])?Number(row[iGas]):null;
+    var temp=iTemp>=0&&row[iTemp]!=null&&row[iTemp]!==''&&!isNaN(row[iTemp])?Number(row[iTemp]):null;
+    var gsm=iGSM>=0&&row[iGSM]!=null&&row[iGSM]!==''&&!isNaN(row[iGSM])?Number(row[iGSM]):null;
+    pts.push({d:d,gas:gas,temp:temp,gsm:gsm});
+  }
+  if(!pts.length)return null;
+  pts.sort(function(a,b){return a.d-b.d;});
+  if(!prName)prName=nom.replace(/\.[^.]+$/,'').replace(/_/g,' ');
+  var diffs=[];for(var i=1;i<Math.min(20,pts.length);i++){var df=(pts[i].d-pts[i-1].d)/60000;if(df>0&&df<120)diffs.push(df);}
+  var pas=diffs.length?diffs.sort(function(a,b){return a-b;})[Math.floor(diffs.length/2)]:5;
+  return{nom:prName,fichier:nom,pts:pts,pas:pas,dateMin:pts[0].d,dateMax:pts[pts.length-1].d};
+}
+
+function filterByDate(f,dS,dE){
+  var pts=f.pts.filter(function(p){return p.d>=dS&&p.d<=dE;});
+  return{nom:f.nom,fichier:f.fichier,pts:pts,pas:f.pas,dateMin:pts.length?pts[0].d:f.dateMin,dateMax:pts.length?pts[pts.length-1].d:f.dateMax};
+}
+
+// ===== STATISTIQUES =====
+function calcStats(f){
+  var seuils=getSeuils();
+  var gasV=f.pts.filter(function(p){return p.gas!=null&&isFinite(p.gas);}).map(function(p){return p.gas;});
+  var tempV=f.pts.filter(function(p){return p.temp!=null&&isFinite(p.temp);}).map(function(p){return p.temp;});
+  if(!gasV.length)return null;
+  var sorted=gasV.slice().sort(function(a,b){return a-b;});
+  var n=sorted.length;
+  var q25=sorted[Math.floor((n-1)*0.25)],q75=sorted[Math.floor((n-1)*0.75)];
+  var moy=gasV.reduce(function(s,v){return s+v;},0)/n;
+  var max=sorted[n-1],min=sorted[0],med=sorted[Math.floor(n/2)];
+  function pctAbove(s){return n?rnd(gasV.filter(function(v){return v>s;}).length/n*100,1):0;}
+  var depassements={olfactif:pctAbove(seuils.olfactif),irritation:pctAbove(seuils.irritation),
+    chronique:pctAbove(seuils.chronique),irreversible:pctAbove(seuils.irreversible),letal:pctAbove(seuils.letal)};
+  var verdict='Nul';
+  if(depassements.letal>0)verdict='Critique';
+  else if(depassements.irreversible>1)verdict='Critique';
+  else if(depassements.chronique>5)verdict='Important';
+  else if(depassements.irritation>10)verdict='Important';
+  else if(max>seuils.chronique)verdict='Important';
+  else if(depassements.irritation>0)verdict='Faible';
+  else if(max>seuils.irritation)verdict='Faible';
+  var tempMoy=tempV.length?rnd(tempV.reduce(function(s,v){return s+v;},0)/tempV.length,1):null;
+  var tempMax=tempV.length?Math.max.apply(null,tempV):null;
+  var dureeH=rnd((f.dateMax-f.dateMin)/3600000,1);
+  return{n:n,moy:rnd(moy,1),med:rnd(med,1),min:rnd(min,1),max:rnd(max,1),q25:rnd(q25,1),q75:rnd(q75,1),
+    depassements:depassements,verdict:verdict,dureeH:dureeH,pas:f.pas,tempMoy:tempMoy,tempMax:tempMax};
+}
+
+// ===== ANOMALIES =====
+function detecterAnomalies(f){
+  var A=[];var pts=f.pts;
+  for(var i=1;i<pts.length;i++){var gap=(pts[i].d-pts[i-1].d)/60000;
+    if(gap>f.pas*2.5){var nbManq=Math.round(gap/f.pas)-1;
+      A.push({type:'Trou de données',niveau:gap>120?'Critique':'Alerte',date:fmtDH(pts[i-1].d),detail:nbManq+' mesures manquantes ('+rnd(gap,0)+' min)'});}}
+  var run=1;
+  for(var i=1;i<pts.length;i++){
+    if(pts[i].gas!=null&&pts[i-1].gas!=null&&pts[i].gas===pts[i-1].gas)run++;
+    else{if(run>=6){var dur=run*f.pas;A.push({type:'Valeur figée',niveau:dur>=180?'Critique':'Alerte',date:fmtDH(pts[i-run].d),detail:'Fixe à '+rnd(pts[i-1].gas,2)+' ppm pendant '+rnd(dur,0)+' min'});}run=1;}}
+  if(run>=6){var dur=run*f.pas;A.push({type:'Valeur figée',niveau:dur>=180?'Critique':'Alerte',date:fmtDH(pts[pts.length-run].d),detail:'Fixe à '+rnd(pts[pts.length-1].gas,2)+' ppm pendant '+rnd(dur,0)+' min'});}
+  var neg=pts.filter(function(p){return p.gas!=null&&p.gas<0;});
+  if(neg.length)A.push({type:'Valeurs négatives',niveau:'Alerte',date:fmtDH(neg[0].d),detail:neg.length+' mesure(s)'});
+  var sat=pts.filter(function(p){return p.gas!=null&&p.gas>=2000;});
+  if(sat.length)A.push({type:'Saturation capteur',niveau:'Critique',date:fmtDH(sat[0].d),detail:sat.length+' mesure(s) ≥ 2000 ppm'});
+  return A;
+}
+
+// ===== HEATMAP =====
+function calcHeatmap(f){
+  var days={},dayList=[];
+  f.pts.forEach(function(p){if(p.gas==null)return;
+    var dk=fmtISO(p.d),h=p.d.getHours();
+    if(!days[dk]){days[dk]={};dayList.push(dk);}
+    if(!days[dk][h])days[dk][h]=[];days[dk][h].push(p.gas);});
+  dayList.sort();
+  return dayList.map(function(dk){var row={day:dk,hours:[]};
+    for(var h=0;h<24;h++){var v=days[dk]&&days[dk][h]?days[dk][h]:[];
+      row.hours.push(v.length?rnd(v.reduce(function(s,x){return s+x;},0)/v.length,0):null);}return row;});
+}
+
+// ===== RENDERING =====
+var charts=[];
+function destroyCharts(){charts.forEach(function(c){c.destroy();});charts=[];window._h2sCharts={};}
+
+function applyDateFilter(){
+  FILTERED=[];
+  FICHIERS.forEach(function(f,i){
+    var dsEl=document.getElementById('dS_'+i),deEl=document.getElementById('dE_'+i);
+    if(dsEl&&deEl&&dsEl.value&&deEl.value){
+      var dS=new Date(dsEl.value+'T00:00:00'),dE=new Date(deEl.value+'T23:59:59');
+      FILTERED.push(filterByDate(f,dS,dE));
+    }else{FILTERED.push(f);}
+  });
+  renderPanels();
+}
+
+function renderApp(){
+  destroyCharts();
+  var tabsEl=document.getElementById('tabs');var panelsEl=document.getElementById('panels');
+  tabsEl.innerHTML='';panelsEl.innerHTML='';
+  FILTERED=FICHIERS.slice();
+  var tabDefs=[];
+  FICHIERS.forEach(function(f,i){tabDefs.push({id:'pr_'+i,label:f.nom,icon:'📍'});});
+  if(FICHIERS.length>1)tabDefs.push({id:'compare',label:'Comparaison',icon:'📊'});
+  tabDefs.forEach(function(t,i){
+    var btn=document.createElement('button');btn.className='tab'+(i===0?' active':'');
+    btn.innerHTML=t.icon+' '+esc(t.label);
+    btn.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+      btn.classList.add('active');document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('vis');});
+      document.getElementById('panel_'+t.id).classList.add('vis');};
+    tabsEl.appendChild(btn);});
+  renderPanels();
+}
+
+function renderPanels(){
+  destroyCharts();var seuils=getSeuils();var panelsEl=document.getElementById('panels');panelsEl.innerHTML='';
+  FILTERED.forEach(function(f,idx){
+    var st=calcStats(f);var an=detecterAnomalies(f);var hm=calcHeatmap(f);
+    f._stats=st;f._anom=an;f._hm=hm;
+    var orig=FICHIERS[idx];
+    var div=document.createElement('div');div.id='panel_pr_'+idx;div.className='panel'+(idx===0?' vis':'');
+    var vClass=st?('v-'+st.verdict.toLowerCase()):'';
+    // Toolbar dates
+    var html='<div class="toolbar"><label>Du</label><input type="date" id="dS_'+idx+'" value="'+fmtISO(orig.dateMin)+'" min="'+fmtISO(orig.dateMin)+'" max="'+fmtISO(orig.dateMax)+'">';
+    html+='<label>au</label><input type="date" id="dE_'+idx+'" value="'+fmtISO(orig.dateMax)+'" min="'+fmtISO(orig.dateMin)+'" max="'+fmtISO(orig.dateMax)+'">';
+    html+='<button class="btn btn-sm btn-accent" onclick="applyDateFilter()">Appliquer</button>';
+    html+='<button class="btn btn-sm btn-reinit" onclick="resetDates('+idx+')">↻ Réinitialiser</button>';
+    html+='<span style="margin-left:auto;font-size:11px;color:var(--faint)">'+f.pts.length+' mesures · pas '+f.pas+' min</span></div>';
+    // KPIs
+    html+='<div class="stats">';
+    if(st){
+      html+='<div class="stat"><div class="v">'+st.max+'</div><div class="l">Max (ppm)</div></div>';
+      html+='<div class="stat"><div class="v">'+st.moy+'</div><div class="l">Moyenne</div></div>';
+      html+='<div class="stat"><div class="v">'+st.med+'</div><div class="l">Médiane</div></div>';
+      html+='<div class="stat"><div class="v">'+st.min+'</div><div class="l">Min</div></div>';
+      html+='<div class="stat"><div class="v">'+st.q25+' — '+st.q75+'</div><div class="l">Q25 — Q75</div></div>';
+      html+='<div class="stat"><div class="v">'+st.n+'</div><div class="l">Mesures ('+st.dureeH+'h)</div></div>';
+      html+='<div class="stat"><div class="v '+(st.tempMoy!=null&&st.tempMoy>=15?'k-amber':'k-teal')+'">'+(st.tempMoy!=null?st.tempMoy+'°C':'—')+'</div><div class="l">Temp. moy.</div></div>';
+      html+='<div class="stat"><div class="v"><span class="verdict '+vClass+'">'+st.verdict+'</span></div><div class="l">Verdict H₂S</div></div>';
+    }
+    html+='</div>';
+    // Dépassements — clickable
+    if(st){
+      html+='<div class="card"><div class="card-title">Dépassements de seuils <span style="font-size:11px;color:var(--faint);font-weight:400">— cliquez une ligne pour filtrer</span></div>';
+      html+='<table class="dtab" id="seuilTab_'+idx+'"><thead><tr><th>Seuil</th><th>Valeur (ppm)</th><th>% temps</th><th>Durée</th><th>Nb mesures</th></tr></thead><tbody>';
+      var seuilList=[
+        {key:'olfactif',nom:'🟢 Olfactif',val:seuils.olfactif,pct:st.depassements.olfactif},
+        {key:'irritation',nom:'🟡 Irritation',val:seuils.irritation,pct:st.depassements.irritation},
+        {key:'chronique',nom:'🟠 Chronique',val:seuils.chronique,pct:st.depassements.chronique},
+        {key:'irreversible',nom:'🔴 Irréversible',val:seuils.irreversible,pct:st.depassements.irreversible},
+        {key:'letal',nom:'💀 Létal',val:seuils.letal,pct:st.depassements.letal}
+      ];
+      seuilList.forEach(function(s){
+        var duree=rnd(s.pct/100*st.dureeH,1);
+        var nbMes=f.pts.filter(function(p){return p.gas!=null&&p.gas>s.val;}).length;
+        html+='<tr class="seuil-filter" data-seuil="'+s.val+'" data-key="'+s.key+'" data-idx="'+idx+'" onclick="filterBySeuil(this,'+idx+','+s.val+')"><td>'+s.nom+'</td><td><b>'+s.val+' ppm</b></td><td><b>'+s.pct+'%</b></td><td>'+duree+' h</td><td>'+nbMes+'</td></tr>';
+      });
+      html+='</tbody></table>';
+      html+='<div id="seuilDetail_'+idx+'" style="margin-top:8px"></div></div>';
+    }
+    // Graphique
+    html+='<div class="card"><div class="card-title">Chronique H₂S et Température</div>';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
+    html+='<span style="font-size:11px;color:var(--faint)">Cliquez-glissez pour zoomer</span>';
+    html+='<span style="margin-left:auto"></span>';
+    html+='<button class="btn btn-sm btn-reinit" onclick="resetZoom('+idx+')">↻ Réinitialiser le zoom</button>';
+    html+='<button class="btn btn-sm" onclick="exportPNG('+idx+')">📷 Export PNG</button>';
+    html+='</div>';
+    html+='<canvas id="chart_'+idx+'" height="280"></canvas></div>';
+    // Heatmap
+    html+='<div class="card"><div class="card-title">Heatmap — Concentration moyenne par heure</div>';
+    html+='<div class="legend">';
+    html+='<div class="legend-item"><div class="legend-sq" style="background:#22C55E"></div>< '+seuils.irritation+'</div>';
+    html+='<div class="legend-item"><div class="legend-sq" style="background:#EAB308"></div>'+seuils.irritation+'–'+seuils.chronique+'</div>';
+    html+='<div class="legend-item"><div class="legend-sq" style="background:#F97316"></div>'+seuils.chronique+'–'+seuils.irreversible+'</div>';
+    html+='<div class="legend-item"><div class="legend-sq" style="background:#EF4444"></div>'+seuils.irreversible+'–'+seuils.letal+'</div>';
+    html+='<div class="legend-item"><div class="legend-sq" style="background:#7C1D1D"></div>> '+seuils.letal+'</div>';
+    html+='</div><div id="heatmap_'+idx+'" class="heatmap"></div></div>';
+    // Anomalies
+    html+='<div class="card"><div class="card-title">Anomalies détectées <span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-family:var(--mono);font-weight:700;background:'+(an.length?'rgba(220,38,38,.12);color:#991B1B':'rgba(22,163,74,.12);color:#065F46')+'">'+an.length+'</span></div>';
+    if(!an.length)html+='<div style="font-size:12.5px;color:var(--muted)">Aucune anomalie capteur détectée.</div>';
+    an.forEach(function(a){html+='<div class="anom-card'+(a.niveau==='Critique'?' crit':'')+'"><div class="at">'+(a.niveau==='Critique'?'🔴':'🟠')+' '+esc(a.type)+'</div><div class="ad">'+esc(a.date)+' — '+esc(a.detail)+'</div></div>';});
+    html+='</div>';
+    // Commentaire libre
+    html+='<div class="card"><div class="card-title">📝 Commentaire / Interprétation</div>';
+    html+='<textarea id="comment_'+idx+'" class="comment-box" placeholder="Saisissez votre analyse, observations ou recommandations pour ce point de mesure…">'+(FICHIERS[idx]._comment?esc(FICHIERS[idx]._comment):'')+'</textarea>';
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><button class="btn btn-sm btn-accent" onclick="saveComment('+idx+')">💾 Enregistrer</button><span id="commentOk_'+idx+'" style="font-size:12px;color:var(--green);font-weight:600;opacity:0;transition:opacity .3s"></span></div></div>';
+    div.innerHTML=html;panelsEl.appendChild(div);
+    setTimeout(function(){buildChart(f,idx,seuils);buildHeatmap(hm,idx,seuils);},50);
+  });
+  // Compare
+  if(FILTERED.length>1){
+    var div=document.createElement('div');div.id='panel_compare';div.className='panel';
+    var html='<div class="card"><div class="card-title">Comparaison des points de mesure</div>';
+    html+='<table class="dtab"><thead><tr><th>Point</th><th>Max</th><th>Moy</th><th>Méd</th><th>Q75</th><th>Temp</th><th>% > '+seuils.chronique+'</th><th>Anom.</th><th>Verdict</th></tr></thead><tbody>';
+    var sorted=FILTERED.slice().sort(function(a,b){return(b._stats?b._stats.max:0)-(a._stats?a._stats.max:0);});
+    sorted.forEach(function(f){var s=f._stats;if(!s)return;
+      html+='<tr><td><b>'+esc(f.nom)+'</b></td><td>'+s.max+'</td><td>'+s.moy+'</td><td>'+s.med+'</td><td>'+s.q75+'</td><td>'+(s.tempMoy!=null?s.tempMoy:'—')+'</td><td>'+s.depassements.chronique+'%</td><td>'+f._anom.length+'</td><td><span class="verdict v-'+s.verdict.toLowerCase()+'">'+s.verdict+'</span></td></tr>';});
+    html+='</tbody></table></div>';
+    html+='<div class="card"><div class="card-title">Profil horaire moyen comparé</div><canvas id="chart_compare" height="180"></canvas></div>';
+    html+='<div class="card"><div class="card-title">Répartition par classe</div>';
+    sorted.forEach(function(f){var s=f._stats;if(!s)return;var d=s.depassements;
+      var p1=100-d.olfactif,p2=d.olfactif-d.irritation,p3=d.irritation-d.chronique,p4=d.chronique-d.irreversible,p5=d.irreversible-d.letal,p6=d.letal;
+      html+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;margin-bottom:3px">'+esc(f.nom)+'</div><div class="compare-bar">';
+      if(p1>0)html+='<span style="width:'+p1+'%;background:#D1FAE5;color:#065F46">'+(p1>8?rnd(p1,0)+'%':'')+'</span>';
+      if(p2>0)html+='<span style="width:'+p2+'%;background:#EAB308">'+(p2>8?rnd(p2,0)+'%':'')+'</span>';
+      if(p3>0)html+='<span style="width:'+p3+'%;background:#F97316">'+(p3>8?rnd(p3,0)+'%':'')+'</span>';
+      if(p4>0)html+='<span style="width:'+p4+'%;background:#EF4444">'+(p4>8?rnd(p4,0)+'%':'')+'</span>';
+      if(p5>0)html+='<span style="width:'+p5+'%;background:#B91C1C">'+(p5>8?rnd(p5,0)+'%':'')+'</span>';
+      if(p6>0)html+='<span style="width:'+p6+'%;background:#7C1D1D">'+(p6>8?rnd(p6,0)+'%':'')+'</span>';
+      html+='</div></div>';});
+    html+='</div>';
+    div.innerHTML=html;panelsEl.appendChild(div);
+    setTimeout(function(){buildCompareChart(seuils);},100);
+  }
+}
+
+function resetDates(idx){
+  var f=FICHIERS[idx];
+  document.getElementById('dS_'+idx).value=fmtISO(f.dateMin);
+  document.getElementById('dE_'+idx).value=fmtISO(f.dateMax);
+  applyDateFilter();
+}
+
+// ===== SEUIL FILTER =====
+function filterBySeuil(tr,idx,seuil){
+  var tab=document.getElementById('seuilTab_'+idx);
+  var wasActive=tr.classList.contains('active-filter');
+  tab.querySelectorAll('.active-filter').forEach(function(r){r.classList.remove('active-filter');});
+  var detailDiv=document.getElementById('seuilDetail_'+idx);
+  var hmEl=document.getElementById('heatmap_'+idx);
+  if(wasActive){detailDiv.innerHTML='';hmEl.querySelectorAll('.hm-dim').forEach(function(c){c.classList.remove('hm-dim');});return;}
+  tr.classList.add('active-filter');
+  var f=FILTERED[idx];
+  // List of measurements above seuil
+  var above=f.pts.filter(function(p){return p.gas!=null&&p.gas>seuil;});
+  var html='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">'+above.length+' mesures au-dessus de '+seuil+' ppm</div>';
+  if(above.length){
+    html+='<div class="detail-list"><table><thead><tr><th>Date/Heure</th><th>H₂S (ppm)</th><th>Temp (°C)</th></tr></thead><tbody>';
+    above.forEach(function(p){html+='<tr><td>'+fmtDH(p.d)+'</td><td style="font-weight:700;color:var(--red)">'+rnd(p.gas,2)+'</td><td>'+(p.temp!=null?rnd(p.temp,1):'—')+'</td></tr>';});
+    html+='</tbody></table></div>';}
+  detailDiv.innerHTML=html;
+  // Dim heatmap cells below seuil
+  var cells=hmEl.querySelectorAll('.hm-cell');
+  cells.forEach(function(c){var v=parseFloat(c.getAttribute('title'));c.classList.toggle('hm-dim',isNaN(v)||v<=seuil);});
+}
+
+// ===== CHART =====
+function seuilColor(v,s){
+  if(v>=s.letal)return'rgba(124,29,29,.9)';if(v>=s.irreversible)return'rgba(239,68,68,.85)';
+  if(v>=s.chronique)return'rgba(249,115,22,.85)';if(v>=s.irritation)return'rgba(234,179,8,.8)';
+  return'rgba(22,163,74,.7)';
+}
+function seuilBg(v,s){
+  if(v==null)return'#F1F5F9';if(v>=s.letal)return'#7C1D1D';if(v>=s.irreversible)return'#EF4444';
+  if(v>=s.chronique)return'#F97316';if(v>=s.irritation)return'#EAB308';return'#22C55E';
+}
+function seuilTxt(v,s){
+  if(v==null)return'#94A3B8';if(v>=s.chronique)return'#fff';if(v>=s.irritation)return'#422006';return'#052E16';
+}
+
+function buildChart(f,idx,seuils){
+  var canvas=document.getElementById('chart_'+idx);if(!canvas)return;
+  var maxPts=900,step=f.pts.length>maxPts?Math.ceil(f.pts.length/maxPts):1;
+  var labels=[],gasD=[],tempD=[];
+  for(var i=0;i<f.pts.length;i+=step){var p=f.pts[i];labels.push(fmtDH(p.d));
+    gasD.push(p.gas!=null?rnd(p.gas,1):null);tempD.push(p.temp!=null?rnd(p.temp,1):null);}
+  var gasMax=Math.max.apply(null,gasD.filter(function(v){return v!=null;}))||500;
+  var seuilDs=[];
+  [{val:seuils.irritation,label:'Irritation',color:'rgba(234,179,8,.55)'},
+   {val:seuils.chronique,label:'Chronique',color:'rgba(249,115,22,.6)'},
+   {val:seuils.irreversible,label:'Irréversible',color:'rgba(239,68,68,.6)'},
+   {val:seuils.letal,label:'Létal',color:'rgba(124,29,29,.6)'}
+  ].forEach(function(sl){if(sl.val<=gasMax*1.2){
+    seuilDs.push({type:'line',data:new Array(labels.length).fill(sl.val),borderColor:sl.color,borderWidth:1.5,
+      borderDash:[6,3],pointRadius:0,fill:false,yAxisID:'y',label:sl.label+' ('+sl.val+')',tension:0,order:5});}});
+  var seuilLabelPlugin={id:'seuilLabels',afterDraw:function(chart){
+    var yScale=chart.scales.y;if(!yScale)return;var cx=chart.ctx,area=chart.chartArea;cx.save();cx.font='bold 9px Inter,sans-serif';cx.textAlign='left';
+    [{val:seuils.irritation,label:'Irritation '+seuils.irritation,color:'#A16207'},
+     {val:seuils.chronique,label:'Chronique '+seuils.chronique,color:'#C2410C'},
+     {val:seuils.irreversible,label:'Irréversible '+seuils.irreversible,color:'#DC2626'},
+     {val:seuils.letal,label:'Létal '+seuils.letal,color:'#7C1D1D'}
+    ].forEach(function(s){if(s.val>yScale.max*1.2)return;var y=yScale.getPixelForValue(s.val);
+      if(y<area.top||y>area.bottom)return;var tw=cx.measureText(s.label).width;
+      cx.fillStyle='rgba(255,255,255,.82)';cx.fillRect(area.left+4,y-7,tw+6,14);
+      cx.fillStyle=s.color;cx.fillText(s.label,area.left+7,y+3);});cx.restore();}};
+  var ch=new Chart(canvas,{type:'line',plugins:[seuilLabelPlugin],data:{labels:labels,datasets:[
+    {data:gasD,borderWidth:2.5,pointRadius:0,
+      segment:{borderColor:function(ctx){return seuilColor(ctx.p1.parsed.y,seuils);}},
+      fill:{target:'origin',above:'rgba(27,111,232,.08)'},tension:.15,yAxisID:'y',label:'H₂S (ppm)',spanGaps:false,order:1},
+    {data:tempD,borderColor:'rgba(249,115,22,.7)',borderWidth:2,pointRadius:0,fill:false,
+      borderDash:[4,2],tension:.3,yAxisID:'yTemp',label:'Température (°C)',spanGaps:true,order:2}
+  ].concat(seuilDs)},
+  options:{plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,font:{size:11},padding:16}},
+    zoom:{zoom:{drag:{enabled:true,backgroundColor:'rgba(27,111,232,.08)',borderColor:'rgba(27,111,232,.3)',borderWidth:1},mode:'x'},pan:{enabled:false}},
+    tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(19,36,70,.92)',titleFont:{size:12,weight:'bold'},bodyFont:{size:12},padding:10,
+      callbacks:{label:function(ctx){
+        if(ctx.dataset.label&&ctx.dataset.label.indexOf('H₂S')>=0)return' H₂S : '+(ctx.parsed.y!=null?ctx.parsed.y+' ppm':'—');
+        if(ctx.dataset.label&&ctx.dataset.label.indexOf('Temp')>=0)return' Temp : '+(ctx.parsed.y!=null?ctx.parsed.y+'°C':'—');
+        return ctx.dataset.label||'';}}}},
+  scales:{x:{ticks:{maxTicksLimit:14,font:{size:9},maxRotation:45},grid:{display:false}},
+    y:{position:'left',title:{display:true,text:'H₂S (ppm)',font:{size:11,weight:'bold'}},ticks:{font:{size:10}},grid:{color:'rgba(228,234,243,.6)'},min:0},
+    yTemp:{position:'right',title:{display:true,text:'°C',font:{size:11,weight:'bold'},color:'rgba(249,115,22,.7)'},ticks:{font:{size:9},color:'rgba(249,115,22,.5)'},grid:{display:false}}},
+  animation:{duration:200},interaction:{mode:'nearest',intersect:false}}});
+  charts.push(ch);if(!window._h2sCharts)window._h2sCharts={};window._h2sCharts[idx]=ch;
+}
+function resetZoom(idx){if(window._h2sCharts&&window._h2sCharts[idx])window._h2sCharts[idx].resetZoom();}
+function saveComment(idx){
+  var ta=document.getElementById('comment_'+idx);
+  FICHIERS[idx]._comment=ta?ta.value:'';
+  var ok=document.getElementById('commentOk_'+idx);
+  if(ok){ok.textContent='✓ Commentaire enregistré — sera inclus dans l\'export Excel';ok.style.opacity='1';
+    setTimeout(function(){ok.style.opacity='0';},3000);}
+}
+function exportPNG(idx){
+  var ch=window._h2sCharts&&window._h2sCharts[idx];if(!ch)return;
+  var a=document.createElement('a');a.href=ch.toBase64Image('image/png',1);
+  a.download='H2S_'+FILTERED[idx].nom.replace(/\s+/g,'_')+'_'+fmtISO(new Date())+'.png';a.click();
+}
+
+function buildHeatmap(hm,idx,seuils){
+  var el=document.getElementById('heatmap_'+idx);if(!el)return;
+  var html='<div class="hm-grid" style="grid-template-columns:60px repeat(24,1fr)">';
+  html+='<div class="hm-head"></div>';
+  for(var h=0;h<24;h++)html+='<div class="hm-head">'+(h<10?'0':'')+h+'h</div>';
+  hm.forEach(function(row){var parts=row.day.split('-');
+    html+='<div class="hm-head">'+parts[2]+'/'+parts[1]+'</div>';
+    row.hours.forEach(function(v){var bg=seuilBg(v,seuils),txt=seuilTxt(v,seuils);
+      html+='<div class="hm-cell" style="background:'+bg+';color:'+txt+'" title="'+(v!=null?v+' ppm':'—')+'">'+(v!=null?v:'')+'</div>';});});
+  html+='</div>';el.innerHTML=html;
+}
+function buildCompareChart(seuils){
+  var canvas=document.getElementById('chart_compare');if(!canvas)return;
+  var colors=['#1B6FE8','#F97316','#0D9488','#8B5CF6','#EC4899','#EAB308','#DC2626','#06B6D4'];
+  var datasets=[];
+  FILTERED.forEach(function(f,i){var hourly={};
+    f.pts.forEach(function(p){if(p.gas!=null){var h=p.d.getHours();if(!hourly[h])hourly[h]=[];hourly[h].push(p.gas);}});
+    var data=[];for(var h=0;h<24;h++){var v=hourly[h];data.push(v&&v.length?rnd(v.reduce(function(s,x){return s+x;},0)/v.length,1):null);}
+    datasets.push({data:data,borderColor:colors[i%colors.length],borderWidth:2,pointRadius:3,pointBackgroundColor:colors[i%colors.length],fill:false,tension:.3,label:f.nom});});
+  var labels=[];for(var h=0;h<24;h++)labels.push((h<10?'0':'')+h+'h');
+  var ch=new Chart(canvas,{type:'line',data:{labels:labels,datasets:datasets},
+    options:{plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,font:{size:11}}}},
+      scales:{x:{grid:{display:false}},y:{title:{display:true,text:'H₂S moyen (ppm)',font:{size:10}},grid:{color:'#E4EAF3'},min:0}},animation:{duration:300}}});
+  charts.push(ch);
+}
+
+// ===== EXPORT =====
+async function exportExcel(){
+  try{
+  var seuils=getSeuils();var wb=new ExcelJS.Workbook();
+  var ws1=wb.addWorksheet('Synthèse');
+  ws1.columns=[{header:'Point',key:'nom',width:30},{header:'Max (ppm)',key:'max',width:12},{header:'Moyenne',key:'moy',width:12},
+    {header:'Médiane',key:'med',width:12},{header:'Q25',key:'q25',width:10},{header:'Q75',key:'q75',width:10},
+    {header:'Min',key:'min',width:10},{header:'Mesures',key:'n',width:10},{header:'Durée (h)',key:'dureeH',width:10},
+    {header:'Temp moy (°C)',key:'tempMoy',width:14},
+    {header:'% > Olfactif',key:'pOlf',width:12},{header:'% > Irritation',key:'pIrr',width:12},
+    {header:'% > Chronique',key:'pChr',width:12},{header:'% > Irréversible',key:'pIrv',width:14},
+    {header:'% > Létal',key:'pLet',width:10},{header:'Verdict',key:'verdict',width:14},{header:'Anomalies',key:'anom',width:10},{header:'Commentaire',key:'comment',width:50}];
+  FILTERED.forEach(function(f,fi){var s=f._stats;if(!s)return;
+    ws1.addRow({nom:f.nom,max:s.max,moy:s.moy,med:s.med,q25:s.q25,q75:s.q75,min:s.min,n:s.n,dureeH:s.dureeH,
+      tempMoy:s.tempMoy,pOlf:s.depassements.olfactif,pIrr:s.depassements.irritation,
+      pChr:s.depassements.chronique,pIrv:s.depassements.irreversible,pLet:s.depassements.letal,
+      verdict:s.verdict,anom:f._anom.length,comment:FICHIERS[fi]._comment||''});});
+  ws1.getRow(1).eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF182F52'}};c.font={bold:true,color:{argb:'FFFFFFFF'}};});
+  var ws2=wb.addWorksheet('Anomalies');
+  ws2.columns=[{header:'Point',key:'pt',width:30},{header:'Type',key:'type',width:22},{header:'Niveau',key:'niv',width:12},{header:'Date',key:'date',width:18},{header:'Détail',key:'detail',width:55}];
+  FILTERED.forEach(function(f){f._anom.forEach(function(a){ws2.addRow({pt:f.nom,type:a.type,niv:a.niveau,date:a.date,detail:a.detail});});});
+  ws2.getRow(1).eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF182F52'}};c.font={bold:true,color:{argb:'FFFFFFFF'}};});
+  var usedNames={};
+  FILTERED.forEach(function(f){
+    var base=f.nom.substring(0,28).replace(/[\\/*?:\[\]]/g,'');
+    var name=base;var k=2;while(usedNames[name]){name=base.substring(0,25)+'_'+k;k++;}usedNames[name]=true;
+    var wsD=wb.addWorksheet(name);
+    wsD.columns=[{header:'Date/Heure',key:'dh',width:20},{header:'H₂S (ppm)',key:'gas',width:14},{header:'Temp (°C)',key:'temp',width:12},{header:'GSM (dBm)',key:'gsm',width:12}];
+    f.pts.forEach(function(p){wsD.addRow({dh:fmtDH(p.d),gas:p.gas,temp:p.temp,gsm:p.gsm});});
+    wsD.getRow(1).eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF182F52'}};c.font={bold:true,color:{argb:'FFFFFFFF'}};});});
+  var ws3=wb.addWorksheet('Paramètres');ws3.columns=[{header:'Paramètre',key:'p',width:30},{header:'Valeur',key:'v',width:20}];
+  ws3.addRow({p:'Version',v:CONFIG.VERSION});ws3.addRow({p:'Seuil olfactif',v:seuils.olfactif});
+  ws3.addRow({p:'Seuil irritation',v:seuils.irritation});ws3.addRow({p:'Seuil chronique',v:seuils.chronique});
+  ws3.addRow({p:'Seuil irréversible',v:seuils.irreversible});ws3.addRow({p:'Seuil létal',v:seuils.letal});
+  ws3.addRow({p:'Date export',v:new Date().toLocaleString('fr-FR')});
+  ws3.getRow(1).eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF182F52'}};c.font={bold:true,color:{argb:'FFFFFFFF'}};});
+  var buf=await wb.xlsx.writeBuffer();var blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='Diagnostic_H2S_'+fmtISO(new Date())+'.xlsx';a.click();
+  }catch(err){alert('Erreur export Excel : '+err.message);console.error(err);}
+}
+
+// ===== LOADING =====
+function log(msg,cls){var d=document.getElementById('log');var p=document.createElement('div');
+  p.style.cssText='font-size:12px;margin-top:4px;color:'+(cls==='ok'?'var(--green)':(cls==='err'?'var(--red)':'var(--muted)'));p.textContent=msg;d.appendChild(p);}
+function progress(pct){document.getElementById('pbar').style.display='block';document.getElementById('pfill').style.width=pct+'%';}
+function processFiles(files){
+  if(!files||!files.length)return;FICHIERS=[];document.getElementById('log').innerHTML='';
+  var total=files.length,done=0;progress(5);
+  Array.from(files).forEach(function(file){
+    var reader=new FileReader();reader.onload=function(e){
+      try{var wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+        var f=lireFichierH2S(wb,file.name);
+        if(f){FICHIERS.push(f);log('✓ '+f.nom+' — '+f.pts.length+' mesures ('+fmtDH(f.dateMin)+' → '+fmtDH(f.dateMax)+')','ok');}
+        else{log('⚠ '+file.name+' — format non reconnu','err');}
+      }catch(ex){log('✗ '+file.name+' — '+ex.message,'err');}
+      done++;progress(10+80*done/total);
+      if(done===total&&FICHIERS.length){progress(100);
+        setTimeout(function(){document.getElementById('loader').style.display='none';document.getElementById('app').style.display='block';renderApp();},300);}
+      else if(done===total){log('Aucun fichier valide.','err');}
+    };reader.readAsArrayBuffer(file);});
+}
+function resetApp(){destroyCharts();FICHIERS=[];FILTERED=[];
+  document.getElementById('app').style.display='none';document.getElementById('loader').style.display='block';
+  document.getElementById('log').innerHTML='';document.getElementById('pbar').style.display='none';document.getElementById('fi').value='';}
+
+document.getElementById('fi').addEventListener('change',function(e){processFiles(e.target.files);});
+var loader=document.getElementById('loader');
+['dragenter','dragover'].forEach(function(ev){loader.addEventListener(ev,function(e){e.preventDefault();loader.classList.add('drag');});});
+['dragleave','drop'].forEach(function(ev){loader.addEventListener(ev,function(e){e.preventDefault();loader.classList.remove('drag');});});
+loader.addEventListener('drop',function(e){e.preventDefault();processFiles(e.dataTransfer.files);});
+
+// ===== TESTS =====
+(function(){var T=0,P=0;function ok(n,c){T++;if(c)P++;else console.error('FAIL: '+n);}
+ok('getSeuils',typeof getSeuils()==='object');ok('seuil olf',getSeuils().olfactif===0.1);
+ok('fmtDH',fmtDH(new Date(2026,0,15,9,5))==='15/01/2026 09:05');ok('rnd',rnd(3.456,1)===3.5);
+var fp=[];for(var i=0;i<100;i++)fp.push({d:new Date(2026,5,1,Math.floor(i/12),i%12*5),gas:50+Math.sin(i)*30,temp:25+Math.random(),gsm:-95});
+var ff={nom:'T',pts:fp,pas:5,dateMin:fp[0].d,dateMax:fp[99].d};
+var st=calcStats(ff);ok('stats.n',st.n===100);ok('stats.moy',typeof st.moy==='number');
+ok('anom',Array.isArray(detecterAnomalies(ff)));
+var hm=calcHeatmap(ff);ok('heatmap',hm.length>0&&hm[0].hours.length===24);
+ok('filterByDate',filterByDate(ff,new Date(2026,5,1),new Date(2026,5,1,4)).pts.length<100);
+console.log('Tests H₂S: '+P+'/'+T+' OK');})();
+</script>
+</body>
+</html>
