@@ -114,7 +114,7 @@ var MESSAGES={
   'Volume négatif':{niveau:'Critique',msg:"Vérifier le débit des pompes reporté sur AQC. Merci de réaliser un tarage."},
   'Surdébit en Temps Sec':{niveau:'Alerte',msg:"Si la valeur correspond à un fait réel (ressuyage par exemple) vous pouvez la conserver. Sinon, pour plus de cohérence, il est possible de reconstruire le volume ou de l'invalider."},
   'Courbe Volumétrique Figée Temps Sec':{niveau:'Alerte',msg:"Anomalie de fonctionnement du pompage ou donnée non représentative liée à une maintenance. Veuillez invalider la donnée ou la reconstruire à partir de la chronique."},
-  'Défaut point de mesure':{niveau:'Critique',msg:'Vérifier la chaîne de mesure.Défaut capteur probable. Vérifier la chaine de mesure et procéder à l\'invalidation ou la reconstruction du volume.'},
+  'Défaut point de mesure':{niveau:'Critique',msg:'Défaut capteur probable. Vérifier la chaîne de mesure et procéder à l\'invalidation ou la reconstruction du volume.'},
   'Courbe Volumétrique Figée Temps de pluie':{niveau:'Alerte',msg:"Surcharge hydraulique ou donnée non représentative liée à une maintenance. Veuillez invalider la donnée ou la reconstruire à partir de la chronique."},
   'Dérive chronique Temps Sec / volume réel':{niveau:'Alerte',msg:"Dérive importante entre chronique et volume réel. Possibilité de reconstruire le volume à partir de la chronique ou inversement selon le cas."}
 };
@@ -196,13 +196,13 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
       if(nbT){var at=isPl?'Rupture de donnée Pluviométrie':'Rupture de donnée Volume';var gP=Math.round(mxG*24*60/m.pas)-1;
         A.push(Object.assign({},base,{anomalie:at,niveau:MESSAGES[at].niveau,date:fmtDate(mxF),
           valeur:jM+' mesure(s) manquante(s)',contexte:'plus gros trou : '+fmtDH(mxF)+' → '+fmtDH(mxT)+' ('+gP+' pas)'+(nbT>1?', '+nbT+' trous':''),
-          conseil:estLong?'Vérifier la chaîne de mesure. Défaut capteur probable.':MESSAGES[at]?MESSAGES[at].msg:''}));}}}
+          conseil:estLong?'Défaut capteur probable. Vérifier la chaîne de mesure et procéder à l\'invalidation ou la reconstruction du volume.':MESSAGES[at]?MESSAGES[at].msg:''}));}}}
     if(!nums.length)continue;var vals=nums.map(function(p){return p.v;});
     // NÉGATIFS
     var neg=nums.filter(function(p){return p.v<0;});
     if(neg.length){var at=isPl?'Pluvio négative':'Volume négatif';
       A.push(Object.assign({},base,{anomalie:at,niveau:MESSAGES[at].niveau,date:fmtDate(neg[0].d),
-        valeur:neg.length+' valeurs négatives',contexte:'ex: '+neg.slice(0,3).map(function(p){return rnd2(p.v);}).join(', '),picNeg:neg.sort(function(a,b){return a.v-b.v;})[0].v,conseil:estLong?'Vérifier la chaîne de mesure. Défaut capteur probable.':MESSAGES[at]?MESSAGES[at].msg:''}));}
+        valeur:neg.length+' valeurs négatives',contexte:'ex: '+neg.slice(0,3).map(function(p){return rnd2(p.v);}).join(', '),picNeg:neg.sort(function(a,b){return a.v-b.v;})[0].v,conseil:estLong?'Défaut capteur probable. Vérifier la chaîne de mesure et procéder à l\'invalidation ou la reconstruction du volume.':MESSAGES[at]?MESSAGES[at].msg:''}));}
     // PICS SANS PLUIE
     if(isVol&&vals.length>=10){
       // IQR calculé uniquement sur les heures SANS pluie (plus sensible aux pics anormaux)
@@ -229,7 +229,7 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
         var at=estLong?'Défaut point de mesure':(sec?'Courbe Volumétrique Figée Temps Sec':'Courbe Volumétrique Figée Temps de pluie');
         A.push(Object.assign({},base,{anomalie:at,niveau:estLong?'Critique':'Alerte',date:fmtDate(nums[r.from].d),valeur:'fixe à '+rnd2(r.val),
           contexte:'valeur '+rnd2(r.val)+' répétée '+r.len+' fois ('+fmtDH(nums[r.from].d)+' → '+fmtDH(nums[r.to].d)+')',
-          conseil:estLong?'Vérifier la chaîne de mesure. Défaut capteur probable.':MESSAGES[at]?MESSAGES[at].msg:''}));}}
+          conseil:estLong?'Défaut capteur probable. Vérifier la chaîne de mesure et procéder à l\'invalidation ou la reconstruction du volume.':MESSAGES[at]?MESSAGES[at].msg:''}));}}
   }
   // DÉCALAGE CHRONIQUE TS / VOLUME HORAIRE (par heure, en temps sec 6h < 0.2mm)
   var parPt={};for(var i=0;i<mesures.length;i++){var m=mesures[i];
