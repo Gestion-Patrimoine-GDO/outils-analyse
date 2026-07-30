@@ -70,8 +70,9 @@ button{font:inherit;font-family:var(--disp);font-weight:600;font-size:14px;borde
 button:disabled{opacity:.45;cursor:not-allowed}
 .btn-primary{background:linear-gradient(135deg,var(--accent),#1559BE);color:#fff;box-shadow:0 3px 12px rgba(27,111,232,.26)}
 .btn-primary:not(:disabled):hover{filter:brightness(1.06)}
-.btn-amber{background:var(--amber-dim);color:var(--amber);border:1.5px solid rgba(217,119,15,.3)}
-.btn-amber:not(:disabled):hover{background:rgba(217,119,15,.16)}
+.btn-amber{background:linear-gradient(135deg,#D97706,#EA9A2E);color:#fff;border:none;
+  box-shadow:0 3px 10px rgba(217,119,6,.28)}
+.btn-amber:not(:disabled):hover{filter:brightness(1.06);box-shadow:0 5px 16px rgba(217,119,6,.36)}
 .btn-ghost{background:var(--panel-2);color:var(--text);border:1.5px solid var(--line-2)}
 .btn-ghost:not(:disabled):hover{background:#EAF0F7;border-color:var(--accent);color:var(--accent)}
 
@@ -156,12 +157,6 @@ footer .dot{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
       <div class="tablewrap"><table id="previewTable"><thead></thead><tbody></tbody></table></div>
     </div>
   </div>
-
-  <footer>
-    <span>SUEZ — Gestion d'Actif</span><span class="dot"></span>
-    <span>Traitement 100 % local dans le navigateur</span><span class="dot"></span>
-    <span>Tanguy BAYLE</span>
-  </footer>
 </div>
 
 
