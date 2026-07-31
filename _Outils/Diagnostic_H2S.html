@@ -278,6 +278,12 @@ function renderApp(){
       setTimeout(function(){charts.forEach(function(c){try{c.resize();}catch(e){}});},50);
     };
     tabsEl.appendChild(btn);});
+  // bouton « + » : ajouter un fichier oublié (façon onglet navigateur)
+  var addBtn=document.createElement('button');
+  addBtn.className='tab';addBtn.setAttribute('title','Ajouter un fichier');
+  addBtn.style.fontWeight='700';addBtn.innerHTML='➕';
+  addBtn.onclick=function(){window.__APPEND=true;document.getElementById('fi').click();};
+  tabsEl.appendChild(addBtn);
   renderPanels();
 }
 
@@ -501,7 +507,7 @@ function buildCompareChart(){
   FILTERED.forEach(function(f,i){var hourly={};
     f.pts.forEach(function(p){if(p.gas!=null){var h=p.d.getHours();if(!hourly[h])hourly[h]=[];hourly[h].push(p.gas);}});
     var data=[];for(var h=0;h<24;h++){var v=hourly[h];data.push(v&&v.length?rnd(v.reduce(function(s,x){return s+x;},0)/v.length,1):null);}
-    datasets.push({data:data,borderColor:colors[i%colors.length],borderWidth:2,pointRadius:3,pointBackgroundColor:colors[i%colors.length],fill:false,tension:.3,label:f.nom});});
+    datasets.push({data:data,borderColor:colors[i%colors.length],borderWidth:2,pointRadius:3,pointBackgroundColor:colors[i%colors.length],fill:false,tension:.3,label:f.fichier});});
   var labels=[];for(var h=0;h<24;h++)labels.push((h<10?'0':'')+h+'h');
   var ch=new Chart(canvas,{type:'line',data:{labels:labels,datasets:datasets},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,font:{size:11}}}},
@@ -575,11 +581,18 @@ function exportPanelPDF(idx){
   var panelId=typeof idx==='number'?'panel_pr_'+idx:'panel_'+idx;
   var panel=document.getElementById(panelId);if(!panel)return;
   var nom=typeof idx==='number'&&FILTERED[idx]?FILTERED[idx].nom.replace(/\s+/g,'_'):'Comparaison';
+  var titre=(typeof idx==='number'&&FILTERED[idx])?FILTERED[idx].fichier:'Comparaison H2S';
   html2canvas(panel,{backgroundColor:'#FFFFFF',scale:2,scrollY:-window.scrollY}).then(function(canvas){
     var imgW=canvas.width,imgH=canvas.height;
     var pdfW=imgW*0.5,pdfH=imgH*0.5;
-    var pdf=new jspdf.jsPDF({orientation:pdfW>pdfH?'landscape':'portrait',unit:'px',format:[pdfW,pdfH]});
-    pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pdfW,pdfH);
+    var HEAD=40;   // bandeau titre en haut du PDF
+    var pdf=new jspdf.jsPDF({orientation:pdfW>pdfH?'landscape':'portrait',unit:'px',format:[pdfW,pdfH+HEAD]});
+    pdf.setFillColor(24,47,82);pdf.rect(0,0,pdfW,HEAD,'F');
+    pdf.setTextColor(255,255,255);pdf.setFont(undefined,'bold');pdf.setFontSize(13);
+    pdf.text(String(titre),12,17);
+    pdf.setFont(undefined,'normal');pdf.setFontSize(9);pdf.setTextColor(200,215,235);
+    pdf.text('Diagnostic H2S  \u2022  '+new Date().toLocaleString('fr-FR'),12,30);
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,HEAD,pdfW,pdfH);
     pdf.save('H2S_'+nom+'_'+fmtISO(new Date())+'.pdf');
   });
 }
@@ -655,11 +668,42 @@ function processFiles(files){
   });
 }
 
+// Ajout de fichiers supplémentaires (bouton « + ») sans réinitialiser la liste
+function addFiles(files){
+  if(!files||!files.length)return;
+  var total=files.length,done=0,added=0;
+  Array.from(files).forEach(function(file){
+    var isCSV=/\.csv$/i.test(file.name);
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var parsed;
+        if(isCSV){var buf=e.target.result;var text;
+          try{text=new TextDecoder('utf-16le').decode(buf);if(text.indexOf('Date')<0&&text.indexOf('date')<0)throw 0;}
+          catch(x){text=new TextDecoder('utf-8').decode(buf);}
+          parsed=detectAndParse(text,file.name,true);
+        }else{parsed=detectAndParse(new Uint8Array(e.target.result),file.name,false);}
+        if(parsed){var f=finalizeFile(parsed,file.name);if(f){FICHIERS.push(f);added++;
+          log('✓ '+f.nom+' — Format '+f.format+' — '+f.pts.length+' mesures','ok');}
+          else{log('⚠ '+file.name+' — aucune donnée exploitable','err');}}
+        else{log('⚠ '+file.name+' — format non reconnu','err');}
+      }catch(ex){log('✗ '+file.name+' — '+ex.message,'err');}
+      done++;
+      if(done===total){if(added)renderApp();else alert('Aucun fichier valide ajouté.');}
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 function resetApp(){destroyCharts();FICHIERS=[];FILTERED=[];
   document.getElementById('app').style.display='none';document.getElementById('loader').style.display='block';
   document.getElementById('log').innerHTML='';document.getElementById('pbar').style.display='none';document.getElementById('fi').value='';}
 
-document.getElementById('fi').addEventListener('change',function(e){processFiles(e.target.files);});
+document.getElementById('fi').addEventListener('change',function(e){
+  if(window.__APPEND){window.__APPEND=false;addFiles(e.target.files);}
+  else{processFiles(e.target.files);}
+  e.target.value='';
+});
 var loader=document.getElementById('loader');
 ['dragenter','dragover'].forEach(function(ev){loader.addEventListener(ev,function(e){e.preventDefault();loader.classList.add('drag');});});
 ['dragleave','drop'].forEach(function(ev){loader.addEventListener(ev,function(e){e.preventDefault();loader.classList.remove('drag');});});
