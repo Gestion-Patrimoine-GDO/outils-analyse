@@ -24,7 +24,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
              radial-gradient(760px 420px at 4% 0%,rgba(13,148,136,.06),transparent 60%)}
 .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 24px 80px}
 
-/* header (identique au portail) */
 .hero{padding:46px 0 26px;border-bottom:1px solid var(--line);margin-bottom:28px}
 .hero .brandline{display:flex;align-items:center;gap:14px;margin-bottom:22px}
 .logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:none;
@@ -39,72 +38,82 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .hero h1{font-family:var(--disp);font-size:34px;font-weight:700;letter-spacing:-.02em;color:#132446;margin-bottom:10px}
 .hero p{font-size:15px;color:var(--muted);max-width:660px}
 
-/* barre d'outils */
 .toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 24px}
 .btn{font-family:var(--disp);font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:99px;
   border:1.5px solid var(--line-2);background:var(--panel);color:var(--muted);cursor:pointer;
   transition:all .18s;display:inline-flex;align-items:center;gap:8px}
 .btn:hover{border-color:var(--accent);color:var(--accent);background:#F5F9FF}
+.btn.small{padding:6px 13px;font-size:12px}
 .switch{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
 .switch input{width:36px;height:20px;-webkit-appearance:none;appearance:none;background:var(--line-2);border-radius:99px;position:relative;cursor:pointer;transition:.18s;flex:none}
 .switch input:checked{background:var(--accent)}
 .switch input::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.18s}
 .switch input:checked::after{left:18px}
-.updated{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 .ownerbox{display:inline-flex;align-items:center;gap:9px;padding-left:14px;border-left:1px solid var(--line-2)}
-.opill{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:99px;white-space:nowrap}
+.opill{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:99px;white-space:nowrap;cursor:pointer;transition:.15s}
+.opill:hover{filter:brightness(.96)}
 .opill.me{background:var(--accent-dim);color:var(--accent)}
 .opill.vis{background:rgba(100,116,139,.12);color:var(--muted)}
-.btn.small{padding:6px 13px;font-size:12px}
+.updated{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 
-/* cartes de stats */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px}
 .stat .k{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
-.stat .v{font-family:var(--disp);font-size:30px;font-weight:700;color:#132446;line-height:1}
+.stat .v{font-family:var(--disp);font-size:30px;font-weight:700;color:#132446;line-height:1;word-break:break-word}
 .stat .s{font-size:12px;color:var(--muted);margin-top:6px}
 
-/* panneaux graphiques */
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px 26px;margin-bottom:22px}
-.panel h2{font-family:var(--disp);font-size:17px;font-weight:700;color:#132446;margin-bottom:4px}
-.panel .sub{font-size:12.5px;color:var(--muted);margin-bottom:22px}
+.filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;min-height:34px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#132446;
+  background:var(--panel);border:1px solid var(--line-2);border-radius:99px;padding:6px 8px 6px 13px;box-shadow:var(--shadow)}
+.chip .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+.chip .x{cursor:pointer;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:13px;background:var(--panel-2)}
+.chip .x:hover{background:#FEE2E2;color:#DC2626}
+.filterbar .hint{font-size:12.5px;color:var(--faint)}
 
-/* barres horizontales (par outil) */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px 26px;margin-bottom:22px}
+.panel h2{font-family:var(--disp);font-size:17px;font-weight:700;color:#132446;margin-bottom:18px}
+.panel h2 .tag{font-family:var(--sans);font-size:11.5px;font-weight:500;color:var(--faint);margin-left:8px}
+
 .hbars{display:flex;flex-direction:column;gap:13px}
-.hrow{display:grid;grid-template-columns:210px 1fr;align-items:center;gap:14px}
+.hrow{display:grid;grid-template-columns:210px 1fr;align-items:center;gap:14px;cursor:pointer;transition:opacity .18s}
 .hrow .lbl{font-size:13px;font-weight:500;color:var(--text);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hrow .track{position:relative;height:26px;background:var(--panel-2);border-radius:8px;overflow:hidden}
-.hrow .fill{height:100%;border-radius:8px;min-width:3px;transition:width .5s cubic-bezier(.22,1,.36,1)}
+.hrow .fill{height:100%;border-radius:8px;min-width:3px;transition:width .5s cubic-bezier(.22,1,.36,1),box-shadow .18s}
 .hrow .num{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:12px;font-weight:600}
 .hrow .num.inside{right:10px;color:#fff}
 .hrow .num.outside{color:var(--muted)}
+.hrow.sel .lbl{color:#132446;font-weight:700}
+.hrow.sel .fill{box-shadow:0 0 0 2px #fff,0 0 0 4px currentColor}
+.dim{opacity:.32}
 
-/* barres verticales (jour / heure) */
-.vbars{display:flex;align-items:flex-end;gap:10px;height:180px;padding-top:10px}
-.vcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:8px;min-width:0}
-.vcol .vbar{width:100%;max-width:46px;border-radius:7px 7px 0 0;background:linear-gradient(180deg,var(--accent),#1559BE);min-height:3px;transition:height .5s cubic-bezier(.22,1,.36,1);position:relative}
+.vbars{display:flex;align-items:flex-end;gap:10px;height:190px;padding-top:12px}
+.vcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:8px;min-width:0;cursor:pointer}
 .vcol .vnum{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--muted)}
+.vstack{width:100%;max-width:46px;border-radius:7px 7px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;min-height:3px;transition:height .5s cubic-bezier(.22,1,.36,1)}
+.vseg{width:100%;transition:height .5s cubic-bezier(.22,1,.36,1)}
+.vseg+.vseg{border-top:1px solid rgba(255,255,255,.55)}
 .vcol .vlbl{font-size:12px;color:var(--muted);white-space:nowrap}
-.vcol.weekend .vbar{background:linear-gradient(180deg,#94A3B8,#64748B)}
+.vcol.sel .vlbl{color:#132446;font-weight:700}
+.vcol.sel .vstack{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--accent)}
 
-.hours{display:flex;align-items:flex-end;gap:3px;height:130px;padding-top:6px}
+.hours{display:flex;align-items:flex-end;gap:3px;height:140px;padding-top:8px}
 .hcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px}
-.hcol .hbar{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--teal),#0F766E);min-height:2px;transition:height .5s}
+.hstack{width:100%;border-radius:3px 3px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;min-height:2px}
+.hseg{width:100%}
 .hcol .hlbl{font-family:var(--mono);font-size:9px;color:var(--faint)}
-.hcol.empty .hbar{background:var(--line)}
+.hcol.empty .hstack{background:var(--line);height:2px}
 
-/* états message */
 .msg{text-align:center;padding:44px 20px;color:var(--muted)}
 .msg .big{font-family:var(--disp);font-size:16px;font-weight:600;color:#132446;margin-bottom:6px}
 .msg.err .big{color:#B45309}
 
-.legend{font-size:11.5px;color:var(--faint);margin-top:16px;display:flex;gap:16px;flex-wrap:wrap}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.tip{position:fixed;z-index:50;pointer-events:none;opacity:0;transition:opacity .12s;
+  background:#0F2346;color:#fff;font-size:12.5px;line-height:1.45;padding:9px 12px;border-radius:9px;
+  box-shadow:0 8px 24px rgba(15,35,70,.28);max-width:240px}
+.tip b{font-family:var(--disp);font-size:13px}
+.tip .tsw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
 
-/* pied de page (identique au portail) */
-.__ver-badge{position:relative;z-index:1;max-width:1180px;margin:10px auto 0;padding:0 24px 30px;
-  display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:11.5px}
+.__ver-badge{position:relative;z-index:1;max-width:1180px;margin:10px auto 0;padding:0 24px 30px;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:11.5px}
 .__ver-txt{color:var(--faint);user-select:none}
 
 @media(max-width:640px){
@@ -144,14 +153,14 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 </div>
 
 <div class="__ver-badge">
-  <span class="__ver-txt">Tableau de bord Activité · v1.0 · lecture seule</span>
+  <span class="__ver-txt">Tableau de bord Activité · v2.0 · lecture seule</span>
 </div>
 
+<div class="tip" id="tip"></div>
+
 <script>
-/* ---- Réglages ---- */
 var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbYvSaCFpOAA8F6J5LeHCBWrZqj_EZyy6Kv2Jk8FFY9QKg9ZTEmxHpw7VuOdBvoVS7-Ua8wQ0DBKPC/pub?gid=497888461&single=true&output=csv";
 
-/* nom + couleurs par fichier d'outil (aligné sur les cartes du portail) */
 var META = {
   "index":                        {label:"Portail (accueil)",           c1:"#1B6FE8", c2:"#1559BE"},
   "Diagnostic_H2S":               {label:"Diagnostic H2S",              c1:"#92400E", c2:"#B45309"},
@@ -164,80 +173,53 @@ var META = {
   "Remplissage_PTR":              {label:"Remplissage PTR",            c1:"#DB2777", c2:"#F43F5E"},
   "Comparateur_RAD":              {label:"Comparateur RAD",            c1:"#6366F1", c2:"#8B5CF6"}
 };
-function metaFor(page){
-  if(META[page]) return META[page];
-  return {label: page.replace(/_/g," "), c1:"#1B6FE8", c2:"#1559BE"};
-}
+function metaFor(p){ return META[p] || {label:p.replace(/_/g," "), c1:"#1B6FE8", c2:"#1559BE"}; }
 
 var JOURS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+var JOURSL = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 var rowsCache = [];
+var sel = { tool:null, day:null };   // filtres actifs
 
-/* ---- Parsing CSV robuste ---- */
 function parseCSV(text){
   var rows=[], row=[], cur="", q=false, i, ch;
-  for(i=0;i<text.length;i++){
-    ch=text[i];
-    if(q){
-      if(ch==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
-      else cur+=ch;
-    }else{
-      if(ch==='"') q=true;
+  for(i=0;i<text.length;i++){ ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else{ if(ch==='"') q=true;
       else if(ch===','){ row.push(cur); cur=""; }
       else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
-      else if(ch==='\r'){ /* ignore */ }
-      else cur+=ch;
-    }
-  }
+      else if(ch==='\r'){}
+      else cur+=ch; } }
   if(cur!==""||row.length){ row.push(cur); rows.push(row); }
   return rows;
 }
-
-/* ---- Parsing date (formats Google Forms FR/ISO) ---- */
 function parseDate(s){
-  if(!s) return null;
-  s=s.trim();
-  var m;
-  // JJ/MM/AAAA HH:MM:SS
+  if(!s) return null; s=s.trim(); var m;
   m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
   if(m) return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+(m[6]||0));
-  // AAAA-MM-JJ HH:MM:SS
   m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
   if(m) return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
-  var d=new Date(s);
-  return isNaN(d)?null:d;
+  var d=new Date(s); return isNaN(d)?null:d;
 }
-
-/* ---- Décodage du champ Source ---- */
 function parseSource(raw){
   raw=(raw||"").trim();
-  if(raw.indexOf("|")>-1){
-    var p=raw.split("|");
-    return {page:p[0].trim(), who:(p[1]||"").trim().toLowerCase()};
-  }
-  // ancien format éventuel : juste "moi" / "visiteur"
+  if(raw.indexOf("|")>-1){ var p=raw.split("|"); return {page:p[0].trim(), who:(p[1]||"").trim().toLowerCase()}; }
   var low=raw.toLowerCase();
   if(low==="moi"||low==="visiteur") return {page:"index", who:low};
   return {page:raw||"(inconnu)", who:"visiteur"};
 }
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
-/* ---- Chargement ---- */
 function load(){
   document.getElementById("content").innerHTML =
     '<div class="msg"><div class="big">Chargement des données…</div><div>Lecture de la feuille de visites.</div></div>';
-  var url = CSV_URL + "&_t=" + Date.now();
-  fetch(url,{cache:"no-store"})
+  fetch(CSV_URL + "&_t=" + Date.now(), {cache:"no-store"})
     .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
     .then(function(txt){
-      var table=parseCSV(txt);
-      var out=[];
-      for(var i=1;i<table.length;i++){          // ligne 0 = en-tête
-        var r=table[i]; if(!r||!r.length) continue;
-        var ts=parseDate(r[0]); if(!ts) continue;
-        var s=parseSource(r[1]);
-        out.push({ts:ts, page:s.page, who:s.who});
-      }
-      rowsCache=out;
-      render();
+      var table=parseCSV(txt), out=[];
+      for(var i=1;i<table.length;i++){ var r=table[i]; if(!r||!r.length) continue;
+        var ts=parseDate(r[0]); if(!ts) continue; var s=parseSource(r[1]);
+        out.push({ts:ts, page:s.page, who:s.who}); }
+      rowsCache=out; sel={tool:null,day:null}; render();
       var now=new Date();
       document.getElementById("updated").textContent =
         "à jour : "+String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
@@ -245,91 +227,122 @@ function load(){
     .catch(function(e){
       document.getElementById("content").innerHTML =
         '<div class="panel"><div class="msg err"><div class="big">Impossible de lire les données</div>'
-        +'<div>La feuille est peut-être inaccessible depuis ce réseau (le proxy SUEZ bloque parfois la lecture Google), '
-        +'ou le lien de publication a changé.<br>Détail technique : '+String(e.message||e)+'</div></div></div>';
+        +'<div>La feuille est peut-être inaccessible depuis ce réseau, ou le lien de publication a changé.<br>'
+        +'Détail : '+esc(String(e.message||e))+'</div></div></div>';
     });
 }
 
-/* ---- Rendu ---- */
+function toolOrder(rows){
+  var c={}; rows.forEach(function(r){c[r.page]=(c[r.page]||0)+1;});
+  return Object.keys(c).sort(function(a,b){return c[b]-c[a];});
+}
+
 function render(){
   var excludeMoi=document.getElementById("excludeMoi").checked;
-  var rows=rowsCache.filter(function(r){ return excludeMoi ? r.who!=="moi" : true; });
+  var base=rowsCache.filter(function(r){ return excludeMoi ? r.who!=="moi" : true; });
   var moiCount=rowsCache.filter(function(r){return r.who==="moi";}).length;
   var C=document.getElementById("content");
 
   if(rowsCache.length===0){
     C.innerHTML='<div class="panel"><div class="msg"><div class="big">Aucune visite enregistrée pour l\'instant</div>'
-      +'<div>Les barres se rempliront dès que le portail et les outils seront consultés. '
-      +'Ouvre une page ou deux, attends une minute, puis clique sur « Actualiser ».</div></div></div>';
+      +'<div>Les barres se rempliront dès que le portail et les outils seront consultés. Ouvre une page ou deux, attends une minute, puis clique sur « Actualiser ».</div></div></div>';
     return;
   }
-  if(rows.length===0){
+  if(base.length===0){
     C.innerHTML='<div class="panel"><div class="msg"><div class="big">Seules tes propres visites sont enregistrées</div>'
-      +'<div>Il y a '+moiCount+' visite(s) « moi » et aucune visite de collègue pour l\'instant. '
-      +'Décoche « Exclure mes visites » pour les afficher.</div></div></div>';
+      +'<div>Il y a '+moiCount+' visite(s) « moi » et aucune visite de collègue. Décoche « Exclure mes visites » pour les afficher.</div></div></div>';
     return;
   }
 
-  /* agrégats */
-  var byTool={}, byDay=[0,0,0,0,0,0,0], byHour=new Array(24).fill(0), dmin=null, dmax=null;
-  rows.forEach(function(r){
-    byTool[r.page]=(byTool[r.page]||0)+1;
-    byDay[r.ts.getDay()]++;
-    byHour[r.ts.getHours()]++;
-    if(!dmin||r.ts<dmin)dmin=r.ts;
-    if(!dmax||r.ts>dmax)dmax=r.ts;
-  });
-  var tools=Object.keys(byTool).map(function(k){return {page:k,n:byTool[k]};})
-              .sort(function(a,b){return b.n-a.n;});
-  var top=tools[0];
-  var maxTool=tools[0].n;
-
-  var fmt=function(d){return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();};
-  var periode = dmin ? (fmt(dmin)===fmt(dmax) ? fmt(dmin) : fmt(dmin)+" → "+fmt(dmax)) : "—";
+  var order = toolOrder(base);                       // ordre + couleurs cohérents partout
+  var rowsTool = base.filter(function(r){ return sel.day===null || r.ts.getDay()===sel.day; });
+  var rowsDay  = base.filter(function(r){ return sel.tool===null || r.page===sel.tool; });
+  var rowsHour = base.filter(function(r){ return (sel.tool===null||r.page===sel.tool) && (sel.day===null||r.ts.getDay()===sel.day); });
+  var statRows = rowsHour;
 
   var html="";
 
-  /* stats */
+  /* ---- filtres actifs ---- */
+  html+='<div class="filterbar">';
+  if(sel.tool===null && sel.day===null){
+    html+='<span class="hint">Astuce : clique sur un outil ou un jour pour filtrer l\'ensemble du tableau.</span>';
+  }else{
+    if(sel.tool!==null){ var mt=metaFor(sel.tool);
+      html+='<span class="chip"><span class="sw" style="background:'+mt.c1+'"></span>'+esc(mt.label)
+          +'<span class="x" data-clear="tool" title="Retirer">×</span></span>'; }
+    if(sel.day!==null){
+      html+='<span class="chip"><span class="sw" style="background:var(--accent)"></span>'+JOURSL[sel.day]
+          +'<span class="x" data-clear="day" title="Retirer">×</span></span>'; }
+    html+='<button class="btn small" data-clear="all">Réinitialiser</button>';
+  }
+  html+='</div>';
+
+  /* ---- stats ---- */
+  var toolsStat=toolOrder(statRows), topTool=toolsStat[0];
+  var dmin=null,dmax=null; statRows.forEach(function(r){ if(!dmin||r.ts<dmin)dmin=r.ts; if(!dmax||r.ts>dmax)dmax=r.ts; });
+  var fmt=function(d){return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();};
+  var periode=dmin?(fmt(dmin)===fmt(dmax)?fmt(dmin):fmt(dmin)+" → "+fmt(dmax)):"—";
   html+='<div class="stats">';
-  html+=stat("Visites (hors moi)", rows.length, excludeMoi?(moiCount+" visite(s) « moi » masquée(s)"):"tes visites incluses");
-  html+=stat("Outil le plus utilisé", metaFor(top.page).label, top.n+" visite(s)");
-  html+=stat("Outils actifs", tools.length, "sur 10 pages");
+  html+=stat("Visites affichées", statRows.length, excludeMoi?(moiCount+" visite(s) « moi » masquée(s)"):"tes visites incluses");
+  html+=stat("Outil le plus utilisé", topTool?metaFor(topTool).label:"—", topTool?(toolsStat.length+" outil(s) actif(s)"):"");
+  html+=stat("Outils actifs", toolsStat.length, "sur 10 pages");
   html+=stat("Période", periode, "");
   html+='</div>';
 
-  /* par outil */
-  html+='<div class="panel"><h2>Fréquentation par outil</h2>'
-      +'<div class="sub">Quel outil sort du lot. Trié du plus au moins consulté.</div><div class="hbars">';
-  tools.forEach(function(t){
-    var mt=metaFor(t.page), pct=Math.max(3,Math.round(t.n/maxTool*100));
-    var inside=pct>16;
-    html+='<div class="hrow"><div class="lbl" title="'+esc(mt.label)+'">'+esc(mt.label)+'</div>'
+  /* ---- par outil (barres horizontales, cliquables) ---- */
+  var byTool={}; rowsTool.forEach(function(r){byTool[r.page]=(byTool[r.page]||0)+1;});
+  var toolsSorted=Object.keys(byTool).sort(function(a,b){return byTool[b]-byTool[a];});
+  var maxTool=toolsSorted.length?byTool[toolsSorted[0]]:1;
+  html+='<div class="panel"><h2>Fréquentation par outil'
+      +(sel.day!==null?'<span class="tag">— '+JOURSL[sel.day]+'</span>':'')+'</h2><div class="hbars">';
+  toolsSorted.forEach(function(p){
+    var mt=metaFor(p), n=byTool[p], pct=Math.max(3,Math.round(n/maxTool*100)), inside=pct>16;
+    var cls="hrow"+(sel.tool===p?" sel":"")+((sel.tool!==null&&sel.tool!==p)?" dim":"");
+    var tip="<b>"+esc(mt.label)+"</b><br>"+n+" visite(s)"+(sel.day!==null?" — "+JOURSL[sel.day]:"");
+    html+='<div class="'+cls+'" data-tool="'+esc(p)+'" data-tip="'+esc(tip)+'" style="color:'+mt.c2+'">'
+        +'<div class="lbl" title="'+esc(mt.label)+'">'+esc(mt.label)+'</div>'
         +'<div class="track"><div class="fill" style="width:'+pct+'%;background:linear-gradient(90deg,'+mt.c1+','+mt.c2+')"></div>'
-        +'<span class="num '+(inside?'inside':'outside')+'" style="'+(inside?'':'left:calc('+pct+'% + 8px)')+'">'+t.n+'</span></div></div>';
+        +'<span class="num '+(inside?'inside':'outside')+'" style="'+(inside?'':'left:calc('+pct+'% + 8px)')+'">'+n+'</span></div></div>';
   });
   html+='</div></div>';
 
-  /* par jour */
-  var order=[1,2,3,4,5], hasWk=(byDay[6]+byDay[0])>0;
-  if(hasWk) order=[1,2,3,4,5,6,0];
-  var maxDay=Math.max(1,Math.max.apply(null,order.map(function(d){return byDay[d];})));
-  html+='<div class="panel"><h2>Activité par jour de la semaine</h2>'
-      +'<div class="sub">Les jours où ça travaille'+(hasWk?' (week-end en gris)':'')+'.</div><div class="vbars">';
-  order.forEach(function(d){
-    var n=byDay[d], h=Math.round(n/maxDay*100), wk=(d===0||d===6);
-    html+='<div class="vcol'+(wk?' weekend':'')+'"><div class="vnum">'+n+'</div>'
-        +'<div class="vbar" style="height:'+h+'%"></div><div class="vlbl">'+JOURS[d]+'</div></div>';
+  /* ---- par jour (empilé par outil, cliquable) ---- */
+  var days=[1,2,3,4,5]; [6,0].forEach(function(d){ if(rowsDay.some(function(r){return r.ts.getDay()===d;})) days.push(d); });
+  var dayStack={}, dayTot={};
+  days.forEach(function(d){ dayStack[d]={}; dayTot[d]=0; });
+  rowsDay.forEach(function(r){ var d=r.ts.getDay(); if(dayStack[d]===undefined)return; dayStack[d][r.page]=(dayStack[d][r.page]||0)+1; dayTot[d]++; });
+  var maxDay=Math.max(1,Math.max.apply(null,days.map(function(d){return dayTot[d];})));
+  html+='<div class="panel"><h2>Activité par jour de la semaine'
+      +(sel.tool!==null?'<span class="tag">— '+esc(metaFor(sel.tool).label)+'</span>':'')+'</h2><div class="vbars">';
+  days.forEach(function(d){
+    var tot=dayTot[d], colH=Math.round(tot/maxDay*100);
+    var cls="vcol"+(sel.day===d?" sel":"")+((sel.day!==null&&sel.day!==d)?" dim":"");
+    html+='<div class="'+cls+'" data-day="'+d+'"><div class="vnum">'+tot+'</div><div class="vstack" style="height:'+colH+'%">';
+    order.forEach(function(p){ var n=dayStack[d][p]; if(!n)return;
+      var mt=metaFor(p), segH=Math.round(n/tot*100);
+      var tip="<b><span class=\"tsw\" style=\"background:"+mt.c1+"\"></span>"+esc(mt.label)+"</b><br>"+JOURSL[d]+" : "+n+" visite(s)";
+      html+='<div class="vseg" data-tip="'+esc(tip)+'" style="height:'+segH+'%;background:linear-gradient(180deg,'+mt.c1+','+mt.c2+')"></div>';
+    });
+    html+='</div><div class="vlbl">'+JOURS[d]+'</div></div>';
   });
   html+='</div></div>';
 
-  /* par heure */
-  var maxH=Math.max(1,Math.max.apply(null,byHour));
-  html+='<div class="panel"><h2>Activité par heure</h2>'
-      +'<div class="sub">À quelle heure tes collègues ouvrent les outils.</div><div class="hours">';
+  /* ---- par heure (empilé par outil) ---- */
+  var hourStack=[], hourTot=[]; for(var h=0;h<24;h++){hourStack[h]={};hourTot[h]=0;}
+  rowsHour.forEach(function(r){ var h=r.ts.getHours(); hourStack[h][r.page]=(hourStack[h][r.page]||0)+1; hourTot[h]++; });
+  var maxH=Math.max(1,Math.max.apply(null,hourTot));
+  html+='<div class="panel"><h2>Activité par heure'
+      +(sel.tool!==null?'<span class="tag">— '+esc(metaFor(sel.tool).label)+'</span>':'')
+      +(sel.day!==null?'<span class="tag">— '+JOURSL[sel.day]+'</span>':'')+'</h2><div class="hours">';
   for(var hh=0;hh<24;hh++){
-    var n=byHour[hh], h=Math.round(n/maxH*100), lab=(hh%6===0||hh===23)?hh+"h":"";
-    html+='<div class="hcol'+(n===0?' empty':'')+'" title="'+hh+'h : '+n+' visite(s)">'
-        +'<div class="hbar" style="height:'+(n===0?2:h)+'%"></div><div class="hlbl">'+lab+'</div></div>';
+    var tot=hourTot[hh], colH=Math.round(tot/maxH*100), lab=(hh%6===0||hh===23)?hh+"h":"";
+    if(tot===0){ html+='<div class="hcol empty" data-tip="'+hh+'h : 0 visite"><div class="hstack"></div><div class="hlbl">'+lab+'</div></div>'; continue; }
+    var segs=''; order.forEach(function(p){ var n=hourStack[hh][p]; if(!n)return;
+      var mt=metaFor(p), segH=Math.round(n/tot*100);
+      segs+='<div class="hseg" style="height:'+segH+'%;background:linear-gradient(180deg,'+mt.c1+','+mt.c2+')"></div>'; });
+    var tipParts=order.filter(function(p){return hourStack[hh][p];}).map(function(p){return metaFor(p).label+" : "+hourStack[hh][p];});
+    var tip="<b>"+hh+"h</b><br>"+esc(tipParts.join("<br>"));
+    html+='<div class="hcol" data-tip="'+esc(tip)+'"><div class="hstack" style="height:'+colH+'%">'+segs+'</div><div class="hlbl">'+lab+'</div></div>';
   }
   html+='</div></div>';
 
@@ -340,20 +353,40 @@ function stat(k,v,s){
   return '<div class="stat"><div class="k">'+esc(k)+'</div><div class="v">'+esc(String(v))+'</div>'
     +(s?'<div class="s">'+esc(s)+'</div>':'')+'</div>';
 }
-function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
-/* ---- Marquage de CE navigateur comme "moi" (même origine que les outils) ---- */
+/* ---- interactions : clic (filtres) + survol (info-bulles) ---- */
+var content=document.getElementById("content"), tip=document.getElementById("tip");
+content.addEventListener("click",function(e){
+  var clr=e.target.closest("[data-clear]");
+  if(clr){ var w=clr.getAttribute("data-clear");
+    if(w==="tool")sel.tool=null; else if(w==="day")sel.day=null; else {sel.tool=null;sel.day=null;}
+    render(); return; }
+  var t=e.target.closest("[data-tool]");
+  if(t){ var p=t.getAttribute("data-tool"); sel.tool=(sel.tool===p?null:p); render(); return; }
+  var d=e.target.closest("[data-day]");
+  if(d){ var dv=+d.getAttribute("data-day"); sel.day=(sel.day===dv?null:dv); render(); return; }
+});
+content.addEventListener("mousemove",function(e){
+  var el=e.target.closest("[data-tip]");
+  if(!el){ tip.style.opacity=0; return; }
+  tip.innerHTML=el.getAttribute("data-tip"); tip.style.opacity=1;
+  var x=e.clientX+14, y=e.clientY+14, w=tip.offsetWidth, h=tip.offsetHeight;
+  if(x+w>window.innerWidth-8) x=e.clientX-w-14;
+  if(y+h>window.innerHeight-8) y=e.clientY-h-14;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+});
+content.addEventListener("mouseleave",function(){ tip.style.opacity=0; });
+
+/* ---- marquage "moi" (pastille ET bouton cliquables) ---- */
 function isOwner(){ return localStorage.getItem("gdo_owner")==="1"; }
+function toggleOwner(){ if(isOwner())localStorage.removeItem("gdo_owner"); else localStorage.setItem("gdo_owner","1"); renderOwner(); }
 function renderOwner(){
   var o=isOwner();
   document.getElementById("ownerBox").innerHTML =
-    '<span class="opill '+(o?'me':'vis')+'">Ce navigateur compte comme : '+(o?'moi':'visiteur')+'</span>'
+    '<span class="opill '+(o?'me':'vis')+'" id="ownerPill" title="Cliquer pour changer">Ce navigateur compte comme : '+(o?'moi':'visiteur')+'</span>'
     +'<button class="btn small" id="ownerBtn">'+(o?"Ne plus m'exclure":"C'est mon poste — m'exclure")+'</button>';
-  document.getElementById("ownerBtn").addEventListener("click",function(){
-    if(isOwner()) localStorage.removeItem("gdo_owner");
-    else localStorage.setItem("gdo_owner","1");
-    renderOwner();
-  });
+  document.getElementById("ownerBtn").addEventListener("click",toggleOwner);
+  document.getElementById("ownerPill").addEventListener("click",toggleOwner);
 }
 
 document.getElementById("refresh").addEventListener("click",load);
