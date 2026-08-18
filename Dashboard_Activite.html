@@ -51,6 +51,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .switch input::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.18s}
 .switch input:checked::after{left:18px}
 .updated{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.ownerbox{display:inline-flex;align-items:center;gap:9px;padding-left:14px;border-left:1px solid var(--line-2)}
+.opill{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:99px;white-space:nowrap}
+.opill.me{background:var(--accent-dim);color:var(--accent)}
+.opill.vis{background:rgba(100,116,139,.12);color:var(--muted)}
+.btn.small{padding:6px 13px;font-size:12px}
 
 /* cartes de stats */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
@@ -128,6 +133,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="toolbar">
     <button class="btn" id="refresh">↻ Actualiser</button>
     <label class="switch"><input type="checkbox" id="excludeMoi" checked> Exclure mes visites (« moi »)</label>
+    <span class="ownerbox" id="ownerBox"></span>
     <span class="updated" id="updated"></span>
   </div>
 
@@ -336,8 +342,23 @@ function stat(k,v,s){
 }
 function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
+/* ---- Marquage de CE navigateur comme "moi" (même origine que les outils) ---- */
+function isOwner(){ return localStorage.getItem("gdo_owner")==="1"; }
+function renderOwner(){
+  var o=isOwner();
+  document.getElementById("ownerBox").innerHTML =
+    '<span class="opill '+(o?'me':'vis')+'">Ce navigateur compte comme : '+(o?'moi':'visiteur')+'</span>'
+    +'<button class="btn small" id="ownerBtn">'+(o?"Ne plus m'exclure":"C'est mon poste — m'exclure")+'</button>';
+  document.getElementById("ownerBtn").addEventListener("click",function(){
+    if(isOwner()) localStorage.removeItem("gdo_owner");
+    else localStorage.setItem("gdo_owner","1");
+    renderOwner();
+  });
+}
+
 document.getElementById("refresh").addEventListener("click",load);
 document.getElementById("excludeMoi").addEventListener("change",render);
+renderOwner();
 load();
 </script>
 </body>
