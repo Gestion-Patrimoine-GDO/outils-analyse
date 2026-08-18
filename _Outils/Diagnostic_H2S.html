@@ -709,5 +709,28 @@ var loader=document.getElementById('loader');
 ['dragleave','drop'].forEach(function(ev){loader.addEventListener(ev,function(e){e.preventDefault();loader.classList.remove('drag');});});
 loader.addEventListener('drop',function(e){e.preventDefault();processFiles(e.dataTransfer.files);});
 </script>
+<script>
+/* Compteur de visites anonyme — GDO
+   Envoie "<nom de la page> | moi" ou "<nom de la page> | visiteur" + horodatage
+   vers un Google Form, pour voir quels outils sont utilisés et quand.
+   Marquer CE navigateur comme le tien : ouvrir n'importe quelle page du portail
+   UNE fois avec ?owner=1 (ex : .../outils-analyse/?owner=1). Vaut ensuite pour
+   tout le portail et tous les outils (même origine). */
+(function(){
+  try{
+    var p = new URLSearchParams(location.search);
+    if (p.get("owner") === "1") localStorage.setItem("gdo_owner","1");
+    var qui = localStorage.getItem("gdo_owner") === "1" ? "moi" : "visiteur";
+    var seg = (location.pathname.split("/").pop() || "index.html");
+    var page = decodeURIComponent(seg).replace(/\.html$/i,"") || "index";
+    fetch("https://docs.google.com/forms/d/e/1FAIpQLScrMHKTGYYpD77erWOtXsPwLCu2XeOSK7MLyzp1yEh8qKa5gA/formResponse", {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "entry.1091031611=" + encodeURIComponent(page + " | " + qui)
+    });
+  }catch(e){/* silencieux : ne casse jamais la page */}
+})();
+</script>
 </body>
 </html>
