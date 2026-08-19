@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formatage Liste d'Identifiants</title>
+<style>
+  :root{
+    --blue:#1B6FE8; --blue-d:#1558bd;
+    --teal:#0D9488; --teal-d:#0b7a70;
+    --bg:#f4f6fb; --card:#ffffff;
+    --ink:#1a2233; --ink-soft:#5a6577; --line:#e5e9f2;
+    --ok:#0D9488; --warn:#d9822b; --err:#d64550;
+    --radius:16px;
+    --mono:'JetBrains Mono','Cascadia Code',ui-monospace,Consolas,monospace;
+    --sans:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    --head:'Space Grotesk','Inter','Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); line-height:1.5;
+    padding:28px 16px 64px;
+  }
+  .wrap{max-width:920px; margin:0 auto}
+  .card{
+    background:var(--card); border:1px solid var(--line);
+    border-radius:var(--radius); position:relative; overflow:hidden;
+    box-shadow:0 1px 3px rgba(20,30,60,.04),0 8px 24px rgba(20,30,60,.05);
+    margin-bottom:20px;
+  }
+  .card::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:4px;
+    background:linear-gradient(90deg,var(--blue),var(--teal));
+  }
+  .card-pad{padding:24px 26px}
+  header.card .card-pad{padding:22px 26px}
+  .head-row{display:flex; align-items:center; justify-content:space-between; gap:20px}
+  .head-left{display:flex; align-items:center; gap:16px; min-width:0}
+  .app-icon{
+    flex-shrink:0; width:44px; height:44px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--blue),var(--teal));
+    box-shadow:0 4px 12px rgba(13,148,136,.28);
+  }
+  .app-icon svg{width:24px; height:24px; stroke:#fff}
+  .head-meta{display:flex; align-items:center; gap:12px; flex-shrink:0}
+  .version{
+    font-family:var(--mono); font-size:.76rem; color:var(--ink-soft);
+    border:1px solid var(--line); border-radius:999px; padding:6px 13px;
+    background:#fff; white-space:nowrap;
+  }
+  .author{
+    flex-shrink:0; font-family:var(--head); font-weight:700; font-size:.9rem;
+    color:#fff; border-radius:999px; padding:9px 18px; white-space:nowrap;
+    background:linear-gradient(135deg,var(--blue),var(--blue-d));
+    box-shadow:0 4px 12px rgba(27,111,232,.28);
+  }
+  .head-divider{border:none; border-top:1px solid var(--line); margin:20px 0 0}
+  @media(max-width:640px){
+    .head-row{flex-direction:column; align-items:flex-start; gap:16px}
+    .head-meta{align-self:flex-start}
+  }
+  h1{
+    font-family:var(--head); font-weight:700; font-size:1.5rem;
+    margin:0 0 6px; letter-spacing:-.01em;
+  }
+  .sub{color:var(--ink-soft); font-size:.95rem; margin:0}
+  h2{
+    font-family:var(--head); font-weight:600; font-size:1.05rem;
+    margin:0 0 16px; display:flex; align-items:center; gap:8px;
+  }
+  .step{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:7px; font-size:.78rem;
+    font-weight:700; color:#fff;
+    background:linear-gradient(135deg,var(--blue),var(--teal));
+  }
+  textarea{
+    width:100%; min-height:190px; resize:vertical;
+    font-family:var(--mono); font-size:.86rem; line-height:1.5;
+    padding:14px 16px; border:1px solid var(--line); border-radius:12px;
+    background:#fbfcfe; color:var(--ink); outline:none;
+  }
+  textarea:focus{border-color:var(--blue); box-shadow:0 0 0 3px rgba(27,111,232,.12)}
+  .opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px 20px; margin:18px 0 6px}
+  .opt{display:flex; flex-direction:column; gap:5px}
+  .opt label{font-size:.82rem; font-weight:600; color:var(--ink-soft)}
+  .opt input[type=text],.opt input[type=number]{
+    font-family:var(--mono); font-size:.86rem; padding:9px 11px;
+    border:1px solid var(--line); border-radius:9px; background:#fbfcfe;
+    color:var(--ink); outline:none;
+  }
+  .opt input:focus{border-color:var(--blue); box-shadow:0 0 0 3px rgba(27,111,232,.12)}
+  .checks{display:flex; flex-wrap:wrap; gap:12px 22px; margin-top:4px}
+  .chk{display:flex; align-items:center; gap:8px; font-size:.88rem; cursor:pointer; user-select:none}
+  .chk input{width:17px; height:17px; accent-color:var(--blue); cursor:pointer}
+  .actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:20px; align-items:center}
+  button.btn{
+    font-family:var(--head); font-weight:600; font-size:.92rem;
+    border:none; border-radius:11px; padding:11px 20px; cursor:pointer;
+    color:#fff; background:linear-gradient(135deg,var(--blue),var(--blue-d));
+    transition:filter .12s, transform .04s;
+  }
+  button.btn:hover{filter:brightness(1.06)}
+  button.btn:active{transform:translateY(1px)}
+  button.btn.ghost{
+    background:#fff; color:var(--blue); border:1px solid var(--line);
+  }
+  button.btn.ghost:hover{background:#f5f8ff}
+  .hint{font-size:.82rem; color:var(--ink-soft)}
+  /* stats */
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px}
+  .stat{
+    border:1px solid var(--line); border-radius:12px; padding:14px 16px;
+    background:linear-gradient(180deg,#fff,#fbfcfe);
+  }
+  .stat .n{font-family:var(--head); font-weight:700; font-size:1.35rem; letter-spacing:-.02em}
+  .stat .l{font-size:.76rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-top:2px}
+  .stat.warn .n{color:var(--warn)}
+  .stat.blue .n{color:var(--blue)}
+  .stat.teal .n{color:var(--teal)}
+  /* blocks */
+  .block{border:1px solid var(--line); border-radius:12px; margin-bottom:14px; overflow:hidden}
+  .block-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; background:#f7f9fd; border-bottom:1px solid var(--line);
+  }
+  .block-title{font-family:var(--head); font-weight:600; font-size:.9rem}
+  .block-meta{font-size:.76rem; color:var(--ink-soft); font-family:var(--mono)}
+  .block-body{
+    font-family:var(--mono); font-size:.8rem; line-height:1.5;
+    padding:12px 14px; max-height:150px; overflow:auto;
+    white-space:pre-wrap; word-break:break-all; color:#2a3346;
+  }
+  .copy-btn{
+    font-family:var(--head); font-weight:600; font-size:.8rem;
+    border:1px solid var(--teal); color:var(--teal); background:#fff;
+    border-radius:8px; padding:6px 13px; cursor:pointer; white-space:nowrap;
+  }
+  .copy-btn:hover{background:var(--teal); color:#fff}
+  .copy-btn.done{background:var(--teal); color:#fff; border-color:var(--teal)}
+  .empty{color:var(--ink-soft); font-size:.9rem; padding:6px 0}
+  .foot{text-align:center; color:var(--ink-soft); font-size:.78rem; margin-top:26px}
+  .banner{
+    display:none; align-items:center; gap:10px; font-size:.85rem;
+    padding:11px 14px; border-radius:10px; margin-bottom:16px;
+  }
+  .banner.err{display:flex; background:#fdecee; color:var(--err); border:1px solid #f5c6cc}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="card">
+    <div class="card-pad">
+      <div class="head-row">
+        <div class="head-left">
+          <div class="app-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+          </div>
+          <div>
+            <h1>Formatage Liste d'Identifiants</h1>
+            <p class="sub">Transforme une liste d'identifiants d'équipement en format strict <code style="font-family:var(--mono)">=id,=id,=id,…</code> · découpage automatique sous 32 767 caractères</p>
+          </div>
+        </div>
+        <div class="head-meta">
+          <span class="version">v1.0 · identifiants</span>
+          <span class="author">Tanguy BAYLE</span>
+        </div>
+      </div>
+      <hr class="head-divider">
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="card-pad">
+      <h2><span class="step">1</span> Coller les identifiants</h2>
+      <textarea id="input" placeholder="Colle ici ta colonne d'identifiants (copiée depuis Excel), ou une liste séparée par des virgules, espaces, points-virgules…&#10;632549&#10;1163968&#10;1559351&#10;…"></textarea>
+      <p class="hint" style="margin-top:8px; font-weight:700; color:var(--ink)">Astuce : sélectionne la colonne dans Excel → Ctrl+C → clique ici → Ctrl+V.</p>
+
+      <div class="opts">
+        <div class="opt">
+          <label for="prefix">Préfixe de chaque identifiant</label>
+          <input type="text" id="prefix" value="=">
+        </div>
+        <div class="opt">
+          <label for="sep">Séparateur / suffixe</label>
+          <input type="text" id="sep" value=",">
+        </div>
+        <div class="opt">
+          <label for="limit">Limite de caractères par bloc</label>
+          <input type="number" id="limit" value="32767" min="100" step="1">
+        </div>
+      </div>
+
+      <div class="checks">
+        <label class="chk"><input type="checkbox" id="dedup"> Supprimer les doublons</label>
+        <label class="chk"><input type="checkbox" id="trailing" checked> Séparateur final après le dernier</label>
+        <label class="chk"><input type="checkbox" id="numonly"> Ne garder que les valeurs numériques</label>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="gen">Générer</button>
+        <button class="btn ghost" id="clear">Vider</button>
+        <span class="hint" id="autoinfo"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="resultCard" style="display:none">
+    <div class="card-pad">
+      <h2><span class="step">2</span> Résultat</h2>
+      <div class="banner err" id="errBanner"></div>
+      <div class="stats" id="stats"></div>
+      <div id="blocks"></div>
+    </div>
+  </section>
+
+  <p class="foot">Outil interne · fonctionne 100 % hors-ligne · aucune donnée envoyée</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var LS = "fmt_ids_opts_v1";
+
+  var els = {
+    input:$("input"), prefix:$("prefix"), sep:$("sep"), limit:$("limit"),
+    dedup:$("dedup"), trailing:$("trailing"), numonly:$("numonly"),
+    gen:$("gen"), clear:$("clear"), autoinfo:$("autoinfo"),
+    resultCard:$("resultCard"), stats:$("stats"), blocks:$("blocks"), err:$("errBanner")
+  };
+
+  // ---- persistance des options ----
+  function saveOpts(){
+    try{
+      localStorage.setItem(LS, JSON.stringify({
+        prefix:els.prefix.value, sep:els.sep.value, limit:els.limit.value,
+        dedup:els.dedup.checked, trailing:els.trailing.checked, numonly:els.numonly.checked
+      }));
+    }catch(e){}
+  }
+  function loadOpts(){
+    try{
+      var o = JSON.parse(localStorage.getItem(LS) || "null");
+      if(!o) return;
+      if(o.prefix!==undefined) els.prefix.value=o.prefix;
+      if(o.sep!==undefined) els.sep.value=o.sep;
+      if(o.limit!==undefined) els.limit.value=o.limit;
+      if(o.dedup!==undefined) els.dedup.checked=o.dedup;
+      if(o.trailing!==undefined) els.trailing.checked=o.trailing;
+      if(o.numonly!==undefined) els.numonly.checked=o.numonly;
+    }catch(e){}
+  }
+  loadOpts();
+
+  // ---- parsing ----
+  function parseIds(text){
+    var raw = text.split(/[\s,;]+/);
+    var out = [], seen = {}, dedup = els.dedup.checked, numonly = els.numonly.checked;
+    for(var i=0;i<raw.length;i++){
+      var t = raw[i].trim();
+      if(!t) continue;
+      if(numonly && !/^\d+$/.test(t)) continue;
+      if(dedup){ if(seen[t]) continue; seen[t]=1; }
+      out.push(t);
+    }
+    return out;
+  }
+
+  // ---- construction des blocs ----
+  function buildBlocks(ids){
+    var prefix = els.prefix.value, sep = els.sep.value;
+    var trailing = els.trailing.checked;
+    var limit = parseInt(els.limit.value,10);
+    if(isNaN(limit) || limit < 10) limit = 32767;
+
+    var tokens = ids.map(function(id){ return prefix + id + sep; });
+    // si pas de séparateur final : on retirera le dernier sep de chaque bloc plus bas
+    var blocks = [], cur = "", curCount = 0;
+
+    for(var i=0;i<tokens.length;i++){
+      var tok = tokens[i];
+      // longueur si on ajoute ce token (en tenant compte du retrait éventuel du sep final)
+      var prospective = cur + tok;
+      var effLen = trailing ? prospective.length : (prospective.length - sep.length);
+      if(cur !== "" && effLen > limit){
+        blocks.push({ text: finalize(cur, sep, trailing), count: curCount });
+        cur = ""; curCount = 0;
+      }
+      cur += tok; curCount++;
+    }
+    if(cur !== "") blocks.push({ text: finalize(cur, sep, trailing), count: curCount });
+    return blocks;
+  }
+  function finalize(s, sep, trailing){
+    if(!trailing && sep && s.slice(-sep.length) === sep) return s.slice(0, s.length - sep.length);
+    return s;
+  }
+
+  // ---- rendu ----
+  function render(){
+    els.err.style.display = "none";
+    var text = els.input.value;
+    var ids = parseIds(text);
+
+    if(ids.length === 0){
+      els.resultCard.style.display = "block";
+      els.stats.innerHTML = "";
+      els.blocks.innerHTML = '<p class="empty">Aucun identifiant détecté. Colle une liste puis clique sur « Générer ».</p>';
+      return;
+    }
+
+    var blocks = buildBlocks(ids);
+    var totalChars = 0, maxBlock = 0;
+    blocks.forEach(function(b){ totalChars += b.text.length; if(b.text.length>maxBlock) maxBlock=b.text.length; });
+
+    var rawCount = (text.match(/[^\s,;]+/g) || []).length;
+    var removed = rawCount - ids.length;
+
+    // stats
+    var st = "";
+    st += stat(ids.length.toLocaleString('fr-FR'), "identifiants retenus", "blue");
+    if(removed>0) st += stat(removed.toLocaleString('fr-FR'), els.dedup.checked?"doublons/exclus retirés":"exclus", "warn");
+    st += stat(blocks.length, blocks.length>1?"blocs à copier":"bloc", "teal");
+    st += stat(totalChars.toLocaleString('fr-FR'), "caractères au total");
+    els.stats.innerHTML = st;
+
+    // blocks
+    var html = "";
+    blocks.forEach(function(b, idx){
+      var near = b.text.length > parseInt(els.limit.value,10) - 200;
+      html += '<div class="block">';
+      html += '  <div class="block-head">';
+      html += '    <div><span class="block-title">Bloc '+(idx+1)+' / '+blocks.length+'</span> ';
+      html += '      <span class="block-meta">— '+b.count.toLocaleString('fr-FR')+' id · '+b.text.length.toLocaleString('fr-FR')+' car.</span></div>';
+      html += '    <button class="copy-btn" data-i="'+idx+'">Copier</button>';
+      html += '  </div>';
+      html += '  <div class="block-body" id="bb'+idx+'"></div>';
+      html += '</div>';
+    });
+    els.blocks.innerHTML = html;
+    // remplir le texte des blocs sans risque d'injection HTML
+    blocks.forEach(function(b, idx){ $("bb"+idx).textContent = b.text; });
+
+    // brancher les boutons copier
+    var btns = els.blocks.querySelectorAll(".copy-btn");
+    btns.forEach(function(btn){
+      btn.addEventListener("click", function(){
+        copyText(blocks[parseInt(btn.getAttribute("data-i"),10)].text, btn);
+      });
+    });
+
+    els.resultCard.style.display = "block";
+    saveOpts();
+  }
+
+  function stat(n, label, cls){
+    return '<div class="stat '+(cls||"")+'"><div class="n">'+n+'</div><div class="l">'+label+'</div></div>';
+  }
+
+  // ---- copie presse-papier (avec fallback hors-ligne) ----
+  function copyText(txt, btn){
+    var done = function(){
+      var old = btn.textContent;
+      btn.textContent = "Copié ✓"; btn.classList.add("done");
+      setTimeout(function(){ btn.textContent = old; btn.classList.remove("done"); }, 1400);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, function(){ fallback(txt, done); });
+    } else {
+      fallback(txt, done);
+    }
+  }
+  function fallback(txt, done){
+    var ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position="fixed"; ta.style.left="-9999px";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand("copy"); done(); }catch(e){ alert("Copie automatique impossible. Sélectionne le texte du bloc et copie-le manuellement."); }
+    document.body.removeChild(ta);
+  }
+
+  // ---- événements ----
+  els.gen.addEventListener("click", render);
+  els.clear.addEventListener("click", function(){
+    els.input.value=""; els.resultCard.style.display="none"; els.input.focus();
+  });
+  [els.prefix, els.sep, els.limit, els.dedup, els.trailing, els.numonly].forEach(function(el){
+    el.addEventListener("change", function(){
+      saveOpts();
+      if(els.resultCard.style.display==="block" && els.input.value.trim()) render();
+    });
+  });
+  // Ctrl+Entrée pour générer
+  els.input.addEventListener("keydown", function(e){
+    if((e.ctrlKey||e.metaKey) && e.key==="Enter"){ e.preventDefault(); render(); }
+  });
+})();
+</script>
+</body>
+</html>
