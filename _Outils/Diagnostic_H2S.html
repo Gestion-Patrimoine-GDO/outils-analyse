@@ -72,10 +72,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--txt);line-height:1
 <div id="panels"></div>
 </div></div>
 
-<div class="__ver-badge"><span class="__ver-txt">Diagnostic H₂S · v2.0 · juillet 2026</span></div>
+<div class="__ver-badge"><span class="__ver-txt">Diagnostic H₂S · v2.3 · août 2026</span></div>
 
 <script>
-var CONFIG={VERSION:'v2.0'};
+var CONFIG={VERSION:'v2.3'};
 var SEUILS=[
   {val:688,label:'Létal',color:'#450A0A',bg:'#7C1D1D'},
   {val:150,label:'Irréversible',color:'#991B1B',bg:'#DC2626'},
@@ -245,7 +245,7 @@ function filterByDate(f,dS,dE){
 
 // ===== RENDERING =====
 var charts=[];
-function destroyCharts(){charts.forEach(function(c){c.destroy();});charts=[];window._h2sCharts={};}
+function destroyCharts(){charts.forEach(function(c){c.destroy();});charts=[];window._h2sCharts={};window._compareCharts=[];}
 
 function applyDateFilter(){
   FILTERED=[];
@@ -370,13 +370,16 @@ function renderPanels(){
     html+='<button class="btn btn-sm" onclick="detachPanel(\'compare\')">🔲 Détacher la page</button>';
     html+='<button class="btn btn-sm" onclick="exportPanelPDF(\'compare\')">📄 Export PDF</button></div>';
     html+='<div class="card"><div class="card-title">Comparaison des points de mesure</div>';
-    html+='<table class="dtab"><thead><tr><th>Point</th><th>Fichier</th><th>Format</th><th>Max</th><th>Moy</th><th>Q75</th><th>Q25</th><th>Temp</th><th>Jours</th></tr></thead><tbody>';
+    html+='<table class="dtab"><thead><tr><th>Point</th><th>Format</th><th>Max</th><th>Moy</th><th>Q75</th><th>Q25</th><th>Temp</th><th>Jours</th></tr></thead><tbody>';
     var sorted=FILTERED.slice().sort(function(a,b){return(b._stats?b._stats.max:0)-(a._stats?a._stats.max:0);});
     sorted.forEach(function(f){var s=f._stats;if(!s)return;
-      html+='<tr><td><b>'+esc(f.nom)+'</b></td><td style="font-size:11px;color:var(--faint)">'+esc(f.fichier)+'</td><td>'+esc(f.format)+'</td><td>'+s.max+'</td><td>'+s.moy+'</td><td>'+s.q75+'</td><td>'+s.q25+'</td><td>'+(s.tempMoy!=null?s.tempMoy:'—')+'</td><td>'+s.dureeJ+'</td></tr>';});
+      html+='<tr><td><b>'+esc(f.fichier)+'</b></td><td>'+esc(f.format)+'</td><td>'+s.max+'</td><td>'+s.moy+'</td><td>'+s.q75+'</td><td>'+s.q25+'</td><td>'+(s.tempMoy!=null?s.tempMoy:'—')+'</td><td>'+s.dureeJ+'</td></tr>';});
     html+='</tbody></table></div>';
-    html+='<div class="card" id="compareCard"><div class="card-title">Concentration moyenne <span style="font-size:11px;color:var(--faint);font-weight:400">— moyenne par heure sur toute la période, tous jours confondus</span></div>';
-    html+='<div style="position:relative;height:250px"><canvas id="chart_compare"></canvas></div></div>';
+    html+='<div class="card" id="compareCard"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><div class="card-title" style="flex:1;margin-bottom:0">Chronique H₂S comparée <span style="font-size:11px;color:var(--faint);font-weight:400">— valeurs brutes</span></div>';
+    html+='<select id="cmpMode" onchange="buildCompareChart()" style="border:1px solid var(--line2);border-radius:6px;padding:4px 10px;font-size:12px;font-family:var(--sans)"><option value="sup">Superposé</option><option value="sep">Séparé (une ligne par capteur)</option></select>';
+    html+='<button class="btn btn-sm btn-reinit" onclick="resetCompareZoom()">↻ Réinitialiser le zoom</button></div>';
+    html+='<div style="font-size:11px;color:var(--faint);margin:6px 0 2px">💡 Glissez sur un graphique pour zoomer. En « Superposé », cliquez un nom dans la légende pour masquer une courbe. En « Séparé », chaque capteur a sa propre ligne — plus aucun recouvrement.</div>';
+    html+='<div id="compareChartArea"></div></div>';
     div.innerHTML=html;panelsEl.appendChild(div);
     setTimeout(function(){buildCompareChart();},100);
   }
@@ -422,20 +425,25 @@ function filterBySeuil(tr,idx,seuil){
 
 // ===== CHART CONFIG — source unique =====
 function prepareChartData(f,filterSeuil){
-  var maxPts=900,step=f.pts.length>maxPts?Math.ceil(f.pts.length/maxPts):1;
-  var labels=[],gasD=[],tempD=[];
-  for(var i=0;i<f.pts.length;i+=step){var p=f.pts[i];labels.push(fmtDH(p.d));
-    var g=p.gas!=null?rnd(p.gas,1):null;
-    if(filterSeuil!=null&&g!=null&&g<filterSeuil)g=null;
-    gasD.push(g);tempD.push(p.temp!=null?rnd(p.temp,1):null);}
-  var gasMax=Math.max.apply(null,f.pts.filter(function(p){return p.gas!=null;}).map(function(p){return p.gas;}))||500;
-  return{labels:labels,gasD:gasD,tempD:tempD,gasMax:gasMax};
+  // On trace TOUTES les valeurs mesurées, sans aucune réduction ni échantillonnage.
+  var gasPts=[],tempPts=[];
+  for(var i=0;i<f.pts.length;i++){var p=f.pts[i],t=p.d.getTime();
+    if(p.gas!=null&&isFinite(p.gas))gasPts.push({x:t,y:rnd(p.gas,1)});
+    if(p.temp!=null&&isFinite(p.temp))tempPts.push({x:t,y:rnd(p.temp,1)});}
+  var gasMax=gasPts.length?gasPts.reduce(function(m,p){return p.y>m?p.y:m;},-Infinity):500;
+  if(!isFinite(gasMax)||gasMax<=0)gasMax=500;
+  // Filtre par seuil : on masque les points sous le seuil sans décaler le tracé
+  if(filterSeuil!=null)gasPts=gasPts.map(function(p){return p.y<filterSeuil?{x:p.x,y:null}:p;});
+  var xMin=f.pts.length?f.pts[0].d.getTime():0,xMax=f.pts.length?f.pts[f.pts.length-1].d.getTime():1;
+  return{gasPts:gasPts,tempPts:tempPts,gasMax:gasMax,xMin:xMin,xMax:xMax};
 }
 
-function makeChartConfig(labels,gasD,tempD,gasMax,seuils,pluginId){
+function makeChartConfig(gasPts,tempPts,gasMax,xMin,xMax,seuils,pluginId){
+  function fmtT(ms){var d=new Date(ms),D=function(n){return(n<10?'0':'')+n;};
+    return D(d.getDate())+'/'+D(d.getMonth()+1)+' '+D(d.getHours())+':'+D(d.getMinutes());}
   var seuilDs=[];
   seuils.forEach(function(sl){if(sl.val<=gasMax*1.2){
-    seuilDs.push({type:'line',data:new Array(labels.length).fill(sl.val),borderColor:sl.bg+'88',borderWidth:1.5,
+    seuilDs.push({type:'line',data:[{x:xMin,y:sl.val},{x:xMax,y:sl.val}],borderColor:sl.bg+'88',borderWidth:1.5,
       borderDash:[6,3],pointRadius:0,fill:false,yAxisID:'y',label:'__seuil_'+sl.label,tension:0,order:5});}});
   var seuilLabelPlugin={id:pluginId||'sl',afterDraw:function(chart){
     var yScale=chart.scales.y;if(!yScale)return;var cx=chart.ctx,area=chart.chartArea;cx.save();
@@ -449,26 +457,28 @@ function makeChartConfig(labels,gasD,tempD,gasMax,seuils,pluginId){
   function segColor(v){for(var i=0;i<seuils.length;i++){if(v>=seuils[i].val)return seuils[i].bg;}return'rgba(22,163,74,.5)';}
   return{
     plugins:[seuilLabelPlugin],
-    config:{type:'line',data:{labels:labels,datasets:[
-      {data:gasD,borderWidth:2.5,pointRadius:0,
+    config:{type:'line',data:{datasets:[
+      {data:gasPts,borderWidth:2.5,pointRadius:0,
         segment:{borderColor:function(ctx){return segColor(Math.max(ctx.p0.parsed.y||0,ctx.p1.parsed.y||0));}},
         fill:{target:'origin',above:'rgba(27,111,232,.08)'},tension:.15,yAxisID:'y',label:'H₂S (ppm)',spanGaps:false,order:1},
-      {data:tempD,borderColor:'rgba(249,115,22,.7)',borderWidth:2,pointRadius:0,fill:false,
+      {data:tempPts,borderColor:'rgba(249,115,22,.7)',borderWidth:2,pointRadius:0,fill:false,
         borderDash:[4,2],tension:.3,yAxisID:'yTemp',label:'Température (°C)',spanGaps:true,order:2}
     ].concat(seuilDs)},
-    options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
       plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,font:{size:11},padding:16,
         filter:function(item){return !item.text||item.text.indexOf('__seuil_')<0;}}},
         zoom:{zoom:{drag:{enabled:true,backgroundColor:'rgba(27,111,232,.08)',borderColor:'rgba(27,111,232,.3)',borderWidth:1},mode:'x'}},
-        tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(19,36,70,.92)',titleFont:{size:12,weight:'bold'},bodyFont:{size:12},padding:10,
-          callbacks:{label:function(ctx){
+        tooltip:{mode:'index',intersect:false,axis:'x',backgroundColor:'rgba(19,36,70,.92)',titleFont:{size:12,weight:'bold'},bodyFont:{size:12},padding:10,
+          filter:function(item){return !item.dataset.label||item.dataset.label.indexOf('__seuil_')<0;},
+          callbacks:{title:function(items){return items.length?fmtT(items[0].parsed.x):'';},
+            label:function(ctx){
             if(ctx.dataset.label&&ctx.dataset.label.indexOf('H₂S')>=0)return' H₂S : '+(ctx.parsed.y!=null?ctx.parsed.y+' ppm':'—');
             if(ctx.dataset.label&&ctx.dataset.label.indexOf('Temp')>=0)return' Temp : '+(ctx.parsed.y!=null?ctx.parsed.y+'°C':'—');
             return ctx.dataset.label||'';}}}},
-      scales:{x:{ticks:{maxTicksLimit:14,font:{size:9},maxRotation:45},grid:{display:false}},
+      scales:{x:{type:'linear',min:xMin,max:xMax,ticks:{maxTicksLimit:14,font:{size:9},maxRotation:45,autoSkip:true,callback:function(v){return fmtT(v);}},grid:{display:false}},
         y:{position:'left',title:{display:true,text:'H₂S (ppm)',font:{size:11,weight:'bold'}},ticks:{font:{size:10}},grid:{color:'rgba(228,234,243,.6)'},min:0},
         yTemp:{position:'right',title:{display:true,text:'°C',font:{size:11,weight:'bold'},color:'rgba(249,115,22,.7)'},ticks:{font:{size:9},color:'rgba(249,115,22,.5)'},grid:{display:false}}},
-      interaction:{mode:'nearest',intersect:false}}}
+      interaction:{mode:'index',intersect:false,axis:'x'}}}
   };
 }
 
@@ -477,7 +487,7 @@ function buildChart(f,idx,filterSeuil){
   var canvas=document.getElementById('chart_'+idx);if(!canvas)return;
   if(window._h2sCharts&&window._h2sCharts[idx]){window._h2sCharts[idx].destroy();}
   var d=prepareChartData(f,filterSeuil);
-  var cfg=makeChartConfig(d.labels,d.gasD,d.tempD,d.gasMax,SEUILS,'seuilLabels_'+idx);
+  var cfg=makeChartConfig(d.gasPts,d.tempPts,d.gasMax,d.xMin,d.xMax,SEUILS,'seuilLabels_'+idx);
   var conf=cfg.config;conf.plugins=cfg.plugins;
   var ch=new Chart(canvas,conf);
   charts.push(ch);if(!window._h2sCharts)window._h2sCharts={};window._h2sCharts[idx]=ch;
@@ -494,26 +504,73 @@ function buildHeatmap(hm,idx,mode){
   for(var h=0;h<24;h++)html+='<div class="hm-head">'+(h<10?'0':'')+h+'h</div>';
   hm.forEach(function(row){var parts=row.day.split('-');var arr=mode==='max'?row.maxH:row.moyH;
     html+='<div class="hm-head">'+parts[2]+'/'+parts[1]+'</div>';
-    arr.forEach(function(v){var c=hmColor(v,maxVal);
-      html+='<div class="hm-cell" style="background:'+c.bg+';color:'+c.txt+'" data-val="'+(v!=null?v:'')+'" title="'+(v!=null?v+' ppm ('+mode+')':'—')+'">'+(v!=null?v:'')+'</div>';});});
+    arr.forEach(function(v,h){var c=hmColor(v,maxVal);var clic=v!=null;
+      html+='<div class="hm-cell'+(clic?' hm-click':'')+'" style="background:'+c.bg+';color:'+c.txt+(clic?';cursor:pointer':'')+'" data-val="'+(v!=null?v:'')+'"'+
+        (clic?' data-day="'+row.day+'" data-hour="'+h+'" onclick="zoomChartTo('+idx+',\''+row.day+'\','+h+')"':'')+
+        ' title="'+(v!=null?v+' ppm ('+mode+') — cliquer pour zoomer la chronique':'—')+'">'+(v!=null?v:'')+'</div>';});});
   html+='</div>';el.innerHTML=html;
+}
+// Clic sur une case de la heatmap → zoome la Chronique sur le jour cliqué ± 6 h
+function zoomChartTo(idx,day,hour){
+  var ch=window._h2sCharts&&window._h2sCharts[idx];if(!ch)return;
+  var p=day.split('-');
+  var dayStart=new Date(+p[0],+p[1]-1,+p[2],0,0,0,0).getTime();
+  var pad=6*3600000;
+  var t0=dayStart-pad,t1=dayStart+24*3600000+pad;
+  try{ch.zoomScale('x',{min:t0,max:t1},'default');}catch(e){}
+  var card=document.getElementById('chartCard_'+idx);if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function rebuildHeatmap(idx){var f=FILTERED[idx];if(f&&f._hm)buildHeatmap(f._hm,idx);}
 
 function buildCompareChart(){
-  var canvas=document.getElementById('chart_compare');if(!canvas)return;
+  var area=document.getElementById('compareChartArea');if(!area)return;
+  if(window._compareCharts)window._compareCharts.forEach(function(c){try{c.destroy();}catch(e){}});
+  window._compareCharts=[];area.innerHTML='';
+  var sel=document.getElementById('cmpMode');var mode=sel?sel.value:'sup';
   var colors=['#1B6FE8','#F97316','#0D9488','#8B5CF6','#EC4899','#EAB308','#DC2626','#06B6D4'];
-  var datasets=[];
-  FILTERED.forEach(function(f,i){var hourly={};
-    f.pts.forEach(function(p){if(p.gas!=null){var h=p.d.getHours();if(!hourly[h])hourly[h]=[];hourly[h].push(p.gas);}});
-    var data=[];for(var h=0;h<24;h++){var v=hourly[h];data.push(v&&v.length?rnd(v.reduce(function(s,x){return s+x;},0)/v.length,1):null);}
-    datasets.push({data:data,borderColor:colors[i%colors.length],borderWidth:2,pointRadius:3,pointBackgroundColor:colors[i%colors.length],fill:false,tension:.3,label:f.fichier});});
-  var labels=[];for(var h=0;h<24;h++)labels.push((h<10?'0':'')+h+'h');
-  var ch=new Chart(canvas,{type:'line',data:{labels:labels,datasets:datasets},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,font:{size:11}}}},
-      scales:{x:{grid:{display:false}},y:{title:{display:true,text:'H₂S moyen (ppm)',font:{size:10}},grid:{color:'#E4EAF3'},min:0}},animation:{duration:300}}});
-  charts.push(ch);
+  function hexA(hex,a){var h=hex.replace('#','');var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return'rgba('+r+','+g+','+b+','+a+')';}
+  function fmtT(ms){var d=new Date(ms),D=function(n){return(n<10?'0':'')+n;};return D(d.getDate())+'/'+D(d.getMonth()+1)+' '+D(d.getHours())+'h';}
+  var files=[],gMax=0,gMin=Infinity,gMaxX=-Infinity;
+  FILTERED.forEach(function(f,i){var pts=[];
+    for(var k=0;k<f.pts.length;k++){var p=f.pts[k];if(p.gas!=null&&isFinite(p.gas)){var t=p.d.getTime();pts.push({x:t,y:rnd(p.gas,1)});if(p.gas>gMax)gMax=p.gas;if(t<gMin)gMin=t;if(t>gMaxX)gMaxX=t;}}
+    files.push({f:f,pts:pts,color:colors[i%colors.length]});});
+  if(!isFinite(gMin)){gMin=0;gMaxX=1;}
+  var yMax=Math.ceil((gMax||1)*1.05);
+  var zoomOpt={zoom:{drag:{enabled:true,backgroundColor:'rgba(27,111,232,.08)',borderColor:'rgba(27,111,232,.3)',borderWidth:1},mode:'x'}};
+  if(mode==='sep'){
+    // Une ligne par capteur : chacun sur sa propre période, échelle verticale commune (niveaux comparables), aucun recouvrement.
+    files.forEach(function(o){
+      var wrap=document.createElement('div');wrap.style.cssText='margin-bottom:10px';
+      var lbl=document.createElement('div');lbl.style.cssText='font-size:12px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:6px;margin-bottom:2px';
+      lbl.innerHTML='<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+o.color+'"></span>'+esc(o.f.fichier);
+      var cw=document.createElement('div');cw.style.cssText='position:relative;height:130px';
+      var cv=document.createElement('canvas');cw.appendChild(cv);
+      wrap.appendChild(lbl);wrap.appendChild(cw);area.appendChild(wrap);
+      var xmin=o.pts.length?o.pts[0].x:0,xmax=o.pts.length?o.pts[o.pts.length-1].x:1;
+      var ch=new Chart(cv,{type:'line',data:{datasets:[{data:o.pts,borderColor:o.color,backgroundColor:hexA(o.color,.15),borderWidth:1.2,pointRadius:0,fill:true,tension:.12,label:o.f.fichier,spanGaps:false}]},
+        options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+          plugins:{legend:{display:false},zoom:zoomOpt,
+            tooltip:{mode:'nearest',intersect:false,axis:'x',backgroundColor:'rgba(19,36,70,.92)',padding:8,callbacks:{title:function(it){return it.length?fmtT(it[0].parsed.x):'';},label:function(ctx){return' '+(ctx.parsed.y!=null?ctx.parsed.y+' ppm':'—');}}}},
+          scales:{x:{type:'linear',min:xmin,max:xmax,ticks:{maxTicksLimit:8,font:{size:9},maxRotation:0,autoSkip:true,callback:function(v){return fmtT(v);}},grid:{display:false}},
+            y:{title:{display:true,text:'ppm',font:{size:9}},grid:{color:'#E4EAF3'},min:0,max:yMax}},
+          interaction:{mode:'nearest',intersect:false,axis:'x'}}});
+      charts.push(ch);window._compareCharts.push(ch);});
+  }else{
+    // Superposé : légende cliquable pour masquer/afficher une courbe.
+    var cw=document.createElement('div');cw.style.cssText='position:relative;height:300px';
+    var cv=document.createElement('canvas');cw.appendChild(cv);area.appendChild(cw);
+    var datasets=files.map(function(o){return{data:o.pts,borderColor:hexA(o.color,.5),backgroundColor:hexA(o.color,.5),borderWidth:1.2,pointRadius:0,fill:false,tension:.12,label:o.f.fichier,spanGaps:false};});
+    var ch=new Chart(cv,{type:'line',data:{datasets:datasets},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+        plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,font:{size:11}}},zoom:zoomOpt,
+          tooltip:{mode:'nearest',intersect:false,axis:'x',backgroundColor:'rgba(19,36,70,.92)',padding:10,callbacks:{title:function(it){return it.length?fmtT(it[0].parsed.x):'';},label:function(ctx){return' '+ctx.dataset.label+' : '+(ctx.parsed.y!=null?ctx.parsed.y+' ppm':'—');}}}},
+        scales:{x:{type:'linear',min:gMin,max:gMaxX,ticks:{maxTicksLimit:12,font:{size:9},maxRotation:45,autoSkip:true,callback:function(v){return fmtT(v);}},grid:{display:false}},
+          y:{title:{display:true,text:'H₂S (ppm)',font:{size:10}},grid:{color:'#E4EAF3'},min:0}},
+        interaction:{mode:'nearest',intersect:false,axis:'x'}}});
+    charts.push(ch);window._compareCharts.push(ch);
+  }
 }
+function resetCompareZoom(){if(window._compareCharts)window._compareCharts.forEach(function(c){try{c.resetZoom();}catch(e){}});}
 
 function detachView(cardId,title){
   var card=document.getElementById(cardId);if(!card)return;
@@ -564,14 +621,14 @@ function detachPanel(idx){
     // Injecter les données et la config partagée sous forme de fonctions
     w.document.write('<script>setTimeout(function(){try{');
     w.document.write('var SEUILS='+JSON.stringify(SEUILS)+';');
-    w.document.write('var labels='+JSON.stringify(d.labels)+';');
-    w.document.write('var gasD='+JSON.stringify(d.gasD)+';');
-    w.document.write('var tempD='+JSON.stringify(d.tempD)+';');
+    w.document.write('var gasPts='+JSON.stringify(d.gasPts)+';');
+    w.document.write('var tempPts='+JSON.stringify(d.tempPts)+';');
     w.document.write('var gasMax='+d.gasMax+';');
+    w.document.write('var xMin='+d.xMin+';var xMax='+d.xMax+';');
     // Injecter makeChartConfig comme fonction locale
     w.document.write(makeChartConfig.toString()+';');
     w.document.write('var canvas=document.getElementById("chart_'+idx+'");');
-    w.document.write('if(canvas){var cfg=makeChartConfig(labels,gasD,tempD,gasMax,SEUILS,"sl");var conf=cfg.config;conf.plugins=cfg.plugins;new Chart(canvas,conf);}');
+    w.document.write('if(canvas){var cfg=makeChartConfig(gasPts,tempPts,gasMax,xMin,xMax,SEUILS,"sl");var conf=cfg.config;conf.plugins=cfg.plugins;new Chart(canvas,conf);}');
     w.document.write('}catch(e){console.error(e);}},500);<\/script>');
   }
   w.document.write('</body></html>');w.document.close();
