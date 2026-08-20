@@ -30,6 +30,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--txt);line-height:1
 .note{margin-top:12px;font-size:11.5px;color:var(--faint);line-height:1.6}
 #app{display:none}
 .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;padding:6px;background:var(--panel2);border:1px solid var(--line);border-radius:12px}.tab{padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;color:var(--muted);transition:.15s;border:1px solid transparent;background:none;font-family:var(--sans)}.tab:hover{color:var(--txt);background:rgba(27,111,232,.06);border-color:var(--line)}.tab.active{color:#fff;background:linear-gradient(135deg,var(--accent),#1559BE);border-color:transparent;box-shadow:0 3px 10px rgba(27,111,232,.25)}
+.tab-close{margin-left:8px;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;font-size:15px;line-height:1;color:var(--faint);transition:.12s;vertical-align:middle}
+.tab-close:hover{background:rgba(220,38,38,.12);color:var(--red)}
+.tab.active .tab-close{color:rgba(255,255,255,.75)}
+.tab.active .tab-close:hover{background:rgba(255,255,255,.25);color:#fff}
 .panel{display:none}.panel.vis{display:block}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;box-shadow:var(--shadow)}.stat .v{font-family:var(--disp);font-size:24px;font-weight:700;color:var(--navy)}.stat .l{font-size:11.5px;color:var(--muted);margin-top:2px}
 .stat.k-amber .v{color:var(--amber)}.stat.k-teal .v{color:var(--teal)}
@@ -72,10 +76,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--txt);line-height:1
 <div id="panels"></div>
 </div></div>
 
-<div class="__ver-badge"><span class="__ver-txt">Diagnostic H₂S · v2.3 · août 2026</span></div>
+<div class="__ver-badge"><span class="__ver-txt">Diagnostic H₂S · v2.5 · août 2026</span></div>
 
 <script>
-var CONFIG={VERSION:'v2.3'};
+var CONFIG={VERSION:'v2.5'};
 var SEUILS=[
   {val:688,label:'Létal',color:'#450A0A',bg:'#7C1D1D'},
   {val:150,label:'Irréversible',color:'#991B1B',bg:'#DC2626'},
@@ -265,12 +269,14 @@ function renderApp(){
   tabsEl.innerHTML='';panelsEl.innerHTML='';
   FILTERED=FICHIERS.slice();
   var tabDefs=[];
-  FICHIERS.forEach(function(f,i){var label=f.fichier.replace(/\.[^.]+$/,'').replace(/_/g,' ');tabDefs.push({id:'pr_'+i,label:label,icon:'📍'});});
+  FICHIERS.forEach(function(f,i){var label=f.fichier.replace(/\.[^.]+$/,'').replace(/_/g,' ');tabDefs.push({id:'pr_'+i,label:label,icon:'📍',fileIdx:i});});
   if(FICHIERS.length>1)tabDefs.push({id:'compare',label:'Comparaison',icon:'📊'});
   tabDefs.forEach(function(t,i){
     var btn=document.createElement('button');btn.className='tab'+(i===0?' active':'');
     btn.setAttribute('data-tid',t.id);
     btn.innerHTML=t.icon+' '+esc(t.label);
+    if(t.fileIdx!=null){var x=document.createElement('span');x.className='tab-close';x.innerHTML='×';x.title='Fermer ce fichier';
+      x.onclick=function(e){e.stopPropagation();closeFile(t.fileIdx);};btn.appendChild(x);}
     btn.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
       btn.classList.add('active');document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('vis');});
       document.getElementById('panel_'+t.id).classList.add('vis');
@@ -287,7 +293,16 @@ function renderApp(){
   renderPanels();
 }
 
+// Fermer un seul fichier (croix sur l'onglet) sans tout réinitialiser
+function closeFile(i){
+  if(i<0||i>=FICHIERS.length)return;
+  FICHIERS.splice(i,1);
+  if(!FICHIERS.length){resetApp();return;}
+  renderApp();
+}
+
 function seuilOf(v){for(var i=0;i<SEUILS.length;i++){if(v>=SEUILS[i].val)return SEUILS[i];}return null;}
+
 function hmColor(v,maxVal){
   if(v==null)return{bg:'#F1F5F9',txt:'#94A3B8'};
   var ratio=maxVal>0?Math.min(v/maxVal,1):0;
@@ -409,12 +424,28 @@ function filterBySeuil(tr,idx,seuil){
   tr.classList.add('active-filter');
   var f=FILTERED[idx];
   var above=f.pts.filter(function(p){return p.gas!=null&&p.gas>=seuil;});
-  var html='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">'+above.length+' mesures ≥ '+seuil+' ppm</div>';
-  if(above.length){
-    html+='<div class="detail-list"><table><thead><tr><th>Date/Heure</th><th>H₂S (ppm)</th><th>Temp (°C)</th></tr></thead><tbody>';
+  // Regroupement des dépassements consécutifs en épisodes datés (début, fin, durée, pic)
+  function durHM(ms){var m=Math.round(ms/60000);if(m<1)return'< 1 min';if(m<60)return m+' min';var h=Math.floor(m/60);return h+' h'+(m%60?' '+(m%60)+' min':'');}
+  var pasMs=Math.max((f.pas||5),1)*60000,maxGap=Math.max(pasMs*3,15*60000);
+  var eps=[],cur=null;
+  for(var ei=0;ei<f.pts.length;ei++){var pp=f.pts[ei];
+    if(pp.gas!=null&&pp.gas>=seuil){
+      if(cur&&(pp.d-cur.lastD)<=maxGap){cur.end=pp.d;cur.lastD=pp.d;cur.n++;if(pp.gas>cur.peak)cur.peak=pp.gas;}
+      else{if(cur)eps.push(cur);cur={start:pp.d,end:pp.d,lastD:pp.d,n:1,peak:pp.gas};}
+    }else if(cur){eps.push(cur);cur=null;}}
+  if(cur)eps.push(cur);
+  var html='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">'+above.length+' mesures ≥ '+seuil+' ppm — regroupées en '+eps.length+' épisode'+(eps.length>1?'s':'')+'</div>';
+  if(eps.length){
+    html+='<table class="dtab"><thead><tr><th>#</th><th>Début</th><th>Fin</th><th>Durée</th><th>Pic (ppm)</th><th>Nb mesures</th></tr></thead><tbody>';
+    eps.slice(0,300).forEach(function(e,i){var dur=e.end-e.start;var durTxt=dur<pasMs?durHM(pasMs):durHM(dur);
+      html+='<tr><td>'+(i+1)+'</td><td>'+fmtDH(e.start)+'</td><td>'+fmtDH(e.end)+'</td><td>'+durTxt+'</td><td style="font-weight:700;color:var(--red)">'+rnd(e.peak,1)+'</td><td>'+e.n+'</td></tr>';});
+    if(eps.length>300)html+='<tr><td colspan="6" style="color:var(--faint);text-align:center">… et '+(eps.length-300)+' autres épisodes</td></tr>';
+    html+='</tbody></table>';
+    html+='<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Voir le détail mesure par mesure</summary>';
+    html+='<div class="detail-list" style="margin-top:6px"><table><thead><tr><th>Date/Heure</th><th>H₂S (ppm)</th><th>Temp (°C)</th></tr></thead><tbody>';
     above.slice(0,500).forEach(function(p){html+='<tr><td>'+fmtDH(p.d)+'</td><td style="font-weight:700;color:var(--red)">'+rnd(p.gas,2)+'</td><td>'+(p.temp!=null?rnd(p.temp,1):'—')+'</td></tr>';});
     if(above.length>500)html+='<tr><td colspan="3" style="color:var(--faint);text-align:center">… et '+(above.length-500)+' autres</td></tr>';
-    html+='</tbody></table></div>';}
+    html+='</tbody></table></div></details>';}
   detailDiv.innerHTML=html;
   // Dim heatmap
   var cells=hmEl.querySelectorAll('.hm-cell');
@@ -445,6 +476,7 @@ function makeChartConfig(gasPts,tempPts,gasMax,xMin,xMax,seuils,pluginId){
   seuils.forEach(function(sl){if(sl.val<=gasMax*1.2){
     seuilDs.push({type:'line',data:[{x:xMin,y:sl.val},{x:xMax,y:sl.val}],borderColor:sl.bg+'88',borderWidth:1.5,
       borderDash:[6,3],pointRadius:0,fill:false,yAxisID:'y',label:'__seuil_'+sl.label,tension:0,order:5});}});
+  var maxPt=null;for(var mpi=0;mpi<gasPts.length;mpi++){var gpt=gasPts[mpi];if(gpt&&gpt.y!=null&&(maxPt===null||gpt.y>maxPt.y))maxPt=gpt;}
   var seuilLabelPlugin={id:pluginId||'sl',afterDraw:function(chart){
     var yScale=chart.scales.y;if(!yScale)return;var cx=chart.ctx,area=chart.chartArea;cx.save();
     cx.font='bold 9px Inter,sans-serif';cx.textAlign='left';
@@ -453,7 +485,20 @@ function makeChartConfig(gasPts,tempPts,gasMax,xMin,xMax,seuils,pluginId){
       var tw=cx.measureText(s.label+' '+s.val).width;
       cx.fillStyle='rgba(255,255,255,.85)';cx.fillRect(area.left+4,y-7,tw+6,14);
       cx.fillStyle=s.color;cx.fillText(s.label+' '+s.val,area.left+7,y+3);
-    });cx.restore();}};
+    });
+    if(maxPt){var xS=chart.scales.x;var px=xS.getPixelForValue(maxPt.x),py=yScale.getPixelForValue(maxPt.y);
+      if(px>=area.left&&px<=area.right&&py>=area.top-1&&py<=area.bottom+1){
+        cx.beginPath();cx.arc(px,py,4,0,6.2832);cx.fillStyle='#DC2626';cx.fill();cx.lineWidth=2;cx.strokeStyle='#fff';cx.stroke();
+        var md=new Date(maxPt.x),P=function(n){return(n<10?'0':'')+n;};
+        var mtxt='max '+maxPt.y+' ppm · '+P(md.getDate())+'/'+P(md.getMonth()+1)+' '+P(md.getHours())+'h'+P(md.getMinutes());
+        cx.font='bold 10px Inter,sans-serif';var mw=cx.measureText(mtxt).width;
+        var mlx=Math.min(Math.max(px-mw/2,area.left+2),area.right-mw-8);
+        var mly=py-10;if(mly<area.top+13)mly=py+22;
+        cx.fillStyle='rgba(220,38,38,.95)';cx.fillRect(mlx-4,mly-11,mw+8,15);
+        cx.fillStyle='#fff';cx.textAlign='left';cx.fillText(mtxt,mlx,mly);
+      }
+    }
+    cx.restore();}};
   function segColor(v){for(var i=0;i<seuils.length;i++){if(v>=seuils[i].val)return seuils[i].bg;}return'rgba(22,163,74,.5)';}
   return{
     plugins:[seuilLabelPlugin],
