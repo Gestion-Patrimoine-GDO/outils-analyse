@@ -35,7 +35,7 @@
 table.atab{width:100%;border-collapse:collapse;font-size:12.5px}.atab thead th{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,#20406B,#182F52);color:#EAF1FB;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;text-align:left;padding:10px 11px;white-space:nowrap;cursor:pointer;user-select:none}.atab thead th:hover{background:#2A5080}.atab thead th .ar{opacity:.5;font-size:9px;margin-left:3px}.atab tbody td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}.atab tr.drow{cursor:pointer;transition:background .1s}.atab tr.drow:hover td{background:#EAF3FE}.atab tr.drow.expanded td{background:#EFF5FE}
 .niv{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:5px;padding:3px 9px;white-space:nowrap}.n-critique{color:#991B1B;background:#FEE2E2}.n-alerte{color:#92400E;background:#FEF3C7}
 .ano{font-weight:600}.tt{font-family:var(--mono);font-size:11px;color:var(--muted)}.ctx{color:var(--faint);font-size:11.5px}.empty{padding:40px;text-align:center;color:var(--muted)}
-.detail-row td{padding:0!important;border-bottom:1px solid var(--line)}.detail-panel{background:linear-gradient(180deg,#F8FAFD,#EFF3FA);padding:16px 20px;border-top:1px solid #D0DFEF}.dp-title{font-family:var(--disp);font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}.dp-info{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.7}.dp-info b{color:var(--txt)}.dp-conseil{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:12.5px;color:#9A3412;line-height:1.6}.dp-conseil b{color:#7C2D12}.detail-panel canvas{max-height:180px;margin-top:6px}.dp-nodata{font-size:12px;color:var(--faint);font-style:italic}
+.detail-row td{padding:0!important;border-bottom:1px solid var(--line)}.detail-panel{background:linear-gradient(180deg,#F8FAFD,#EFF3FA);padding:16px 20px;border-top:1px solid #D0DFEF}.dp-title{font-family:var(--disp);font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}.dp-info{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.7}.dp-info b{color:var(--txt)}.dp-conseil{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:12.5px;color:#9A3412;line-height:1.6;white-space:pre-line}.dp-conseil b{color:#7C2D12}.detail-panel canvas{max-height:180px;margin-top:6px}.dp-nodata{font-size:12px;color:var(--faint);font-style:italic}
 .sec-title{font-family:var(--disp);font-size:16px;font-weight:700;color:var(--navy);margin:26px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:10px}.sec-title .sec-icon{font-size:20px}
 .legende{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:12.5px;color:var(--muted);line-height:1.8;box-shadow:var(--shadow)}.legende b{color:var(--navy)}
 #loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg)}#loader::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(900px 440px at 82% -8%,rgba(27,111,232,.08),transparent 60%),radial-gradient(720px 400px at 4% 0%,rgba(13,148,136,.07),transparent 60%)}#loader .box{position:relative;width:min(620px,93vw);background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 2px rgba(15,35,70,.05),0 18px 50px rgba(15,35,70,.12);padding:26px 30px}
@@ -111,7 +111,7 @@ var MESSAGES={
   'Rupture de donnée Pluviométrie':{niveau:'Critique',msg:"Défaut de transmission de la donnée. Invalider/reconstruire la variable et vérifier la chaîne de mesure."},
   'Pluvio négative':{niveau:'Critique',msg:"Invalidation automatique requise. Valeur physiquement impossible."},
   'Rupture de donnée Volume':{niveau:'Critique',msg:"Défaut de transmission de la donnée. Invalider/reconstruire la variable et vérifier la chaîne de mesure."},
-  'Volume négatif':{niveau:'Critique',msg:"Vérifier le débit des pompes reporté sur AQC. Merci de réaliser un tarage."},
+  'Volume négatif':{niveau:'Critique',msg:"1- Invalider ou reconstruire la donnée.\n2- Vérifier le débit des pompes renseignés sur AQC et étalonner les pompes au besoin."},
   'Surdébit en Temps Sec':{niveau:'Alerte',msg:"Si la valeur correspond à un fait réel (ressuyage par exemple) vous pouvez la conserver. Sinon, pour plus de cohérence, il est possible de reconstruire le volume ou de l'invalider."},
   'Courbe Volumétrique Figée Temps Sec':{niveau:'Alerte',msg:"Anomalie de fonctionnement du pompage ou donnée non représentative liée à une maintenance. Veuillez invalider la donnée ou la reconstruire à partir de la chronique."},
   'Défaut point de mesure':{niveau:'Critique',msg:'Défaut capteur probable. Vérifier la chaîne de mesure et procéder à l\'invalidation ou la reconstruction du volume.'},
@@ -407,7 +407,7 @@ var canvas=document.createElement('canvas');canvas.height=160;panel.appendChild(
 var maxP=600,step=pts.length>maxP?Math.ceil(pts.length/maxP):1;
 var labels=[],vals=[],colors=[],radii=[];
 for(var i=0;i<pts.length;i+=step){var p=pts[i];labels.push(fmtDH(p.d));vals.push(rnd2(p.v));
-var isA=false;if(anom.anomalie.indexOf('gatif')>=0&&anom.picNeg!=null&&p.v===anom.picNeg)isA=true;
+var isA=false;if(anom.anomalie.indexOf('gatif')>=0&&p.v<0)isA=true;
 if(anom.anomalie.indexOf('Courbe Volum')>=0||anom.anomalie.indexOf('faut point')>=0){
         // colorer uniquement la plage figée, pas tous les points avec la même valeur
         if(!window._ppRange){window._ppRange=null;
@@ -417,7 +417,7 @@ if(anom.anomalie.indexOf('Courbe Volum')>=0||anom.anomalie.indexOf('faut point')
               e:new Date(Date.UTC(+p2[2],p2[1]-1,+p2[0],+rm[4].split(':')[0],+rm[4].split(':')[1]))};}}
         if(window._ppRange&&p.d>=window._ppRange.s&&p.d<=window._ppRange.e&&p.v===parseFloat(anom.valeur.replace(/[^\d.-]/g,'')))isA=true;}
 if(anom.anomalie.indexOf('Surd')>=0&&anom.picsH){if(anom.picsH.indexOf(Math.floor(p.dRaw*24))>=0)isA=true;}
-if(anom.date&&fmtDate(p.d)===anom.date&&anom.anomalie.indexOf('Courbe Volum')<0&&anom.anomalie.indexOf('faut point')<0&&anom.anomalie.indexOf('Rupture')<0&&anom.anomalie.indexOf('Surd')<0)isA=true;
+if(anom.date&&fmtDate(p.d)===anom.date&&anom.anomalie.indexOf('gatif')<0&&anom.anomalie.indexOf('Courbe Volum')<0&&anom.anomalie.indexOf('faut point')<0&&anom.anomalie.indexOf('Rupture')<0&&anom.anomalie.indexOf('Surd')<0)isA=true;
 colors.push(isA?couleurType(anom.anomalie):'transparent');radii.push(isA?5:0);}
 var gapZones=[];
 if(isTrou){var pasJ=serie.pas/(24*60);var nL=[],nV=[],nC=[],nR=[];
