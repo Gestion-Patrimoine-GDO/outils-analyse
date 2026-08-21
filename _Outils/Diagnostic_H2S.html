@@ -76,10 +76,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--txt);line-height:1
 <div id="panels"></div>
 </div></div>
 
-<div class="__ver-badge"><span class="__ver-txt">Diagnostic H₂S · v2.5 · août 2026</span></div>
+<div class="__ver-badge"><span class="__ver-txt">Diagnostic H₂S · v2.8 · août 2026</span></div>
 
 <script>
-var CONFIG={VERSION:'v2.5'};
+var CONFIG={VERSION:'v2.8'};
 var SEUILS=[
   {val:688,label:'Létal',color:'#450A0A',bg:'#7C1D1D'},
   {val:150,label:'Irréversible',color:'#991B1B',bg:'#DC2626'},
@@ -393,7 +393,7 @@ function renderPanels(){
     html+='<div class="card" id="compareCard"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><div class="card-title" style="flex:1;margin-bottom:0">Chronique H₂S comparée <span style="font-size:11px;color:var(--faint);font-weight:400">— valeurs brutes</span></div>';
     html+='<select id="cmpMode" onchange="buildCompareChart()" style="border:1px solid var(--line2);border-radius:6px;padding:4px 10px;font-size:12px;font-family:var(--sans)"><option value="sup">Superposé</option><option value="sep">Séparé (une ligne par capteur)</option></select>';
     html+='<button class="btn btn-sm btn-reinit" onclick="resetCompareZoom()">↻ Réinitialiser le zoom</button></div>';
-    html+='<div style="font-size:11px;color:var(--faint);margin:6px 0 2px">💡 Glissez sur un graphique pour zoomer. En « Superposé », cliquez un nom dans la légende pour masquer une courbe. En « Séparé », chaque capteur a sa propre ligne — plus aucun recouvrement.</div>';
+    html+='<div style="font-size:11px;color:var(--faint);margin:6px 0 2px">💡 Glissez sur un graphique pour zoomer. En « Superposé », cliquez un nom dans la légende pour masquer une courbe. En « Séparé », chaque capteur a sa propre ligne — aucun recouvrement.</div>';
     html+='<div id="compareChartArea"></div></div>';
     div.innerHTML=html;panelsEl.appendChild(div);
     setTimeout(function(){buildCompareChart();},100);
@@ -604,7 +604,11 @@ function buildCompareChart(){
     // Superposé : légende cliquable pour masquer/afficher une courbe.
     var cw=document.createElement('div');cw.style.cssText='position:relative;height:300px';
     var cv=document.createElement('canvas');cw.appendChild(cv);area.appendChild(cw);
-    var datasets=files.map(function(o){return{data:o.pts,borderColor:hexA(o.color,.5),backgroundColor:hexA(o.color,.5),borderWidth:1.2,pointRadius:0,fill:false,tension:.12,label:o.f.fichier,spanGaps:false};});
+    // Ordre d'affichage : les capteurs au niveau moyen le plus bas passent au premier plan
+    // (order 0 = dessiné en dernier = au-dessus), pour ne pas être masqués par les plus hauts.
+    var means=files.map(function(o){var s=0,n=0;o.pts.forEach(function(p){if(p.y!=null){s+=p.y;n++;}});return n?s/n:0;});
+    var orderOf=[];files.map(function(_,i){return i;}).sort(function(a,b){return means[a]-means[b];}).forEach(function(fi,rank){orderOf[fi]=rank;});
+    var datasets=files.map(function(o,i){return{data:o.pts,borderColor:o.color,backgroundColor:o.color,borderWidth:1.5,pointRadius:0,fill:false,tension:.12,label:o.f.fichier,spanGaps:false,order:orderOf[i]};});
     var ch=new Chart(cv,{type:'line',data:{datasets:datasets},
       options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
         plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,font:{size:11}}},zoom:zoomOpt,
