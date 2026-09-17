@@ -98,7 +98,7 @@ function fmtDH(d){if(!d)return '';return fmtDate(d)+' '+('0'+d.getUTCHours()).sl
 function rnd2(v){return Math.round(v*100)/100;}
 // ===== CONFIGURATION — modifiez ces valeurs sans toucher au reste du code =====
 var CONFIG = {
-  VERSION: 'v3.0',
+  VERSION: 'v3.1',
   SEUIL_PLUIE_6H: 0.2,        // mm — temps sec si pluie 6h < cette valeur
   SEUIL_PLUIE_HORAIRE: 0.1,   // mm — "il pleut" si pluvio horaire > cette valeur
   K_IQR: 3,                    // sensibilité des pics (Q3 + K × IQR)
@@ -188,14 +188,22 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
       }
       return false;
     }
-    // COUPURES
+    // COUPURES — deux cas de rupture de données :
+    //   1) trou de date : une ou plusieurs lignes/dates manquantes (saut dans la date)
+    //   2) date présente mais valeur vide (non transmise / non numérique)
     if(pts.length>=20&&m.type!=='DEBIT_TS'){var pasJ=m.pas/(24*60);if(pasJ>0){
       var nbT=0,jM=0,mxG=0,mxF=null,mxT=null;
       for(var j=1;j<pts.length;j++){var gap=pts[j].dRaw-pts[j-1].dRaw;
         if(gap>pasJ*1.5){if(estChangementHeure(pts[j-1].d,pts[j].d))continue;var mn=Math.round(gap/pasJ)-1;jM+=mn;nbT++;if(gap>mxG){mxG=gap;mxF=pts[j-1].d;mxT=pts[j].d;}}}
-      if(nbT){var at=isPl?'Rupture de donnée Pluviométrie':'Rupture de donnée Volume';var gP=Math.round(mxG*24*60/m.pas)-1;
-        A.push(Object.assign({},base,{anomalie:at,niveau:MESSAGES[at].niveau,date:fmtDate(mxF),
-          valeur:jM+' mesure(s) manquante(s)',contexte:'plus gros trou : '+fmtDH(mxF)+' → '+fmtDH(mxT)+' ('+gP+' pas)'+(nbT>1?', '+nbT+' trous':''),
+      // Cas 2 : lignes avec une date mais sans valeur
+      var vides=pts.filter(function(p){return p.v==null;});var nbV=vides.length;
+      if(nbT||nbV){var at=isPl?'Rupture de donnée Pluviométrie':'Rupture de donnée Volume';
+        var ctx=[];
+        if(nbT){var gP=Math.round(mxG*24*60/m.pas)-1;ctx.push('plus gros trou : '+fmtDH(mxF)+' → '+fmtDH(mxT)+' ('+gP+' pas)'+(nbT>1?', '+nbT+' trous':''));}
+        if(nbV){ctx.push(nbV+' valeur(s) vide(s), ex : '+vides.slice(0,3).map(function(p){return fmtDH(p.d);}).join(', '));}
+        var dRupt=mxF||vides[0].d;
+        A.push(Object.assign({},base,{anomalie:at,niveau:MESSAGES[at].niveau,date:fmtDate(dRupt),
+          valeur:(jM+nbV)+' mesure(s) manquante(s)',contexte:ctx.join(' | '),
           conseil:estLong?'Défaut capteur probable. Vérifier la chaîne de mesure et procéder à l\'invalidation ou la reconstruction du volume.':MESSAGES[at]?MESSAGES[at].msg:''}));}}}
     if(!nums.length)continue;var vals=nums.map(function(p){return p.v;});
     // NÉGATIFS
@@ -467,7 +475,7 @@ ws2.autoFilter='A1:H1';ws2.views=[{state:'frozen',ySplit:1}];
 // Onglet Paramètres (traçabilité)
 var ws3=wb.addWorksheet('Paramètres');
 ws3.columns=[{header:'Paramètre',key:'param',width:35},{header:'Valeur',key:'val',width:45}];
-ws3.addRow({param:'Version de l\'outil',val:'Analyse Eaux Parasites v3.0'});
+ws3.addRow({param:'Version de l\'outil',val:'Analyse Eaux Parasites v3.1'});
 ws3.addRow({param:'Date de l\'analyse',val:new Date().toLocaleString('fr-FR')});
 ws3.addRow({param:'Intervalle analysé',val:fmtDate(dStart)+' → '+fmtDate(dEnd)});
 ws3.addRow({param:'Seuil profil plat',val:document.getElementById('seuilPlat').value+' heures'});
@@ -481,9 +489,9 @@ var buf=await wb.xlsx.writeBuffer();var d=new Date(),ds=d.getFullYear()+('0'+(d.
 var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='Analyse_EP_'+ds+'.xlsx';a.click();URL.revokeObjectURL(a.href);}
 })();
 </script>
-<div class="__ver-badge"><span class="__ver-txt">Analyse Eaux Parasites &#183; v3.0 &#183; juillet 2026</span>
+<div class="__ver-badge"><span class="__ver-txt">Analyse Eaux Parasites &#183; v3.1 &#183; septembre 2026</span>
 <a class="__ver-report" id="__report">&#9888; Signaler</a></div>
-<script>(function(){var n="Analyse Eaux Parasites",v="v3.0",m="tanguy.bayle@suez.com";var a=document.getElementById("__report");if(!a)return;var c="Bonjour Tanguy,\n\nOutil : "+n+"\nVersion : "+v+"\nNavigateur : "+navigator.userAgent+"\n\n--- Ce que je faisais :\n\n\n--- Ce qui s'est pass\u00e9 :\n\n\nMerci !";a.href="mailto:"+m+"?subject="+encodeURIComponent("Signalement - "+n+" "+v)+"&body="+encodeURIComponent(c);}());</script>
+<script>(function(){var n="Analyse Eaux Parasites",v="v3.1",m="tanguy.bayle@suez.com";var a=document.getElementById("__report");if(!a)return;var c="Bonjour Tanguy,\n\nOutil : "+n+"\nVersion : "+v+"\nNavigateur : "+navigator.userAgent+"\n\n--- Ce que je faisais :\n\n\n--- Ce qui s'est pass\u00e9 :\n\n\nMerci !";a.href="mailto:"+m+"?subject="+encodeURIComponent("Signalement - "+n+" "+v)+"&body="+encodeURIComponent(c);}());</script>
 <script>
 /* Compteur de visites anonyme — GDO  (v2 : + identifiant de poste)
    Envoie "<page> | moi/visiteur | <ID>" + horodatage vers le Google Form.
