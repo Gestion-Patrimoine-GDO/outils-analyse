@@ -98,7 +98,7 @@ function fmtDH(d){if(!d)return '';return fmtDate(d)+' '+('0'+d.getUTCHours()).sl
 function rnd2(v){return Math.round(v*100)/100;}
 // ===== CONFIGURATION — modifiez ces valeurs sans toucher au reste du code =====
 var CONFIG = {
-  VERSION: 'v3.1',
+  VERSION: 'v3.2',
   SEUIL_PLUIE_6H: 0.2,        // mm — temps sec si pluie 6h < cette valeur
   SEUIL_PLUIE_HORAIRE: 0.1,   // mm — "il pleut" si pluvio horaire > cette valeur
   K_IQR: 3,                    // sensibilité des pics (Q3 + K × IQR)
@@ -195,13 +195,17 @@ function analyserComplet(mesures,dS,dE,seuilPlatH){
       var nbT=0,jM=0,mxG=0,mxF=null,mxT=null;
       for(var j=1;j<pts.length;j++){var gap=pts[j].dRaw-pts[j-1].dRaw;
         if(gap>pasJ*1.5){if(estChangementHeure(pts[j-1].d,pts[j].d))continue;var mn=Math.round(gap/pasJ)-1;jM+=mn;nbT++;if(gap>mxG){mxG=gap;mxF=pts[j-1].d;mxT=pts[j].d;}}}
-      // Cas 2 : lignes avec une date mais sans valeur
-      var vides=pts.filter(function(p){return p.v==null;});var nbV=vides.length;
+      // Cas 2 : lignes avec une date mais sans valeur — on repère aussi la plus longue plage vide
+      var nbV=0,exV=[],run=0,runD=null,mxRun=0,mxRunD=null;
+      for(var k=0;k<pts.length;k++){
+        if(pts[k].v==null){nbV++;if(exV.length<3)exV.push(pts[k].d);if(!run)runD=pts[k].d;run++;if(run>mxRun){mxRun=run;mxRunD=runD;}}
+        else run=0;}
       if(nbT||nbV){var at=isPl?'Rupture de donnée Pluviométrie':'Rupture de donnée Volume';
-        var ctx=[];
-        if(nbT){var gP=Math.round(mxG*24*60/m.pas)-1;ctx.push('plus gros trou : '+fmtDH(mxF)+' → '+fmtDH(mxT)+' ('+gP+' pas)'+(nbT>1?', '+nbT+' trous':''));}
-        if(nbV){ctx.push(nbV+' valeur(s) vide(s), ex : '+vides.slice(0,3).map(function(p){return fmtDH(p.d);}).join(', '));}
-        var dRupt=mxF||vides[0].d;
+        var ctx=[];var gP=nbT?Math.round(mxG*24*60/m.pas)-1:0;
+        if(nbT){ctx.push('plus gros trou : '+fmtDH(mxF)+' → '+fmtDH(mxT)+' ('+gP+' pas)'+(nbT>1?', '+nbT+' trous':''));}
+        if(nbV){ctx.push(nbV+' valeur(s) vide(s)'+(mxRun>1?', plus longue plage '+mxRun+' pas dès '+fmtDH(mxRunD):'')+' (ex : '+exV.map(function(d){return fmtDH(d);}).join(', ')+')');}
+        // Ancrage du zoom sur le plus gros trou de données (saut de date OU plage vide, selon le plus long)
+        var dRupt=(mxRun>=gP?mxRunD:mxF)||mxF||mxRunD||exV[0];
         A.push(Object.assign({},base,{anomalie:at,niveau:MESSAGES[at].niveau,date:fmtDate(dRupt),
           valeur:(jM+nbV)+' mesure(s) manquante(s)',contexte:ctx.join(' | '),
           conseil:estLong?'Défaut capteur probable. Vérifier la chaîne de mesure et procéder à l\'invalidation ou la reconstruction du volume.':MESSAGES[at]?MESSAGES[at].msg:''}));}}}
@@ -412,11 +416,22 @@ var canvas=document.createElement('canvas');canvas.height=160;panel.appendChild(
     zoomBtn.className='btn btn-reinit';zoomBtn.style.cssText='font-size:11px;padding:6px 14px';
     zoomBtn.addEventListener('click',function(){if(detailChart)detailChart.resetZoom();});
     zoomBar.appendChild(zoomBtn);panel.appendChild(zoomBar);
-var maxP=600,step=pts.length>maxP?Math.ceil(pts.length/maxP):1;
-var labels=[],vals=[],colors=[],radii=[];
-for(var i=0;i<pts.length;i+=step){var p=pts[i];labels.push(fmtDH(p.d));vals.push(rnd2(p.v));
-var isA=false;if(anom.anomalie.indexOf('gatif')>=0&&p.v<0)isA=true;
-if(anom.anomalie.indexOf('Courbe Volum')>=0||anom.anomalie.indexOf('faut point')>=0){
+// Pour une rupture, on parcourt TOUS les points de la fenêtre (ptsAll) afin de faire
+// apparaître les valeurs vides et les trous de date, y compris en tout début/fin de série.
+var src=isTrou?ptsAll:pts;
+var maxP=600,step=src.length>maxP?Math.ceil(src.length/maxP):1;
+var labels=[],vals=[],colors=[],radii=[],pkeys=[];
+var gapZones=[],pasJ=serie.pas/(24*60),prevRaw=null,inVide=false,videFrom=0;
+for(var i=0;i<src.length;i+=step){var p=src[i];
+  // trou de DATE (lignes absentes) : marqueur intercalé entre deux points tracés
+  if(isTrou&&prevRaw!=null&&(p.dRaw-prevRaw)>pasJ*1.5*step){labels.push('');vals.push(null);colors.push('transparent');radii.push(0);pkeys.push(null);gapZones.push({from:labels.length-1,to:labels.length});}
+  prevRaw=p.dRaw;
+  var vide=(p.v==null);
+  labels.push(fmtDH(p.d));vals.push(vide?null:rnd2(p.v));pkeys.push(Math.floor(p.dRaw*24)/24);
+  var isA=false;
+  if(!vide){
+    if(anom.anomalie.indexOf('gatif')>=0&&p.v<0)isA=true;
+    if(anom.anomalie.indexOf('Courbe Volum')>=0||anom.anomalie.indexOf('faut point')>=0){
         // colorer uniquement la plage figée, pas tous les points avec la même valeur
         if(!window._ppRange){window._ppRange=null;
           var rm=anom.contexte.match(/(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2}).*?(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})/);
@@ -424,14 +439,15 @@ if(anom.anomalie.indexOf('Courbe Volum')>=0||anom.anomalie.indexOf('faut point')
             window._ppRange={s:new Date(Date.UTC(+p1[2],p1[1]-1,+p1[0],+rm[2].split(':')[0],+rm[2].split(':')[1])),
               e:new Date(Date.UTC(+p2[2],p2[1]-1,+p2[0],+rm[4].split(':')[0],+rm[4].split(':')[1]))};}}
         if(window._ppRange&&p.d>=window._ppRange.s&&p.d<=window._ppRange.e&&p.v===parseFloat(anom.valeur.replace(/[^\d.-]/g,'')))isA=true;}
-if(anom.anomalie.indexOf('Surd')>=0&&anom.picsH){if(anom.picsH.indexOf(Math.floor(p.dRaw*24))>=0)isA=true;}
-if(anom.date&&fmtDate(p.d)===anom.date&&anom.anomalie.indexOf('gatif')<0&&anom.anomalie.indexOf('Courbe Volum')<0&&anom.anomalie.indexOf('faut point')<0&&anom.anomalie.indexOf('Rupture')<0&&anom.anomalie.indexOf('Surd')<0)isA=true;
-colors.push(isA?couleurType(anom.anomalie):'transparent');radii.push(isA?5:0);}
-var gapZones=[];
-if(isTrou){var pasJ=serie.pas/(24*60);var nL=[],nV=[],nC=[],nR=[];
-for(var si=0;si<labels.length;si++){nL.push(labels[si]);nV.push(vals[si]);nC.push(colors[si]);nR.push(radii[si]);
-var ir=si*step;if(ir+step<pts.length){var g=pts[ir+step].dRaw-pts[ir].dRaw;if(g>pasJ*1.5*step){var gs=nL.length-1;nL.push('');nV.push(null);nC.push('transparent');nR.push(0);gapZones.push({from:gs,to:nL.length});}}}
-labels=nL;vals=nV;colors=nC;radii=nR;}
+    if(anom.anomalie.indexOf('Surd')>=0&&anom.picsH){if(anom.picsH.indexOf(Math.floor(p.dRaw*24))>=0)isA=true;}
+    if(anom.date&&fmtDate(p.d)===anom.date&&anom.anomalie.indexOf('gatif')<0&&anom.anomalie.indexOf('Courbe Volum')<0&&anom.anomalie.indexOf('faut point')<0&&anom.anomalie.indexOf('Rupture')<0&&anom.anomalie.indexOf('Surd')<0)isA=true;
+  }
+  colors.push(isA?couleurType(anom.anomalie):'transparent');radii.push(isA?5:0);
+  // plage de valeurs vides (date présente, valeur absente)
+  if(isTrou&&vide){if(!inVide){inVide=true;videFrom=labels.length-1;}}
+  else if(inVide){inVide=false;gapZones.push({from:videFrom,to:labels.length-1});}
+}
+if(inVide)gapZones.push({from:videFrom,to:labels.length-1});
 var gapPl={id:'gaps',beforeDraw:function(ch){if(!gapZones.length)return;var cx=ch.ctx,xs=ch.scales.x,ys=ch.scales.y;cx.save();
 gapZones.forEach(function(g){var x1=xs.getPixelForValue(g.from),x2=xs.getPixelForValue(g.to);
 cx.fillStyle='rgba(220,38,38,.12)';cx.fillRect(x1,ys.top,x2-x1,ys.bottom-ys.top);
@@ -447,12 +463,7 @@ var isPluvioChart=/pluvio/i.test(anom.mesure);
       var p5m=trouverPluvio(MESURES);
       if(p5m){
         var plHlocal=agregerPluvioHoraire(p5m,zS,zE);
-        var plVals=[];
-        for(var pi=0;pi<pts.length;pi+=step){
-          var pp=pts[pi];
-          var hk=Math.floor(pp.dRaw*24)/24;
-          plVals.push(-rnd2(plHlocal.get(hk)||0));
-        }
+        var plVals=pkeys.map(function(hk){return hk==null?null:-rnd2(plHlocal.get(hk)||0);});
         pluvioDs={type:'line',data:plVals,borderColor:'rgba(70,180,140,.6)',backgroundColor:'rgba(70,180,140,.08)',
           borderWidth:1.5,pointRadius:0,fill:true,tension:.3,yAxisID:'yPluie',label:'Pluie (mm/h)',tooltip:{callbacks:{label:function(ctx){return 'Pluie : '+Math.abs(ctx.parsed.y)+' mm/h';}}},order:3};
       }
@@ -475,7 +486,7 @@ ws2.autoFilter='A1:H1';ws2.views=[{state:'frozen',ySplit:1}];
 // Onglet Paramètres (traçabilité)
 var ws3=wb.addWorksheet('Paramètres');
 ws3.columns=[{header:'Paramètre',key:'param',width:35},{header:'Valeur',key:'val',width:45}];
-ws3.addRow({param:'Version de l\'outil',val:'Analyse Eaux Parasites v3.1'});
+ws3.addRow({param:'Version de l\'outil',val:'Analyse Eaux Parasites v3.2'});
 ws3.addRow({param:'Date de l\'analyse',val:new Date().toLocaleString('fr-FR')});
 ws3.addRow({param:'Intervalle analysé',val:fmtDate(dStart)+' → '+fmtDate(dEnd)});
 ws3.addRow({param:'Seuil profil plat',val:document.getElementById('seuilPlat').value+' heures'});
@@ -489,9 +500,9 @@ var buf=await wb.xlsx.writeBuffer();var d=new Date(),ds=d.getFullYear()+('0'+(d.
 var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='Analyse_EP_'+ds+'.xlsx';a.click();URL.revokeObjectURL(a.href);}
 })();
 </script>
-<div class="__ver-badge"><span class="__ver-txt">Analyse Eaux Parasites &#183; v3.1 &#183; septembre 2026</span>
+<div class="__ver-badge"><span class="__ver-txt">Analyse Eaux Parasites &#183; v3.2 &#183; septembre 2026</span>
 <a class="__ver-report" id="__report">&#9888; Signaler</a></div>
-<script>(function(){var n="Analyse Eaux Parasites",v="v3.1",m="tanguy.bayle@suez.com";var a=document.getElementById("__report");if(!a)return;var c="Bonjour Tanguy,\n\nOutil : "+n+"\nVersion : "+v+"\nNavigateur : "+navigator.userAgent+"\n\n--- Ce que je faisais :\n\n\n--- Ce qui s'est pass\u00e9 :\n\n\nMerci !";a.href="mailto:"+m+"?subject="+encodeURIComponent("Signalement - "+n+" "+v)+"&body="+encodeURIComponent(c);}());</script>
+<script>(function(){var n="Analyse Eaux Parasites",v="v3.2",m="tanguy.bayle@suez.com";var a=document.getElementById("__report");if(!a)return;var c="Bonjour Tanguy,\n\nOutil : "+n+"\nVersion : "+v+"\nNavigateur : "+navigator.userAgent+"\n\n--- Ce que je faisais :\n\n\n--- Ce qui s'est pass\u00e9 :\n\n\nMerci !";a.href="mailto:"+m+"?subject="+encodeURIComponent("Signalement - "+n+" "+v)+"&body="+encodeURIComponent(c);}());</script>
 <script>
 /* Compteur de visites anonyme — GDO  (v2 : + identifiant de poste)
    Envoie "<page> | moi/visiteur | <ID>" + horodatage vers le Google Form.
