@@ -195,11 +195,22 @@ const OUTILS=[
     rubrique:'Outils IPOP',
     emoji:'\ud83d\udd3d',
     titre:'R210 Import Liste de Valeurs Attributs',
-    sous:'Listes d\u00e9roulantes par type',
+    sous:'Listes d\u00e9roulantes par type d\u2019\u00e9quipement',
     href:'_Outils/IPOP_Import_Liste_de_valeurs.html',
-    desc:'Ajoute des listes d\u00e9roulantes Excel sur chaque colonne d\u2019attribut EQ_xx, limit\u00e9es aux valeurs autoris\u00e9es selon le \u00ab Libell\u00e9 Type d\u2019\u00e9quipement \u00bb. Le fichier reste identique, avec les menus pr\u00eats \u00e0 l\u2019emploi. Les valeurs sont rang\u00e9es dans une feuille masqu\u00e9e.',
-    tags:['Listes d\u00e9roulantes','Par type d\u2019\u00e9quipement','Valeurs autoris\u00e9es','203 types','Excel .xlsx'],
-    mots:'liste valeurs d\u00e9roulante dropdown data validation eq attribut type \u00e9quipement libell\u00e9 r\u00e9f\u00e9rentiel ipop inventaire r210 menu'
+    desc:'Ajoute des listes d\u00e9roulantes Excel sur chaque colonne d\u2019attribut EQ_xx d\u2019un export R210, limit\u00e9es aux valeurs autoris\u00e9es selon le \u00ab Libell\u00e9 Type d\u2019\u00e9quipement \u00bb. Code couleur : bleu = liste, vert d\u2019eau = saisie libre, rose = attribut inutile pour le type. Jumeau de l\u2019outil R110 BF.',
+    tags:['Listes d\u00e9roulantes','Code couleur','Cellules inutiles en rose','203 types','Excel .xlsx'],
+    mots:'liste valeurs d\u00e9roulante dropdown data validation eq attribut type \u00e9quipement libell\u00e9 r\u00e9f\u00e9rentiel ipop inventaire r210 menu rose couleur'
+  },
+  {
+    cls:'t-dash',
+    rubrique:'Outils IPOP',
+    emoji:'\ud83d\udd3d',
+    titre:'R110 Import Liste de Valeurs Attributs BF',
+    sous:'Listes d\u00e9roulantes par type de BF',
+    href:'_Outils/IPOP_Import_Liste_de_valeurs_BF.html',
+    desc:'M\u00eame outil que le R210, pour les blocs fonctionnels : ajoute des listes d\u00e9roulantes sur chaque colonne d\u2019attribut BF_xx d\u2019un export R110, selon le \u00ab Type de BF \u00bb, sites BF0 comme ouvrages BFN (TO-xxx). M\u00eame code couleur, toutes les feuilles r\u00e9unies sur un seul onglet.',
+    tags:['Listes d\u00e9roulantes','BF0 sites & BFN ouvrages','Cellules inutiles en rose','162 types','Excel .xlsx'],
+    mots:'liste valeurs d\u00e9roulante dropdown data validation bf attribut type bf bloc fonctionnel bf0 bfn site ouvrage to r\u00e9f\u00e9rentiel ipop r110 menu rose couleur'
   },
   {
     cls:'t-ptr',
