@@ -344,6 +344,21 @@ body{background:#f3f6fb}
 /* Filtres croisés */
 .fbar{position:sticky;top:66px;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#f3f6fb;padding:8px 0 10px;margin-bottom:6px;font-size:13px;color:var(--muted);min-height:44px}
 .fbar[hidden]{display:none}
+.fbar{flex-direction:column;align-items:stretch;gap:6px}
+.fb-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fb-l{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.fb-l select{font:inherit;font-weight:500;font-size:13px;border:1px solid #cfd7e2;border-radius:8px;padding:6px 8px;background:#fff;max-width:220px}
+.fb-search{position:relative;flex:1;min-width:260px;max-width:420px}
+.fb-search input{width:100%;font:inherit;font-size:13px;border:1px solid #cfd7e2;border-radius:8px;padding:7px 10px 7px 30px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235b6b80' stroke-width='2.4'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 9px center}
+.fb-search input:focus{outline:2px solid #1B6FE8;outline-offset:0;border-color:#1B6FE8}
+.fb-sug{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;background:#fff;border:1px solid #cfd7e2;border-radius:10px;box-shadow:0 12px 30px rgba(15,35,70,.16);max-height:380px;overflow:auto;padding:4px}
+.fb-it{display:grid;grid-template-columns:1fr auto;gap:0 10px;width:100%;text-align:left;border:0;background:none;border-radius:7px;padding:7px 10px;cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
+.fb-it b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fb-it .ppvc{font-family:ui-monospace,Consolas,monospace;font-weight:700;color:#1556b8;font-size:12px;text-align:right}
+.fb-it .m{font-size:11.5px;color:var(--muted)}.fb-it .n{font-size:11.5px;color:var(--muted);text-align:right}
+.fb-it:hover,.fb-it.on{background:#eef4fd}
+.fb-none{padding:10px;font-size:12.5px;color:var(--muted)}
+.fb-perim{font-size:12.5px;color:#92400e;background:#fff7e6;border:1px solid #f6d58e;border-radius:99px;padding:4px 11px}
+.fb-perim .lnk,.lnk{border:0;background:none;color:#1556b8;cursor:pointer;font:inherit;font-size:12px;text-decoration:underline;padding:0 2px}
 .fbar .fl{font-weight:600;color:var(--ink)}
 .fchip{display:inline-flex;align-items:center;gap:6px;background:#1B6FE8;color:#fff;border:0;border-radius:16px;padding:4px 10px 4px 12px;font-size:12.5px;cursor:pointer}
 .fchip b{font-weight:600;opacity:.85}
@@ -1274,7 +1289,7 @@ var CORE = (function () {
 
   function rptListe(M, key, filt, topN) {
     var r = listeSites(M, key, filt), L = r.def;
-    var cols = [{ l: '#', f: 'int' }, { l: 'Agence', f: 'txt' }, { l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'PPV', f: 'txt' }, { l: 'Total', f: 'int' }]
+    var cols = [{ l: '#', f: 'int' }, { l: 'Agence', f: 'txt' }, { l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Identifiant IPOP', f: 'txt' }, { l: 'Total', f: 'int' }]
       .concat(r.brKeys.map(function (k) { return { l: STATUT_COURT[k] || k, full: k, f: 'int' }; }))
       .concat([{ l: '% HNO', f: 'pct' }, { l: 'Principaux libellés', f: 'txt' }]);
     var lim = topN ? r.sites.slice(0, topN) : r.sites;
@@ -1332,7 +1347,7 @@ var CORE = (function () {
       if (!o.last || a.dt > o.last) o.last = a.dt;
     });
     var list = Object.keys(by).map(function (k) { return by[k]; }).sort(function (x, y) { return (y.a.eauPotable - x.a.eauPotable) || y.n - x.n; });
-    var cols = [{ l: 'Eau potable', f: 'txt' }, { l: 'Agence', f: 'txt' }, { l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Code PPV', f: 'txt' }, { l: 'Catégorie', f: 'txt' },
+    var cols = [{ l: 'Eau potable', f: 'txt' }, { l: 'Agence', f: 'txt' }, { l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Identifiant IPOP', f: 'txt' }, { l: 'Catégorie', f: 'txt' },
       { l: 'Intrusions', f: 'int' }, { l: 'Justifiées (G2A)', f: 'int' }, { l: '% en HNO', f: 'pct' }, { l: 'Dernière', f: 'txt' }, { l: 'Libellé', f: 'txt' }];
     var rows = list.map(function (o) {
       var top = Object.keys(o.info).sort(function (x, y) { return o.info[y] - o.info[x]; })[0];
@@ -1371,10 +1386,10 @@ var CORE = (function () {
     if (re_.length) add('info', 'Lignes du journal sans rang AHU / ABU / ANU écartées', re_.map(function (k) { return '« ' + k + ' » : ' + fr(q.rangsEcartes[k]); }).join(', ') + '.');
     if (q.badDates) add('err', 'Dates illisibles', fr(q.badDates) + ' ligne(s) du journal sans date exploitable ont été ignorées.');
     if (M.period.mois.length > 1) add('warn', 'Plusieurs mois dans le journal', 'Le journal couvre ' + M.period.mois.join(', ') + '. Vérifiez que l\'export correspond bien à la période voulue.');
-    if (q.dupPpv) add('warn', 'Doublons dans le BDPTI', q.dupPpv + ' code(s) PPV en double : seule la première ligne est prise en compte.');
+    if (q.dupPpv) add('warn', 'Doublons dans le BDPTI', q.dupPpv + ' identifiant(s) IPOP en double : seule la première ligne est prise en compte.');
     var up = Object.keys(q.unknownPpv);
-    if (up.length) add('warn', 'Sites du journal absents du BDPTI', fr(up.length) + ' code(s) PPV, ' + fr(up.reduce(function (s, k) { return s + q.unknownPpv[k]; }, 0)) + ' alarme(s). Elles comptent dans le total agence (ligne « Site absent du BDPTI ») mais n\'ont ni secteur ni métier.',
-      { cols: ['Code PPV', 'Alarmes', 'Site (journal)'], rows: up.map(function (k) { var a = M.alarms.filter(function (x) { return x.ppv === k; })[0]; return [k, q.unknownPpv[k], a ? a.siteNom : '']; }) });
+    if (up.length) add('warn', 'Sites du journal absents du BDPTI', fr(up.length) + ' identifiant(s) IPOP, ' + fr(up.reduce(function (s, k) { return s + q.unknownPpv[k]; }, 0)) + ' alarme(s). Elles comptent dans le total agence (ligne « Site absent du BDPTI ») mais n\'ont ni secteur ni métier.',
+      { cols: ['Identifiant IPOP', 'Alarmes', 'Site (journal)'], rows: up.map(function (k) { var a = M.alarms.filter(function (x) { return x.ppv === k; })[0]; return [k, q.unknownPpv[k], a ? a.siteNom : '']; }) });
     var av = Object.keys(q.agVariants);
     if (av.length) add('info', 'Libellés d\'agence non standard (corrigés automatiquement)', av.map(function (k) { return '« ' + k + ' » ×' + q.agVariants[k]; }).join(', '));
     var unkAg = {}; M.alarms.forEach(function (a) { if (M.agences.indexOf(a.agence) < 0) unkAg[a.agence] = (unkAg[a.agence] || 0) + 1; });
@@ -1391,7 +1406,7 @@ var CORE = (function () {
     if (bad.length) add(badAl ? 'err' : 'warn', 'Secteurs BDPTI non reconnus', bad.length + ' libellé(s) ne correspondent à aucun secteur configuré. Affectez-les dans Paramètres → Secteurs pour qu\'ils apparaissent dans les tableaux par secteur.', { cols: ['Libellé BDPTI', 'Agence', 'Sites', 'Alarmes', 'Affectation'], rows: bad });
     if (alias.length) add('info', 'Secteurs BDPTI corrigés par le dictionnaire', alias.length + ' libellé(s) mal orthographiés ont été rattachés à leur secteur.', { cols: ['Libellé BDPTI', 'Agence', 'Sites', 'Alarmes', 'Affecté à'], rows: alias });
     var mism = M.sites.filter(function (s) { return s.sec.kind === 'ok' && s.sec.agence !== s.agence; });
-    if (mism.length) add('warn', 'Sites dont le secteur appartient à une autre agence', mism.length + ' site(s).', { cols: ['PPV', 'Site', 'Agence BDPTI', 'Secteur'], rows: mism.slice(0, 200).map(function (s) { return [s.ppv, s.nom, s.agence, s.sec.nom]; }) });
+    if (mism.length) add('warn', 'Sites dont le secteur appartient à une autre agence', mism.length + ' site(s).', { cols: ['Identifiant IPOP', 'Site', 'Agence BDPTI', 'Secteur'], rows: mism.slice(0, 200).map(function (s) { return [s.ppv, s.nom, s.agence, s.sec.nom]; }) });
     // bouclage
     var bl = M.agences.map(function (ag) { var r = rptSecteurs(M, ag).bouclage; return [ag, r.somme, r.total, r.sommeSites, r.sites, r.ok ? 'OK' : 'ÉCART']; });
     add(bl.every(function (r) { return r[5] === 'OK'; }) ? 'ok' : 'err', 'Bouclage secteurs → agences', 'La somme des lignes de secteur doit retomber sur le total agence (alarmes et sites).', { cols: ['Agence', 'Σ secteurs (alarmes)', 'Total agence', 'Σ secteurs (sites)', 'Sites agence', 'Résultat'], rows: bl });
@@ -1933,7 +1948,7 @@ var CLASSEUR = (function () {
         var IA = CORE.rptIntrusions(M, ag);
         ra = section(wsA, ra, 'Alarmes intrusion — ' + nf(IA.total, 0) + ' sur ' + nf(IA.nSites, 0) + ' sites, dont ' + nf(IA.totalEP, 0) + ' en eau potable (' + nf(IA.nSitesEP, 0) + ' sites)', 17, 'Eau potable en premier et surlignée en rouge. Justifiées = sortie d\'astreinte (G2A).');
         wsA.getCell(ra - 2, 1).font = font({ size: 12, bold: true, color: C.red });
-        var iaT = { cols: [{ l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Intrusions', f: 'int' }, { l: 'Justifiées', f: 'int' }, { l: '% HNO', f: 'pct' }, { l: 'Eau potable', f: 'txt' }, { l: 'Code PPV', f: 'txt' }, { l: 'Dernière', f: 'txt' }, { l: '', f: 'txt' }, { l: 'Catégorie · libellé', f: 'txt' }],
+        var iaT = { cols: [{ l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Intrusions', f: 'int' }, { l: 'Justifiées', f: 'int' }, { l: '% HNO', f: 'pct' }, { l: 'Eau potable', f: 'txt' }, { l: 'Identifiant IPOP', f: 'txt' }, { l: 'Dernière', f: 'txt' }, { l: '', f: 'txt' }, { l: 'Catégorie · libellé', f: 'txt' }],
           rows: IA.rows.slice(0, 20).map(function (x) { var d = x.cells[9]; return { cls: x.ep ? 'ep' : '', cells: [x.cells[2], x.cells[3], x.cells[6], x.cells[7], x.cells[8], x.ep ? 'OUI' : '', x.cells[4], d.slice(8, 10) + '/' + d.slice(5, 7) + ' ' + d.slice(11, 16), '', x.cells[5] + ' · ' + x.cells[10]] }; }) };
         if (!iaT.rows.length) iaT.rows = [{ cells: ['Aucune intrusion ce mois', '', null, null, null, '', '', '', '', ''] }];
         ra = block(wsA, ra, iaT, { alert: true, zebra: false }, ctx);
@@ -1941,12 +1956,12 @@ var CLASSEUR = (function () {
         ra++;
         ra = section(wsA, ra, 'Top 10 des sites', 17, 'Toutes alarmes hors inhibées. Liste complète : feuille « Top sites ».');
         var top = CORE.rptListe(M, 'top', { agence: ag }, 10);
-        var topT = { cols: [{ l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Alarmes', f: 'int' }, { l: 'AHU', f: 'int' }, { l: 'ABU', f: 'int' }, { l: 'ANU', f: 'int' }, { l: '% HNO', f: 'pct' }, { l: 'Code PPV', f: 'txt' }, { l: 'Principaux libellés', f: 'txt' }],
+        var topT = { cols: [{ l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Alarmes', f: 'int' }, { l: 'AHU', f: 'int' }, { l: 'ABU', f: 'int' }, { l: 'ANU', f: 'int' }, { l: '% HNO', f: 'pct' }, { l: 'Identifiant IPOP', f: 'txt' }, { l: 'Principaux libellés', f: 'txt' }],
           rows: top.rows.map(function (x) { var s = x.site; return { cells: [x.cells[2], x.cells[3], x.cells[5], s.br.AHU || 0, s.br.ABU || 0, s.br.ANU || 0, s.n ? s.hno / s.n * 100 : null, x.cells[4], x.cells[x.cells.length - 1]] }; }) };
         ra = block(wsA, ra, topT, {}, ctx) + 1;
         var rep = CORE.rptRepetitifs(M, ctx.repSeuil, ag);
         ra = section(wsA, ra, 'Points répétitifs (≥ ' + ctx.repSeuil + ' occurrences) — ' + rep.n + ' point(s), ' + nf(rep.part, 1) + ' % des alarmes de l\'agence', 17);
-        var repT = { cols: [{ l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Occurr.', f: 'int' }, { l: 'Par jour', f: 'dec' }, { l: 'Rang', f: 'txt' }, { l: '% HNO', f: 'pct' }, { l: 'Statut', f: 'txt' }, { l: 'Code PPV', f: 'txt' }, { l: 'Libellé · point (mnémonique)', f: 'txt' }],
+        var repT = { cols: [{ l: 'Secteur', f: 'txt' }, { l: 'Site', f: 'txt' }, { l: 'Occurr.', f: 'int' }, { l: 'Par jour', f: 'dec' }, { l: 'Rang', f: 'txt' }, { l: '% HNO', f: 'pct' }, { l: 'Statut', f: 'txt' }, { l: 'Identifiant IPOP', f: 'txt' }, { l: 'Libellé · point (mnémonique)', f: 'txt' }],
           rows: rep.rows.slice(0, 15).map(function (x) { return { cells: [x.cells[2], x.cells[3], x.cells[6], x.cells[7], x.cells[8], x.cells[10], CORE.STATUT_COURT[x.cells[9]] || x.cells[9], x.a ? x.a.ppv : '', x.cells[5] + ' · ' + x.cells[4]] }; }) };
         if (!repT.rows.length) repT.rows = [{ cells: ['Aucun point au-dessus du seuil', '', null, null, '', null, '', '', ''] }];
         block(wsA, ra, repT, {}, ctx);
@@ -2084,8 +2099,8 @@ var CLASSEUR = (function () {
         sheetTitle(wsL, L.titre, L.aide, 12, { M: M });
         var ci = wsL.getCell(4, 1); ci.value = nf(res.total, 0) + ' alarmes sur ' + nf(res.nSites, 0) + ' sites — ' + parAg + '. Utilisez les filtres des en-têtes.'; ci.font = font({ size: 9.5, bold: true, color: C.head });
         var lcols = res.cols.map(function (x) { return { l: x.full || x.l, f: x.f }; });
-        var wdef = { '#': 6, 'Agence': 20, 'Secteur': 24, 'Site': 40, 'PPV': 12, 'Total': 9, '% HNO': 9, 'Principaux libellés': 80 };
-        lcols.forEach(function (x) { x.w = wdef[x.l] || (x.l.length > 14 ? 14 : 11); if (x.l === 'PPV') x.l = 'Code PPV'; });
+        var wdef = { '#': 6, 'Agence': 20, 'Secteur': 24, 'Site': 40, 'Identifiant IPOP': 15, 'Total': 9, '% HNO': 9, 'Principaux libellés': 80 };
+        lcols.forEach(function (x) { x.w = wdef[x.l] || (x.l.length > 14 ? 14 : 11);  });
         xlTable(wsL, 6, 'T_Liste_' + li, lcols, res.rows.map(function (x) { return x.cells; }), 'TableStyleMedium2');
       });
 
@@ -2125,7 +2140,7 @@ var CLASSEUR = (function () {
       ws = newSheet(wb, 'Données alarmes', { tab: C.muted, freeze: 5 });
       sheetTitle(ws, 'Journal OCEANE enrichi', nf(M.alarms.length, 0) + ' alarmes. Colonnes ajoutées par l\'outil : secteur retenu, métier, catégorie, HO/HNO, férié, classement communication / intrusion. Commentaires non repris (données personnelles).', 12, { M: M });
       var jcols = [{ l: 'Date et heure', f: 'txt', w: 19 }, { l: 'Jour', f: 'txt', w: 11 }, { l: 'Heure', f: 'int', w: 7 }, { l: 'HO / HNO', f: 'txt', w: 9 }, { l: 'Férié', f: 'txt', w: 8 }, { l: 'Agence', f: 'txt', w: 20 },
-        { l: 'Secteur', f: 'txt', w: 22 }, { l: 'Code PPV', f: 'txt', w: 11 }, { l: 'Site', f: 'txt', w: 34 }, { l: 'Métier', f: 'txt', w: 13 }, { l: 'Catégorie', f: 'txt', w: 30 }, { l: 'Mnémonique', f: 'txt', w: 20 },
+        { l: 'Secteur', f: 'txt', w: 22 }, { l: 'Identifiant IPOP', f: 'txt', w: 11 }, { l: 'Site', f: 'txt', w: 34 }, { l: 'Métier', f: 'txt', w: 13 }, { l: 'Catégorie', f: 'txt', w: 30 }, { l: 'Mnémonique', f: 'txt', w: 20 },
         { l: 'Libellé (Info)', f: 'txt', w: 38 }, { l: 'Rang', f: 'txt', w: 7 }, { l: 'Statut de clôture', f: 'txt', w: 38 }, { l: 'Délai clôture (min)', f: 'int', w: 11 }, { l: 'Inhibée', f: 'txt', w: 8 }, { l: 'Commun.', f: 'txt', w: 8 }, { l: 'Intrusion', f: 'txt', w: 8 }];
       var jrows = M.alarms.map(function (a) { return [a.dt.toISOString().replace('T', ' ').slice(0, 19), a.jour, a.heure, a.hno ? 'HNO' : 'HO', a.ferie ? 'oui' : '', a.agence, a.sec.nom, a.ppv, a.siteNom, a.activite, a.categorie, a.mnemo, a.info, a.rang, a.statut, a.delai === null ? null : Math.round(a.delai), a.exclu ? 'oui' : '', a.com ? 'oui' : '', a.intru ? 'oui' : '']; });
       xlTable(ws, 5, 'T_Alarmes', jcols, jrows, 'TableStyleLight9');
@@ -2133,7 +2148,7 @@ var CLASSEUR = (function () {
       /* ===== DONNÉES SITES ===== */
       ws = newSheet(wb, 'Données sites', { tab: C.muted, freeze: 5 });
       sheetTitle(ws, 'Sites BDPTI de la région', nf(M.sites.length, 0) + ' sites retenus et ' + nf(M.sitesEcartesList.length, 0) + ' écartés. Contacts et astreintes non repris (données personnelles).', 12, { M: M });
-      var scols = [{ l: 'Code PPV', f: 'txt', w: 11 }, { l: 'Agence', f: 'txt', w: 20 }, { l: 'Site', f: 'txt', w: 38 }, { l: 'Commune', f: 'txt', w: 22 }, { l: 'Secteur BDPTI', f: 'txt', w: 22 }, { l: 'Secteur retenu', f: 'txt', w: 22 },
+      var scols = [{ l: 'Identifiant IPOP', f: 'txt', w: 11 }, { l: 'Agence', f: 'txt', w: 20 }, { l: 'Site', f: 'txt', w: 38 }, { l: 'Commune', f: 'txt', w: 22 }, { l: 'Secteur BDPTI', f: 'txt', w: 22 }, { l: 'Secteur retenu', f: 'txt', w: 22 },
         { l: 'Métier', f: 'txt', w: 13 }, { l: 'Catégorie', f: 'txt', w: 32 }, { l: 'Actif', f: 'txt', w: 7 }, { l: 'Alarmes du mois', f: 'int', w: 10 }, { l: 'Pris en compte', f: 'txt', w: 10 }, { l: 'Raison', f: 'txt', w: 40 }];
       var srows = M.sites.map(function (s) { return [s.ppv, s.agence, s.nom, s.commune, s.secteurBrut, s.sec.nom, s.activite, s.categorie, s.actif ? 'oui' : 'non', s.nAlarmes, s.sec.exclu ? 'hors total agence' : 'oui', s.sec.exclu ? 'Secteur exclu du périmètre agence' : (s.sec.kind !== 'ok' ? 'Secteur à vérifier' : '')]; })
         .concat(M.sitesEcartesList.map(function (s) { return [s.ppv, s.agence, s.nom, '', s.secteur, '', s.activite, s.categorie, '', null, 'non', s.raison]; }));
@@ -2262,7 +2277,7 @@ var CLASSEUR = (function () {
         var dv = typeof v === 'number' ? v : (v && typeof v === 'object' ? v.AHU : (v == null ? '' : String(v)));
         var shown = isEc && typeof v === 'number' && f === 'pct' ? fmt(v, 'dpc') : fmt(v, f);
         if (opts.selCol === ci) cls.push('selc');
-        if (t.cols[ci] && /^(PPV|Code PPV)$/.test(t.cols[ci].l)) cls.push('ppvc');
+        if (t.cols[ci] && /^(PPV|Identifiant IPOP|Identifiant IPOP)$/.test(t.cols[ci].l)) cls.push('ppvc');
         h += '<td' + (cls.length ? ' class="' + cls.join(' ').trim() + '"' : '') + (opts.sort ? ' data-v="' + esc(dv) + '"' : '') + (opts.ellCols && opts.ellCols.indexOf(ci) >= 0 ? ' title="' + esc(v) + '"' : '') + '>' + shown + '</td>';
       });
       h += '</tr>';
@@ -2546,17 +2561,80 @@ var CLASSEUR = (function () {
   function refreshData() { _fm = {}; var y = window.scrollY; renderData(); window.scrollTo(0, y); }
   function renderData() { if (!state.model) return; renderSynthese(); renderSecteurs(); renderListes(); renderRepetitifs(); renderVolumetrie(); renderRepartitions(); renderFbar(); }
   function nRetenues(M) { return CORE.perimetres(M)[0].alarms.filter(function (a) { return !a.exclu; }).length; }
+  /* ---------- Barre de périmètre : agence, secteur, recherche de site, périmètre mémorisé ---------- */
+  var PERIM_KEY = 'gdo.suiviAlarmes.perimetre.v1';
+  function lirePerim() { try { return JSON.parse(localStorage.getItem(PERIM_KEY) || 'null'); } catch (e) { return null; } }
+  function perimDefaut(M) {
+    var P = lirePerim(), f = {}; if (!P || !M) return f;
+    if (P.agence && M.agences.indexOf(P.agence) >= 0) f.agence = P.agence;
+    if (P.secteur && M.sites.some(function (s) { return s.sec.nom === P.secteur && (!f.agence || s.agence === f.agence); })) f.secteur = P.secteur;
+    return f;
+  }
+  function secteursDe(M, ag) {
+    var o = {}; M.sites.forEach(function (s) { if (s.sec.kind === 'ok' && (!ag || s.agence === ag)) (o[s.agence] || (o[s.agence] = {}))[s.sec.nom] = 1; });
+    return o;
+  }
+  var _siteIdx = null, _siteIdxM = null;
+  function siteIndex() {
+    var M = state.model; if (_siteIdxM === M && _siteIdx) return _siteIdx;
+    var by = {};
+    M.sites.forEach(function (s) { by[s.ppv] = { ppv: s.ppv, nom: s.nom, commune: s.commune || '', agence: s.agence, secteur: s.sec.nom, n: 0 }; });
+    M.alarms.forEach(function (a) { if (a.exclu) return; var o = by[a.ppv] || (by[a.ppv] = { ppv: a.ppv, nom: a.siteNom, commune: '', agence: a.agence, secteur: a.sec.nom, n: 0 }); o.n++; });
+    _siteIdx = Object.keys(by).map(function (k) { var o = by[k]; o.k = CORE.ik(o.nom + ' ' + o.ppv + ' ' + o.commune); o.kn = CORE.ik(o.nom); return o; });
+    _siteIdxM = M; return _siteIdx;
+  }
+  function chercherSites(q) {
+    q = CORE.ik(q); if (q.length < 2) return [];
+    var mots = q.split(' '), f = state.f;
+    return siteIndex().filter(function (o) { return (!f.agence || o.agence === f.agence) && mots.every(function (m) { return o.k.indexOf(m) >= 0; }); })
+      .sort(function (a, b) { var pa = a.kn.indexOf(q) === 0 || a.ppv === q ? 0 : 1, pb = b.kn.indexOf(q) === 0 || b.ppv === q ? 0 : 1; return pa - pb || b.n - a.n; }).slice(0, 10);
+  }
+  function ouvrirSite(ppv) { state.f.ppv = ppv; _fm = {}; renderData(); go('synthese'); window.scrollTo(0, 0); }
   function renderFbar() {
     var b = $('#fbar'); if (!b) return;
     if (!state.model || !DATA_PAGES[state.page]) { b.hidden = true; return; }
     b.hidden = false;
-    var keys = F_ORDER.filter(function (k) { return state.f[k] !== undefined; });
-    if (!keys.length) { b.innerHTML = '<span class="tip">💡 Cliquez une agence, un secteur, une barre, un niveau, un statut ou un jour : toutes les vues se filtrent ensemble.</span>'; return; }
-    var n = nRetenues(fm());
-    b.innerHTML = '<span class="fl">Filtres actifs :</span>' + keys.map(function (k) { return '<button class="fchip" data-rm="' + k + '" title="Retirer ce filtre"><b>' + esc(F_LABEL[k]) + '</b> ' + esc(fVal(k, state.f[k])) + ' <span class="x">×</span></button>'; }).join('') +
-      '<span class="tip">· ' + nf0.format(n) + ' alarmes retenues</span><button class="btn-reset sm" id="fReset">↺ Réinitialiser</button>';
-    $$('[data-rm]', b).forEach(function (x) { x.onclick = function () { delete state.f[x.dataset.rm]; refreshData(); }; });
-    $('#fReset').onclick = function () { state.f = {}; refreshData(); toast('Filtres réinitialisés'); };
+    var M = state.model, f = state.f, P = lirePerim();
+    var S = secteursDe(M, f.agence), ags = Object.keys(S);
+    var secOpts = ags.map(function (ag) { var l = Object.keys(S[ag]).sort(function (a, c) { return a.localeCompare(c, 'fr'); });
+      var o = l.map(function (sn) { return '<option value="' + esc(sn) + '"' + (sn === f.secteur ? ' selected' : '') + '>' + esc(sn) + '</option>'; }).join('');
+      return f.agence ? o : '<optgroup label="' + esc(shortAg(ag)) + '">' + o + '</optgroup>'; }).join('');
+    var perimTxt = P && (P.agence || P.secteur) ? [P.agence ? shortAg(P.agence) : '', P.secteur || ''].filter(Boolean).join(' · ') : '';
+    var estPerim = P && (P.agence || '') === (f.agence || '') && (P.secteur || '') === (f.secteur || '');
+    var h = '<div class="fb-row">' +
+      '<label class="fb-l">Agence<select id="fbAg"><option value="">Toute la région</option>' + M.agences.map(function (a) { return '<option value="' + esc(a) + '"' + (a === f.agence ? ' selected' : '') + '>' + esc(shortAg(a)) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="fb-l">Secteur<select id="fbSec"><option value="">Tous les secteurs</option>' + secOpts + '</select></label>' +
+      '<div class="fb-search"><input type="search" id="fbQ" placeholder="Rechercher un site : nom, identifiant IPOP ou commune" autocomplete="off"><div class="fb-sug" id="fbSug" hidden></div></div>' +
+      ((f.agence || f.secteur) && !estPerim ? '<button class="btn sm" id="fbSave" title="À chaque nouveau chargement, l\'outil s\'ouvrira directement sur ce périmètre">★ En faire mon périmètre</button>' : '') +
+      (perimTxt ? '<span class="fb-perim" title="L\'outil s\'ouvre directement sur ce périmètre">★ Mon périmètre : <b>' + esc(perimTxt) + '</b>' + (!estPerim ? ' <button class="lnk" id="fbGo">appliquer</button>' : '') + ' <button class="lnk" id="fbForget" title="Ne plus ouvrir sur ce périmètre">oublier</button></span>' : '') +
+      '</div>';
+    var keys = F_ORDER.filter(function (k) { return f[k] !== undefined; });
+    if (!keys.length) h += '<div class="fb-row"><span class="tip">💡 Choisissez une agence ou un secteur ci-dessus, cherchez un site, ou cliquez directement une agence, une barre, un niveau, un statut ou un jour : toutes les vues se filtrent ensemble.</span></div>';
+    else h += '<div class="fb-row"><span class="fl">Filtres actifs :</span>' + keys.map(function (k) { return '<button class="fchip" data-rm="' + k + '" title="Retirer ce filtre"><b>' + esc(F_LABEL[k]) + '</b> ' + esc(fVal(k, f[k])) + ' <span class="x">×</span></button>'; }).join('') +
+      '<span class="tip">· ' + nf0.format(nRetenues(fm())) + ' alarmes retenues</span><button class="btn-reset sm" id="fReset">↺ Réinitialiser</button></div>';
+    b.innerHTML = h;
+    $$('[data-rm]', b).forEach(function (x) { x.onclick = function () { delete state.f[x.dataset.rm]; if (x.dataset.rm === 'agence') delete state.f.secteur; refreshData(); }; });
+    var rz = $('#fReset'); if (rz) rz.onclick = function () { state.f = {}; refreshData(); toast('Filtres réinitialisés'); };
+    $('#fbAg').onchange = function () { if (this.value) state.f.agence = this.value; else delete state.f.agence; delete state.f.secteur; delete state.f.ppv; afterFilter(); };
+    $('#fbSec').onchange = function () { var v = this.value; if (!v) delete state.f.secteur; else { state.f.secteur = v; var s0 = M.sites.filter(function (s) { return s.sec.nom === v; })[0]; if (s0) state.f.agence = s0.agence; } delete state.f.ppv; afterFilter(); };
+    var sv = $('#fbSave'); if (sv) sv.onclick = function () { try { localStorage.setItem(PERIM_KEY, JSON.stringify({ agence: state.f.agence || '', secteur: state.f.secteur || '' })); } catch (e) { } renderFbar(); toast('Périmètre mémorisé : l\'outil s\'ouvrira directement dessus'); };
+    var fg = $('#fbForget'); if (fg) fg.onclick = function () { try { localStorage.removeItem(PERIM_KEY); } catch (e) { } renderFbar(); toast('Périmètre oublié : l\'outil s\'ouvrira sur toute la région'); };
+    var gp = $('#fbGo'); if (gp) gp.onclick = function () { var d = perimDefaut(M); delete state.f.agence; delete state.f.secteur; Object.assign(state.f, d); afterFilter(); };
+    var q = $('#fbQ'), sug = $('#fbSug'), res = [], cur = -1;
+    var dessin = function () {
+      if (!res.length) { sug.hidden = !(q.value.trim().length >= 2); sug.innerHTML = '<div class="fb-none">Aucun site trouvé' + (state.f.agence ? ' dans ' + esc(shortAg(state.f.agence)) : '') + '</div>'; return; }
+      sug.hidden = false;
+      sug.innerHTML = res.map(function (o, i) { return '<button type="button" class="fb-it' + (i === cur ? ' on' : '') + '" data-ppv="' + esc(o.ppv) + '"><b>' + esc(o.nom) + '</b><span class="ppvc">' + esc(o.ppv) + '</span><span class="m">' + esc([shortAg(o.agence), o.secteur, o.commune].filter(Boolean).join(' · ')) + '</span><span class="n">' + nf0.format(o.n) + ' alarme' + (o.n > 1 ? 's' : '') + '</span></button>'; }).join('');
+      $$('[data-ppv]', sug).forEach(function (x) { x.onmousedown = function (e) { e.preventDefault(); ouvrirSite(x.dataset.ppv); }; });
+    };
+    q.oninput = function () { res = chercherSites(q.value); cur = res.length ? 0 : -1; dessin(); };
+    q.onkeydown = function (e) {
+      if (e.key === 'ArrowDown' && res.length) { cur = (cur + 1) % res.length; dessin(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp' && res.length) { cur = (cur - 1 + res.length) % res.length; dessin(); e.preventDefault(); }
+      else if (e.key === 'Enter' && cur >= 0) { ouvrirSite(res[cur].ppv); }
+      else if (e.key === 'Escape') { sug.hidden = true; }
+    };
+    q.onblur = function () { setTimeout(function () { sug.hidden = true; }, 150); };
   }
   function resetAll() {
     var u = state.ui; state.f = {};
@@ -2655,7 +2733,7 @@ var CLASSEUR = (function () {
       }).catch(function (err) { $('#importMsg').innerHTML += '<div class="warnbox">Impossible de lire « ' + esc(f.name) + ' » : ' + esc(err.message) + '</div>'; });
     });
     chain.then(function () {
-      if (gotData && state.journal && state.bdpti) { state.ctrlChecked = false; state.reportDone = false; state.libChecked = false; state.f = {}; recompute(); go('synthese'); toast('Rapport calculé'); }
+      if (gotData && state.journal && state.bdpti) { state.ctrlChecked = false; state.reportDone = false; state.libChecked = false; state.f = {}; recompute(); state.f = perimDefaut(state.model); if (Object.keys(state.f).length) { afterFilter(); toast('Rapport calculé · ouvert sur votre périmètre : ' + [state.f.agence ? shortAg(state.f.agence) : '', state.f.secteur || ''].filter(Boolean).join(' · ')); } else toast('Rapport calculé'); go('synthese'); }
       else if (evoImported) { renderAll(); if (!state.model) go('evolution'); toast('Historique importé'); }
       else if (gotData) { renderSide(); toast(state.journal ? 'Journal chargé : déposez le BDPTI' : 'BDPTI chargé : déposez le journal'); }
     });
@@ -2778,7 +2856,7 @@ var CLASSEUR = (function () {
 
     var h = pageHead('Fiche site — ' + nom, esc(M0.period.label) + (others.length ? ' · filtres en plus : ' + esc(others.map(function (k) { return F_LABEL[k] + ' ' + fVal(k, f[k]); }).join(', ')) : ''),
       '<button class="btn" id="fsBack">← Retour à la synthèse</button>');
-    h += '<div class="card fs-id"><div class="fs-ppv"><span class="l">Code PPV</span><button class="ppv-badge" id="fsPpv" title="Cliquer pour copier le code PPV">' + esc(f.ppv) + ' <span class="cp">⧉</span></button></div><div><span class="l">Agence</span><b data-f="agence" data-v="' + esc(ag || '') + '">' + esc(shortAg(ag || '—')) + '</b></div><div><span class="l">Secteur</span><b>' + esc(sec.nom) + '</b></div>' +
+    h += '<div class="card fs-id"><div class="fs-ppv"><span class="l">Identifiant IPOP</span><button class="ppv-badge" id="fsPpv" title="Cliquer pour copier le identifiant IPOP">' + esc(f.ppv) + ' <span class="cp">⧉</span></button></div><div><span class="l">Agence</span><b data-f="agence" data-v="' + esc(ag || '') + '">' + esc(shortAg(ag || '—')) + '</b></div><div><span class="l">Secteur</span><b>' + esc(sec.nom) + '</b></div>' +
       '<div><span class="l">Interlocuteur secteur</span><b>' + (itl ? esc(itl) : '<span class="m">à renseigner (Paramètres)</span>') + '</b></div>' +
       '<div><span class="l">Métier · catégorie</span><b>' + esc(site ? site.activite : any.activite || '—') + '</b> <span class="m">' + esc(site ? site.categorie : '') + '</span>' + (ep ? ' <span class="pill bad">eau potable</span>' : '') + '</div>' +
       '<div><span class="l">Commune</span><b>' + esc(site && site.commune || '—') + '</b></div></div>';
@@ -2847,28 +2925,59 @@ var CLASSEUR = (function () {
       '</tbody></table></div>' + (rows.length > lim ? '<p class="note"><button class="btn ghost sm" id="fsMore">Afficher 100 de plus</button></p>' : '') + '</div>';
     p.innerHTML = h;
     $('#fsBack').onclick = function () { delete state.f.ppv; delete state.f.info; refreshData(); };
-    $('#fsPpv').onclick = function () { var v = String(state.f.ppv || ''); try { navigator.clipboard.writeText(v).then(function () { toast('Code PPV ' + v + ' copié'); }, function () { toast('Copie impossible : sélectionnez le code'); }); } catch (e) { toast('Copie impossible : sélectionnez le code'); } };
+    $('#fsPpv').onclick = function () { var v = String(state.f.ppv || ''); try { navigator.clipboard.writeText(v).then(function () { toast('Identifiant IPOP ' + v + ' copié'); }, function () { toast('Copie impossible : sélectionnez le code'); }); } catch (e) { toast('Copie impossible : sélectionnez le code'); } };
     var mo = $('#fsMore'); if (mo) mo.onclick = function () { u.fsN = lim + 100; renderSynthese(); };
   }
 
+
+  /* Synthèse vue d'un directeur d'agence (filtre agence) ou d'un responsable de secteur (filtre secteur) */
+  function synGraphesLocal(M0, f, part) {
+    var obj = M0.cfg.objectif, hint0 = part.length ? 'Filtre partiel actif : valeurs non comparables à l\'objectif.' : 'Rouge : au-dessus de l\'objectif (' + obj + ').';
+    var lg = legend([{ name: 'AHU 24h/24', color: cv('c-ahu') }, { name: 'ABU heures ouvrables', color: cv('c-abu') }, { name: 'ANU sous quelques jours', color: cv('c-anu') }]);
+    var flag = function (k) { var l = eqLevel(k.equilibre); return l === 'bad' ? '#c8352a' : l === 'warn' ? '#e09a00' : l === 'good' ? '#15803d' : ''; };
+    if (!f.secteur) {
+      var ag = f.agence, rows = CORE.rptSecteurs(fm('secteur'), ag).rows.filter(function (r) { return r.cls === '' && r.k.sites > 0; });
+      rows.sort(function (a, b) { return b.k.ahuAbuSiteAn - a.k.ahuAbuSiteAn; });
+      var rr = CORE.rptSecteurs(fm(['secteur', 'rang']), ag).rows.filter(function (r) { return (r.cls === '' && r.k.total > 0) || r.cls === 'total'; });
+      var tot = rr.filter(function (r) { return r.cls === 'total'; })[0]; rr = rr.filter(function (r) { return r.cls === ''; }).sort(function (a, b) { return b.k.total - a.k.total; }); if (tot) rr.unshift(tot);
+      return '<div class="syn-grid"><div class="card"><h2>AHU + ABU / site / an par secteur — ' + esc(shortAg(ag)) + '</h2><p class="hint">' + hint0 + ' Secteurs de moins de 10 sites signalés. Cliquez un secteur pour filtrer.</p><div class="chart">' +
+        hbarChart({ labels: rows.map(function (r) { return r.cells[1] + (r.k.sites < 10 ? ' (' + r.k.sites + ' sites)' : ''); }), fk: 'secteur', fv: rows.map(function (r) { return r.cells[1]; }), values: rows.map(function (r) { return r.k.ahuAbuSiteAn; }), target: part.length ? undefined : obj, w: 600, rowH: 30, fs: 12.5 }) + '</div></div>' +
+        '<div class="card"><h2>Répartition AHU / ABU / ANU par secteur</h2><p class="hint">Cible : 1/3 de chaque niveau. Pastille : équilibre. Cliquez un secteur ou un niveau.</p>' + lg +
+        '<div class="chart">' + stack100Chart({ labels: rr.map(function (r) { return r.cls === 'total' ? 'TOTAL AGENCE' : r.cells[1]; }), fk: 'secteur', fv: rr.map(function (r) { return r.cls === 'total' ? '' : r.cells[1]; }), selP: f.rang, bold: rr.map(function (r) { return r.cls === 'total'; }), parts: MIX_PARTS(rr, function (r) { return r.k; }), flags: rr.map(function (r) { return flag(r.k); }), w: 600, rowH: 28, fs: 12 }) + '</div></div></div>';
+    }
+    // responsable de secteur : les sites qui sonnent le plus
+    var Mf = fm(), Mr = fm('rang'), J = Mf.period.jours || 1, by = {}, byR = {};
+    Mf.alarms.forEach(function (a) { if (a.exclu) return; var o = by[a.ppv] || (by[a.ppv] = { ppv: a.ppv, nom: a.siteNom, n: 0, ab: 0 }); o.n++; if (a.rang === 'AHU' || a.rang === 'ABU') o.ab++; });
+    Mr.alarms.forEach(function (a) { if (a.exclu) return; var o = byR[a.ppv] || (byR[a.ppv] = { AHU: 0, ABU: 0, ANU: 0 }); if (o[a.rang] !== undefined) o[a.rang]++; });
+    var L = Object.keys(by).map(function (k) { var o = by[k]; o.r = o.ab / J * 365; return o; });
+    var top = L.slice().sort(function (a, b) { return b.r - a.r || b.n - a.n; }).slice(0, 12), topN = L.slice().sort(function (a, b) { return b.n - a.n; }).slice(0, 12);
+    var lab = function (o) { return (o.nom.length > 34 ? o.nom.slice(0, 33) + '…' : o.nom); };
+    return '<div class="syn-grid"><div class="card"><h2>Sites du secteur — AHU + ABU / an</h2><p class="hint">' + hint0 + ' Les ' + top.length + ' sites les plus sollicités sur ' + L.length + '. Cliquez un site pour ouvrir sa fiche.</p><div class="chart">' +
+      (top.length ? hbarChart({ labels: top.map(lab), fk: 'ppv', fv: top.map(function (o) { return o.ppv; }), values: top.map(function (o) { return o.r; }), target: part.length ? undefined : obj, w: 600, rowH: 28, fs: 12 }) : '<p class="hint">Aucune alarme.</p>') + '</div></div>' +
+      '<div class="card"><h2>Répartition AHU / ABU / ANU des sites</h2><p class="hint">Les ' + topN.length + ' sites qui ont le plus d\'alarmes. Cliquez un site ou un niveau.</p>' + lg +
+      '<div class="chart">' + (topN.length ? stack100Chart({ labels: topN.map(lab), fk: 'ppv', fv: topN.map(function (o) { return o.ppv; }), selP: f.rang, parts: MIX_PARTS(topN, function (o) { return byR[o.ppv] || { AHU: 0, ABU: 0, ANU: 0 }; }), w: 600, rowH: 28, fs: 12 }) : '') + '</div></div></div>';
+  }
   function renderSynthese() {
     if (state.f.ppv) return renderFicheSite();
     var M0 = state.model, Ma = fm('agence'), Mf = fm(), u = state.ui, p = $('#p-synthese'), f = state.f;
     var t = synTable(Ma, u.synAll), Pf = CORE.perimetres(Mf)[0], K = CORE.kpi(Pf.alarms, Pf.sites, Mf), conc = CORE.concentration(Mf), A = attention(Mf);
     var keyPrev = onlyAgFilter() ? (f.agence || 'region') : null, part = filtrePartiel();
     var selCol = f.agence ? 1 + t.P.map(function (x) { return x.key; }).indexOf(f.agence) : undefined;
-    var h = pageHead('Synthèse — ' + M0.period.label, (f.agence ? esc(f.agence) : 'Région ' + esc(M0.cfg.region)) + ' · ' + M0.period.jours + ' jours · objectif ' + M0.cfg.objectif + ' alarmes AHU + ABU par site et par an');
-    h += intruBanner(Ma, t);
+    var h = pageHead('Synthèse — ' + M0.period.label, (f.agence ? esc(f.agence) + (f.secteur ? ' · secteur ' + esc(f.secteur) : '') : 'Région ' + esc(M0.cfg.region)) + ' · ' + M0.period.jours + ' jours · objectif ' + M0.cfg.objectif + ' alarmes AHU + ABU par site et par an');
+    h += f.agence ? intruBanner(Mf, synTable(Mf, false)) : intruBanner(Ma, t);
     h += kpiCardsHTML(K, keyPrev, conc);
     h += '<div class="card"><div class="card-h"><div><h2>Points d\'attention</h2><p class="hint">Repérés automatiquement. Cliquez un secteur ou un site pour filtrer toutes les vues.</p></div></div>' + attentionHTML(Mf, A, 4) + '</div>';
     var P = t.P.slice(1), KK = t.K.slice(1);
     var Mr = fm(['agence', 'rang']), tr = synTable(Mr, false);
     var PK = tr.P.map(function (x, i) { return { key: i ? x.key : '', label: i ? shortAg(x.label) : 'Région', k: tr.K[i] }; });
+    if (f.secteur || f.agence) h += synGraphesLocal(M0, f, part);
+    else {
     h += '<div class="syn-grid"><div class="card"><h2>AHU + ABU / site / an par agence</h2><p class="hint">' + (part.length ? 'Filtre partiel actif : valeurs non comparables à l\'objectif.' : 'Rouge : au-dessus de l\'objectif.') + ' Cliquez une barre pour filtrer.</p><div class="chart">' +
       hbarChart({ labels: P.map(function (x) { return shortAg(x.label); }), fk: 'agence', fv: P.map(function (x) { return x.key; }), sel: f.agence, values: KK.map(function (k) { return k.ahuAbuSiteAn; }), target: part.length ? undefined : M0.cfg.objectif, w: 600, rowH: 40, fs: 13 }) + '</div></div>';
     h += '<div class="card"><h2>Répartition AHU / ABU / ANU</h2><p class="hint">Cible : 1/3 de chaque niveau (pointillés). Pastille : équilibre bon, moyen ou faible. Cliquez une agence ou un niveau.</p>' + legend([{ name: 'AHU 24h/24', color: cv('c-ahu') }, { name: 'ABU heures ouvrables', color: cv('c-abu') }, { name: 'ANU sous quelques jours', color: cv('c-anu') }]) +
       '<div class="chart">' + stack100Chart({ labels: PK.map(function (x) { return x.label; }), fk: 'agence', fv: PK.map(function (x) { return x.key; }), sel: f.agence, selP: f.rang, bold: PK.map(function (x, i) { return i === 0; }), parts: MIX_PARTS(PK, function (x) { return x.k; }),
         flags: PK.map(function (x) { var l = eqLevel(x.k.equilibre); return l === 'bad' ? '#c8352a' : l === 'warn' ? '#e09a00' : l === 'good' ? '#15803d' : ''; }), w: 600, rowH: 34, fs: 13 }) + '</div></div></div>';
+    }
     h += '<details class="card sc"' + (u.scOpen ? ' open' : '') + '><summary><div><h2>Scorecard région et agences</h2><p class="hint">Tous les indicateurs du classeur, côte à côte. Cliquez le nom d\'une agence pour filtrer. Hors ' + esc(M0.cfg.secteursExclusAgence.join(', ')) + ' et hors alarmes inhibées « intervention ».</p></div>' +
       '<button class="btn sm" id="synAll">' + (u.synAll ? 'Vue essentielle' : 'Tous les indicateurs') + '</button></summary>' +
       tableHTML(t, { colF: function (ci) { return ci > 1 ? ['agence', t.P[ci - 1].key] : null; }, selCol: selCol }) + '</details>';
@@ -2945,7 +3054,7 @@ var CLASSEUR = (function () {
     var q = CORE.ik(u.listeQ || '');
     var rows = q ? r.rows.filter(function (x) { return CORE.ik(x.cells.slice(1, 5).join(' ') + ' ' + Object.keys(x.site.infos).join(' ')).indexOf(q) >= 0; }) : r.rows;
     var shown = u.listeN ? rows.slice(0, u.listeN) : rows;
-    var keep = r.cols.map(function (c, i) { return i; }).filter(function (i) { var l = r.cols[i].l; return l !== 'PPV' && !(l === 'Agence' && u.listeAg) && i < r.cols.length - 1; });
+    var keep = r.cols.map(function (c, i) { return i; }).filter(function (i) { var l = r.cols[i].l; return l !== 'Identifiant IPOP' && !(l === 'Agence' && u.listeAg) && i < r.cols.length - 1; });
     var siteCol = keep.indexOf(r.cols.map(function (c) { return c.l; }).indexOf('Site'));
     var t = { cols: keep.map(function (i) { return r.cols[i]; }).concat([{ l: 'Libellé principal', f: 'txt' }]), rows: shown.map(function (x) {
       var s = x.site, top = Object.keys(s.infos).sort(function (a, b) { return s.infos[b] - s.infos[a]; });
@@ -2956,7 +3065,7 @@ var CLASSEUR = (function () {
     h += '<div class="toolbar">' + segHTML('lsType', Object.keys(L).map(function (k) { return [k, LIST_SHORT[k] || L[k].titre]; }), u.liste) + '</div>';
     h += '<div class="toolbar">' + filterSelects(M0) +
       '<label>Afficher<select id="lsN">' + [[10, 'Top 10'], [20, 'Top 20'], [50, 'Top 50'], [0, 'Tous']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === u.listeN ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
-      '<label>Rechercher<input type="search" id="lsQ" placeholder="site, PPV, libellé…" value="' + esc(u.listeQ) + '" style="width:240px"></label>' +
+      '<label>Rechercher<input type="search" id="lsQ" placeholder="site, identifiant IPOP, libellé…" value="' + esc(u.listeQ) + '" style="width:240px"></label>' +
       ((u.listeQ || u.listeN !== 20) ? '<button class="btn-reset sm" id="lsReset" style="margin-bottom:2px">↺ Réinitialiser</button>' : '') + '</div>';
     h += '<div class="card"><div class="card-h"><div><h2>' + esc(r.title) + '</h2><p class="hint">' + esc(r.aide) + '</p></div></div>';
     h += '<div class="chips" style="margin-bottom:10px"><span class="chip"><b>' + fmt(r.total, 'int') + '</b> alarmes</span><span class="chip"><b>' + fmt(r.nSites, 'int') + '</b> sites</span>' +
@@ -2976,7 +3085,7 @@ var CLASSEUR = (function () {
         var s = t.rows[+tr.dataset.i].site, inf = Object.keys(s.infos).sort(function (a, b) { return s.infos[b] - s.infos[a]; });
         var lim = 12, d = document.createElement('tr'); d.className = 'detail';
         var body = function (all) { return '<table class="mini">' + (all ? inf : inf.slice(0, lim)).map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="n">' + s.infos[k] + '</td></tr>'; }).join('') + '</table>' + (!all && inf.length > lim ? '<button class="btn ghost sm more">Voir les ' + inf.length + ' libellés</button>' : ''); };
-        d.innerHTML = '<td colspan="' + t.cols.length + '"><div class="dwrap" style="max-width:' + Math.max(320, tr.closest('.tw').clientWidth - 40) + 'px"><b>' + esc(s.site) + '</b> <span style="color:var(--muted)">— PPV ' + esc(s.ppv) + ' · ' + esc(s.agence) + ' · ' + inf.length + ' libellé(s), ' + s.n + ' alarmes</span> <button class="btn sm" data-f="ppv" data-v="' + esc(s.ppv) + '" style="margin-left:8px">Filtrer toutes les vues sur ce site</button><div style="margin-top:6px" class="lb">' + body(false) + '</div></div></td>';
+        d.innerHTML = '<td colspan="' + t.cols.length + '"><div class="dwrap" style="max-width:' + Math.max(320, tr.closest('.tw').clientWidth - 40) + 'px"><b>' + esc(s.site) + '</b> <span style="color:var(--muted)">— Identifiant IPOP ' + esc(s.ppv) + ' · ' + esc(s.agence) + ' · ' + inf.length + ' libellé(s), ' + s.n + ' alarmes</span> <button class="btn sm" data-f="ppv" data-v="' + esc(s.ppv) + '" style="margin-left:8px">Filtrer toutes les vues sur ce site</button><div style="margin-top:6px" class="lb">' + body(false) + '</div></div></td>';
         tr.after(d);
         var mb = d.querySelector('.more'); if (mb) mb.onclick = function (e) { e.stopPropagation(); d.querySelector('.lb').innerHTML = body(true); };
       };
@@ -2994,7 +3103,7 @@ var CLASSEUR = (function () {
     h += '<div class="toolbar">' + segHTML('lsType', Object.keys(L).map(function (k) { return [k, LIST_SHORT[k] || L[k].titre]; }), u.liste) + '</div>';
     h += '<div class="toolbar">' + filterSelects(M0) +
       '<label class="row" style="flex-direction:row;gap:6px;align-items:center;color:var(--ink);padding-bottom:6px"><input type="checkbox" id="lsEP"' + (u.listeEP ? ' checked' : '') + '> Eau potable seulement</label>' +
-      '<label>Rechercher<input type="search" id="lsQ" placeholder="site, PPV, libellé…" value="' + esc(u.listeQ) + '" style="width:240px"></label></div>';
+      '<label>Rechercher<input type="search" id="lsQ" placeholder="site, identifiant IPOP, libellé…" value="' + esc(u.listeQ) + '" style="width:240px"></label></div>';
     h += '<div class="card"><div class="card-h"><div><h2>Sites avec alarmes intrusion</h2><p class="hint">Eau potable en premier et surlignée : une intrusion sur un réservoir, une usine ou une ressource ne doit pas passer inaperçue. « Justifiées » = sortie d\'astreinte (G2A).</p></div></div>' +
       '<div class="chips" style="margin-bottom:10px"><span class="chip"><b>' + fmt(I.total, 'int') + '</b> intrusions</span><span class="chip"><b>' + fmt(I.nSites, 'int') + '</b> sites</span><span class="chip ep"><b>' + fmt(I.totalEP, 'int') + '</b> en eau potable sur <b>' + fmt(I.nSitesEP, 'int') + '</b> sites</span></div>';
     h += tableHTML({ cols: I.cols, rows: rows.map(function (r) { return { cells: r.cells, cls: r.ep ? 'ep' : '' }; }) }, { sort: true, smallCols: [10], rowF: function (r) { return ['ppv', r.cells[4]]; }, selV: state.f.ppv }) + '</div>';
