@@ -344,6 +344,46 @@ body{background:#f3f6fb}
 /* Filtres croisés */
 .fbar{position:sticky;top:66px;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#f3f6fb;padding:8px 0 10px;margin-bottom:6px;font-size:13px;color:var(--muted);min-height:44px}
 .fbar[hidden]{display:none}
+nav.menu .menu-pli{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;margin:8px 0 2px;padding:3px 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#8a97ab;font-weight:600;cursor:pointer;border-radius:6px}
+nav.menu .menu-pli:hover{background:#f1f5fb;color:#334257}nav.menu .menu-pli span{width:10px;font-size:10px}
+/* Vue d'ensemble */
+#p-accueil,#p-astreinte,#p-tempo{max-width:1180px}
+.ac-note{background:#eef4fd;border:1px solid #cfe0fb;color:#1556b8;border-radius:10px;padding:9px 14px;font-size:13px;margin-bottom:14px}
+.ac-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.ac-q{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--ink);margin-bottom:12px}
+.ac-sub{font-size:13.5px;color:var(--muted);margin:-6px 0 12px}
+.ac-verdict{border-left:6px solid #94a3b8}.ac-verdict.good{border-left-color:#15803d}.ac-verdict.warn{border-left-color:#e09a00}.ac-verdict.bad{border-left-color:#c8352a}
+.ac-vrow{display:flex;gap:28px;align-items:center}
+.ac-big{flex:none;text-align:center;min-width:150px}.ac-big b{display:block;font-family:var(--font-title);font-size:52px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.good .ac-big b{color:#15803d}.warn .ac-big b{color:#b45309}.bad .ac-big b{color:#c8352a}
+.ac-big span{display:block;font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.35}
+.ac-phr{flex:1;min-width:0}.ac-lead{font-size:16.5px;line-height:1.55;color:var(--ink);margin:0 0 12px}
+.ac-down{color:#15803d;font-weight:600}.ac-up{color:#c8352a;font-weight:600}
+.ac-gauge{position:relative;height:12px;border-radius:6px;background:#eef1f6;margin:6px 0 26px}
+.ac-gauge i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:#94a3b8}.good .ac-gauge i{background:#15803d}.warn .ac-gauge i{background:#e09a00}.bad .ac-gauge i{background:#c8352a}
+.ac-gauge em{position:absolute;top:-5px;bottom:-5px;width:0;border-left:2px dashed #10233f}.ac-gauge em span{position:absolute;top:22px;left:-40px;width:80px;text-align:center;font-style:normal;font-size:11.5px;color:#10233f;font-weight:600}
+.ac-def{font-size:12.5px;color:var(--muted);margin:0;line-height:1.5}
+.ac-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.ac-tile{background:var(--surface);border:1px solid var(--line);border-top:4px solid #cbd5e1;border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.ac-tile.good{border-top-color:#15803d}.ac-tile.warn{border-top-color:#e09a00}.ac-tile.bad{border-top-color:#c8352a}
+.ac-tile .t{font-size:12.5px;color:var(--muted);font-weight:600}.ac-tile .v{font-family:var(--font-title);font-size:26px;font-weight:700;color:var(--ink);margin:4px 0 6px;min-height:32px;display:flex;align-items:center}
+.ac-tile .d{font-size:12.5px;color:var(--muted);line-height:1.45}.ac-tile .d b{color:var(--ink)}
+.ac-mix{display:flex;width:100%;height:16px;border-radius:5px;overflow:hidden}.ac-mix i{display:block;height:100%}.ac-mix .ahu{background:var(--c-ahu)}.ac-mix .abu{background:var(--c-abu)}.ac-mix .anu{background:var(--c-anu)}
+.ac-alerts{display:flex;flex-direction:column;gap:10px}
+.ac-alert{display:flex;align-items:center;gap:14px;border-radius:11px;padding:12px 16px;border:1px solid}
+.ac-alert.bad{background:#fdf0ef;border-color:#f3c9c5}.ac-alert.warn{background:#fff7e8;border-color:#f6d9a2}
+.ac-alert .ic{font-size:22px;flex:none}.ac-alert p{flex:1;margin:0;font-size:14.5px;line-height:1.5;color:var(--ink)}.ac-alert .btn{flex:none;background:#fff}
+.ac-ok{font-size:15px;color:#15803d;font-weight:600;margin:0}
+.ac-tab{width:100%;border-collapse:collapse;font-size:13.5px}
+.ac-tab th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line-2,#cfd7e2);padding:8px 10px}
+.ac-tab td{border-bottom:1px solid var(--line);padding:10px;vertical-align:middle}.ac-tab .n{text-align:right;font-variant-numeric:tabular-nums}
+.ac-tab tbody tr{cursor:pointer}.ac-tab tbody tr:hover td{background:#eef4fd}
+.ac-tab td .m{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.ac-act{display:inline-block;font-weight:700;font-size:12.5px;border-radius:6px;padding:3px 9px;background:#eef1f6;color:#334257}
+.ac-act.bad{background:#fdecea;color:#b42318}.ac-act.warn{background:#fff1d6;color:#92400e}.ac-act.teal{background:#dff5f2;color:#0f766e}.ac-act.blue{background:#e8f0fd;color:#1556b8}
+.ac-foot{font-size:12.5px;color:var(--muted);margin:12px 0 0;line-height:1.55}
+.ac-more{font-size:13px;color:var(--muted);padding:4px 4px 30px}
+@media (max-width:1100px){.ac-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.ac-vrow{flex-direction:column;align-items:flex-start}}
 .fbar{flex-direction:column;align-items:stretch;gap:6px}
 .fb-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .fb-l{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink)}
@@ -473,6 +513,9 @@ table.t td.selc{background:#f2f7ff}
     </aside>
     <main id="main">
       <div class="fbar" id="fbar"></div>
+      <section class="panel" id="p-accueil"></section>
+      <section class="panel" id="p-astreinte"></section>
+      <section class="panel" id="p-tempo"></section>
       <section class="panel" id="p-libelles"></section>
       <section class="panel" id="p-synthese"></section>
       <section class="panel" id="p-secteurs"></section>
@@ -641,8 +684,15 @@ var CORE = (function () {
       sansIntervention: ['TLC-Appel sortant vers exploitant', 'TLC-Alarme disparue', 'OCE-Alarme disparue'],
       furtivesHisto: ['TLC-Alarme disparue', 'OCE-Alarme disparue'],
       furtivesTLC: ['TLC-Alarme disparue'],
-      sortieAstreinte: ['TLC-Alarme traitée par G2A']
+      sortieAstreinte: ['TLC-Alarme traitée par G2A'],
+      // astreinte hors heures ouvrées : appel à l'agent sans action justifiée / autres contacts avec l'agent
+      appelSansSuite: ['TLC-Appel sortant vers exploitant'],
+      appelAutres: ['TLC-Télécontrôle prévenu', 'ORDO-Vu avec exploitant']
     },
+    nuitDebut: 22, nuitFin: 6,          // « en pleine nuit » = [22h ; 6h[
+    tempoPaliers: [1, 2, 3, 5, 10, 15], // temporisations proposées (minutes)
+    tempoCouverture: 0.8,               // part des disparitions qu'une temporisation doit absorber
+    tempoMinMesures: 5,                 // nb mini d'alarmes disparues mesurées pour proposer une temporisation
     listes: {
       top:          { titre: 'Top sites', rangs: ['AHU', 'ABU', 'ANU'], statuts: null, filtre: null, colonnes: 'rang',
                       aide: 'Toutes alarmes (hors statuts exclus), classées par site.' },
@@ -1567,7 +1617,80 @@ var CORE = (function () {
     return found;
   }
 
+  /* ---------- Astreinte hors heures ouvrées ---------- */
+  function inSet(list) { var o = {}; (list || []).forEach(function (x) { o[nk(x)] = 1; }); return function (v) { return !!o[nk(v)]; }; }
+  function analyseAstreinte(alarms, cfg) {
+    var K = cfg.kpi || {}, sans = inSet(K.appelSansSuite || DEFAULT_CONFIG.kpi.appelSansSuite), autre = inSet(K.appelAutres || DEFAULT_CONFIG.kpi.appelAutres), sortie = inSet(K.sortieAstreinte);
+    var nd = cfg.nuitDebut == null ? 22 : cfg.nuitDebut, nf = cfg.nuitFin == null ? 6 : cfg.nuitFin;
+    var estNuit = function (h) { return nd > nf ? (h >= nd || h < nf) : (h >= nd && h < nf); };
+    var R = { sans: 0, autre: 0, sortie: 0, nuitSans: 0, nuitSortie: 0, weSans: 0, heures: [], pts: {}, secs: {} };
+    for (var i = 0; i < 24; i++) R.heures.push({ sans: 0, autre: 0, sortie: 0 });
+    alarms.forEach(function (a) {
+      if (a.exclu || !a.hno) return;
+      var t = sans(a.statut) ? 'sans' : sortie(a.statut) ? 'sortie' : autre(a.statut) ? 'autre' : null; if (!t) return;
+      var nuit = estNuit(a.heure), we = a.wd >= 6 || !!a.ferie;
+      R[t]++; R.heures[a.heure][t]++;
+      if (nuit && t === 'sans') R.nuitSans++;
+      if (nuit && t === 'sortie') R.nuitSortie++;
+      if (we && t === 'sans') R.weSans++;
+      var pt = a.mnemo || a.info, k = a.ppv + '||' + pt;
+      var o = R.pts[k] || (R.pts[k] = { ppv: a.ppv, site: a.siteNom, secteur: a.sec.nom, agence: a.agence, sans: 0, nuit: 0, sortie: 0, autre: 0, info: {}, rang: {}, intru: false, ep: a.eauPotable, jours: {} });
+      o[t]++; if (nuit && t === 'sans') o.nuit++; o.info[a.info] = (o.info[a.info] || 0) + 1; o.rang[a.rang] = (o.rang[a.rang] || 0) + 1; if (a.intru) o.intru = true; if (t === 'sans') o.jours[a.jour] = 1;
+      var s = R.secs[a.sec.nom] || (R.secs[a.sec.nom] = { nom: a.sec.nom, agence: a.agence, kind: a.sec.kind, sans: 0, nuit: 0, sortie: 0, autre: 0 });
+      s[t]++; if (nuit && t === 'sans') s.nuit++;
+    });
+    var top = function (m) { var b = null; for (var x in m) if (b === null || m[x] > m[b]) b = x; return b; };
+    R.points = Object.keys(R.pts).map(function (k) { var o = R.pts[k]; o.libelle = top(o.info); o.niveau = top(o.rang); o.nJours = Object.keys(o.jours).length; return o; })
+      .filter(function (o) { return o.sans > 0; }).sort(function (a, b) { return b.sans - a.sans || b.nuit - a.nuit; });
+    R.secteurs = Object.keys(R.secs).map(function (k) { return R.secs[k]; }).sort(function (a, b) { return b.sans - a.sans; });
+    R.appels = R.sans + R.autre + R.sortie;
+    R.def = { nuitDebut: nd, nuitFin: nf };
+    return R;
+  }
+
+  /* ---------- Durée des alarmes disparues seules et temporisations ----------
+     Durée = clôture − apparition, pour les alarmes « disparues » (classées par OCEANE ou par le TC).
+     L'alarme est revenue à la normale AU PLUS TARD à la clôture : la durée réelle est inférieure ou égale.
+     Les alarmes évitées par une temporisation T sont donc comptées par défaut (estimation prudente). */
+  var TRANCHES = [[1, '< 1 min'], [2, '1 à 2 min'], [5, '2 à 5 min'], [10, '5 à 10 min'], [15, '10 à 15 min'], [30, '15 à 30 min'], [60, '30 min à 1 h'], [240, '1 à 4 h'], [Infinity, '> 4 h']];
+  function analyseDurees(alarms, cfg) {
+    var furt = inSet((cfg.kpi || {}).furtivesHisto), sortie = inSet((cfg.kpi || {}).sortieAstreinte), sansI = inSet((cfg.kpi || {}).sansIntervention);
+    var paliers = (cfg.tempoPaliers || [1, 2, 3, 5, 10, 15]).slice().sort(function (a, b) { return a - b; }), couv = cfg.tempoCouverture || 0.8, minM = cfg.tempoMinMesures || 5;
+    var D = { mesurees: 0, tranches: TRANCHES.map(function (t) { return { label: t[1], max: t[0], n: 0 }; }), pts: {}, moins5: 0 };
+    alarms.forEach(function (a) {
+      if (a.exclu) return;
+      var pt = a.mnemo || a.info, k = a.ppv + '||' + pt;
+      var o = D.pts[k] || (D.pts[k] = { ppv: a.ppv, site: a.siteNom, secteur: a.sec.nom, n: 0, d: [], sortie: 0, inter: 0, info: {}, rang: {}, intru: false, ep: a.eauPotable });
+      o.n++; o.info[a.info] = (o.info[a.info] || 0) + 1; o.rang[a.rang] = (o.rang[a.rang] || 0) + 1; if (a.intru) o.intru = true;
+      if (sortie(a.statut)) o.sortie++; if (!sansI(a.statut)) o.inter++;
+      if (furt(a.statut) && a.delai !== null && a.delai >= 0) {
+        o.d.push(a.delai); D.mesurees++; if (a.delai < 5) D.moins5++;
+        for (var i = 0; i < D.tranches.length; i++) if (a.delai < D.tranches[i].max) { D.tranches[i].n++; break; }
+      }
+    });
+    var top = function (m) { var b = null; for (var x in m) if (b === null || m[x] > m[b]) b = x; return b; };
+    D.points = [];
+    Object.keys(D.pts).forEach(function (k) {
+      var o = D.pts[k]; o.libelle = top(o.info); o.niveau = top(o.rang); o.nMes = o.d.length;
+      if (!o.nMes) return;
+      o.d.sort(function (x, y) { return x - y; });
+      o.mediane = o.d[Math.floor((o.nMes - 1) / 2)]; if (o.nMes % 2 === 0) o.mediane = (o.d[o.nMes / 2 - 1] + o.d[o.nMes / 2]) / 2;
+      var cnt = function (T) { var c = 0; for (var i = 0; i < o.nMes && o.d[i] < T; i++) c++; return c; };
+      o.tempo = null; o.evitees = 0;
+      if (o.nMes >= minM) {
+        for (var j = 0; j < paliers.length; j++) { var c = cnt(paliers[j]); if (c / o.nMes >= couv) { o.tempo = paliers[j]; o.evitees = c; break; } }
+        if (o.tempo === null) { var T = paliers[paliers.length - 1], c2 = cnt(T); if (c2 / o.nMes >= 0.5) { o.tempo = T; o.evitees = c2; } }
+      }
+      D.points.push(o);
+    });
+    D.propositions = D.points.filter(function (o) { return o.tempo !== null; }).sort(function (a, b) { return b.evitees - a.evitees; });
+    D.totalEvitees = D.propositions.reduce(function (s, o) { return s + o.evitees; }, 0);
+    D.index = {}; Object.keys(D.pts).forEach(function (k) { if (D.pts[k].nMes) D.index[k] = D.pts[k]; });
+    return D;
+  }
+
   return {
+    analyseAstreinte: analyseAstreinte, analyseDurees: analyseDurees,
     DEFAULT_CONFIG: DEFAULT_CONFIG, STATUTS: STATUTS, STATUT_DESC: STATUT_DESC, MOIS: MOIS, JOURS: JOURS,
     nk: nk, ik: ik, hk: hk, toDate: toDate, feries: feries,
     detectTable: detectTable, identify: identify, readBuffer: readBuffer, readHistSheet: readHistSheet, buildModel: buildModel,
@@ -2421,6 +2544,9 @@ var CLASSEUR = (function () {
 
   /* ---------- Navigation latérale ---------- */
   var ICONS = {
+    astreinte: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+    tempo: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/>',
+    accueil: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/>',
     import: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>',
     libelles: '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
     synthese: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
@@ -2435,14 +2561,18 @@ var CLASSEUR = (function () {
   };
   var MENU = [
 
-    { h: 'Mois en cours', items: [['synthese', 'Synthèse', true], ['secteurs', 'Secteurs', true], ['listes', 'Listes d\'actions', true], ['repetitifs', 'Points répétitifs', true], ['volumetrie', 'Volumétrie', true], ['repartitions', 'Répartitions', true]] },
+    { h: 'Mois en cours', items: [['accueil', 'Vue d\'ensemble', true], ['astreinte', 'Nuits et week-ends', true], ['tempo', 'Temporisations', true]] },
+    { h: 'Analyse détaillée', pli: true, items: [['synthese', 'Indicateurs', true], ['secteurs', 'Secteurs', true], ['listes', 'Listes d\'actions', true], ['repetitifs', 'Points répétitifs', true], ['volumetrie', 'Volumétrie', true], ['repartitions', 'Répartitions', true]] },
     { h: 'Suivi', items: [['evolution', 'Évolution', false], ['controles', 'Contrôles', true]] },
     { h: 'Réglages', items: [['parametres', 'Paramètres', false]] }
   ];
   function renderMenu() {
     var M = state.model, html = '';
     MENU.forEach(function (g) {
-      if (g.h) html += '<h4>' + esc(g.h) + '</h4>';
+      var ouvert = !g.pli || state.ui.detailOpen || g.items.some(function (it) { return it[0] === state.page; });
+      if (g.pli) html += '<button class="menu-pli" data-pli="1" aria-expanded="' + ouvert + '"><span>' + (ouvert ? '▾' : '▸') + '</span>' + esc(g.h) + '</button>';
+      else if (g.h) html += '<h4>' + esc(g.h) + '</h4>';
+      if (!ouvert) return;
       g.items.forEach(function (it) {
         var badge = '';
         if (it[0] === 'controles' && M && !state.ctrlChecked) { var c = ctrlCounts(); badge = c.err + c.warn ? '<span class="badge ' + (c.err ? 'err' : 'warn') + '">' + (c.err + c.warn) + '</span>' : ''; }
@@ -2450,7 +2580,8 @@ var CLASSEUR = (function () {
       });
     });
     var menu = $('#menu'); menu.innerHTML = html;
-    $$('button', menu).forEach(function (b) { b.onclick = function () { go(b.dataset.page); }; });
+    $$('button[data-page]', menu).forEach(function (b) { b.onclick = function () { go(b.dataset.page); }; });
+    var pl = $('[data-pli]', menu); if (pl) pl.onclick = function () { state.ui.detailOpen = pl.getAttribute('aria-expanded') !== 'true'; renderMenu(); };
   }
   function showLanding() { $('#appv').hidden = true; $('#landing').hidden = false; $('#backApp').hidden = !state.model; window.scrollTo(0, 0); }
   function showApp() { $('#landing').hidden = true; $('#appv').hidden = false; }
@@ -2508,7 +2639,7 @@ var CLASSEUR = (function () {
   state.f = {};
   var F_LABEL = { agence: 'Agence', secteur: 'Secteur', metier: 'Métier', categorie: 'Catégorie', ppv: 'Site', rang: 'Niveau', hno: 'Horaire', jour: 'Jour', groupe: 'Traitement', statut: 'Statut', intru: 'Type', ep: 'Métier', info: 'Libellé' };
   var F_ORDER = ['agence', 'secteur', 'metier', 'categorie', 'ppv', 'rang', 'hno', 'jour', 'groupe', 'statut', 'intru', 'ep', 'info'];
-  var DATA_PAGES = { synthese: 1, secteurs: 1, listes: 1, repetitifs: 1, volumetrie: 1, repartitions: 1 };
+  var DATA_PAGES = { accueil: 1, astreinte: 1, tempo: 1, synthese: 1, secteurs: 1, listes: 1, repetitifs: 1, volumetrie: 1, repartitions: 1 };
   function fVal(k, v) {
     if (k === 'agence') return shortAg(v);
     if (k === 'groupe') return (CORE.GROUPES.filter(function (g) { return g.id === v; })[0] || {}).nom || v;
@@ -2559,7 +2690,7 @@ var CLASSEUR = (function () {
     refreshData();
   }
   function refreshData() { _fm = {}; var y = window.scrollY; renderData(); window.scrollTo(0, y); }
-  function renderData() { if (!state.model) return; renderSynthese(); renderSecteurs(); renderListes(); renderRepetitifs(); renderVolumetrie(); renderRepartitions(); renderFbar(); }
+  function renderData() { if (!state.model) return; renderAccueil(); renderAstreinte(); renderTempo(); renderSynthese(); renderSecteurs(); renderListes(); renderRepetitifs(); renderVolumetrie(); renderRepartitions(); renderFbar(); }
   function nRetenues(M) { return CORE.perimetres(M)[0].alarms.filter(function (a) { return !a.exclu; }).length; }
   /* ---------- Barre de périmètre : agence, secteur, recherche de site, périmètre mémorisé ---------- */
   var PERIM_KEY = 'gdo.suiviAlarmes.perimetre.v1';
@@ -2589,7 +2720,7 @@ var CLASSEUR = (function () {
     return siteIndex().filter(function (o) { return (!f.agence || o.agence === f.agence) && mots.every(function (m) { return o.k.indexOf(m) >= 0; }); })
       .sort(function (a, b) { var pa = a.kn.indexOf(q) === 0 || a.ppv === q ? 0 : 1, pb = b.kn.indexOf(q) === 0 || b.ppv === q ? 0 : 1; return pa - pb || b.n - a.n; }).slice(0, 10);
   }
-  function ouvrirSite(ppv) { state.f.ppv = ppv; _fm = {}; renderData(); go('synthese'); window.scrollTo(0, 0); }
+  function ouvrirSite(ppv) { if (state.page !== 'synthese') state.ui.retour = state.page; state.f.ppv = ppv; _fm = {}; renderData(); go('synthese'); window.scrollTo(0, 0); }
   function renderFbar() {
     var b = $('#fbar'); if (!b) return;
     if (!state.model || !DATA_PAGES[state.page]) { b.hidden = true; return; }
@@ -2609,7 +2740,8 @@ var CLASSEUR = (function () {
       (perimTxt ? '<span class="fb-perim" title="L\'outil s\'ouvre directement sur ce périmètre">★ Mon périmètre : <b>' + esc(perimTxt) + '</b>' + (!estPerim ? ' <button class="lnk" id="fbGo">appliquer</button>' : '') + ' <button class="lnk" id="fbForget" title="Ne plus ouvrir sur ce périmètre">oublier</button></span>' : '') +
       '</div>';
     var keys = F_ORDER.filter(function (k) { return f[k] !== undefined; });
-    if (!keys.length) h += '<div class="fb-row"><span class="tip">💡 Choisissez une agence ou un secteur ci-dessus, cherchez un site, ou cliquez directement une agence, une barre, un niveau, un statut ou un jour : toutes les vues se filtrent ensemble.</span></div>';
+    if (SIMPLES[state.page]) { /* vue simple : pas de puces de filtres */ }
+    else if (!keys.length) h += '<div class="fb-row"><span class="tip">💡 Choisissez une agence ou un secteur ci-dessus, cherchez un site, ou cliquez directement une agence, une barre, un niveau, un statut ou un jour : toutes les vues se filtrent ensemble.</span></div>';
     else h += '<div class="fb-row"><span class="fl">Filtres actifs :</span>' + keys.map(function (k) { return '<button class="fchip" data-rm="' + k + '" title="Retirer ce filtre"><b>' + esc(F_LABEL[k]) + '</b> ' + esc(fVal(k, f[k])) + ' <span class="x">×</span></button>'; }).join('') +
       '<span class="tip">· ' + nf0.format(nRetenues(fm())) + ' alarmes retenues</span><button class="btn-reset sm" id="fReset">↺ Réinitialiser</button></div>';
     b.innerHTML = h;
@@ -2733,7 +2865,7 @@ var CLASSEUR = (function () {
       }).catch(function (err) { $('#importMsg').innerHTML += '<div class="warnbox">Impossible de lire « ' + esc(f.name) + ' » : ' + esc(err.message) + '</div>'; });
     });
     chain.then(function () {
-      if (gotData && state.journal && state.bdpti) { state.ctrlChecked = false; state.reportDone = false; state.libChecked = false; state.f = {}; recompute(); state.f = perimDefaut(state.model); if (Object.keys(state.f).length) { afterFilter(); toast('Rapport calculé · ouvert sur votre périmètre : ' + [state.f.agence ? shortAg(state.f.agence) : '', state.f.secteur || ''].filter(Boolean).join(' · ')); } else toast('Rapport calculé'); go('synthese'); }
+      if (gotData && state.journal && state.bdpti) { state.ctrlChecked = false; state.reportDone = false; state.libChecked = false; state.f = {}; recompute(); state.f = perimDefaut(state.model); if (Object.keys(state.f).length) { afterFilter(); toast('Rapport calculé · ouvert sur votre périmètre : ' + [state.f.agence ? shortAg(state.f.agence) : '', state.f.secteur || ''].filter(Boolean).join(' · ')); } else toast('Rapport calculé'); go('accueil'); }
       else if (evoImported) { renderAll(); if (!state.model) go('evolution'); toast('Historique importé'); }
       else if (gotData) { renderSide(); toast(state.journal ? 'Journal chargé : déposez le BDPTI' : 'BDPTI chargé : déposez le journal'); }
     });
@@ -2758,7 +2890,7 @@ var CLASSEUR = (function () {
     renderAll();
   }
   function renderAll() {
-    if (state.model) { renderLibelles(); renderSynthese(); renderSecteurs(); renderListes(); renderRepetitifs(); renderVolumetrie(); renderRepartitions(); renderControles(); }
+    if (state.model) { renderLibelles(); renderAccueil(); renderAstreinte(); renderTempo(); renderSynthese(); renderSecteurs(); renderListes(); renderRepetitifs(); renderVolumetrie(); renderRepartitions(); renderControles(); }
     renderEvolution(); renderParametres(); renderSide();
   }
 
@@ -2855,7 +2987,7 @@ var CLASSEUR = (function () {
     var others = Object.keys(f).filter(function (k) { return k !== 'ppv'; });
 
     var h = pageHead('Fiche site — ' + nom, esc(M0.period.label) + (others.length ? ' · filtres en plus : ' + esc(others.map(function (k) { return F_LABEL[k] + ' ' + fVal(k, f[k]); }).join(', ')) : ''),
-      '<button class="btn" id="fsBack">← Retour à la synthèse</button>');
+      '<button class="btn" id="fsBack">← Retour' + ({ accueil: ' à la vue d\'ensemble', astreinte: ' aux nuits et week-ends', tempo: ' aux temporisations' }[state.ui.retour] || '') + '</button>');
     h += '<div class="card fs-id"><div class="fs-ppv"><span class="l">Identifiant IPOP</span><button class="ppv-badge" id="fsPpv" title="Cliquer pour copier le identifiant IPOP">' + esc(f.ppv) + ' <span class="cp">⧉</span></button></div><div><span class="l">Agence</span><b data-f="agence" data-v="' + esc(ag || '') + '">' + esc(shortAg(ag || '—')) + '</b></div><div><span class="l">Secteur</span><b>' + esc(sec.nom) + '</b></div>' +
       '<div><span class="l">Interlocuteur secteur</span><b>' + (itl ? esc(itl) : '<span class="m">à renseigner (Paramètres)</span>') + '</b></div>' +
       '<div><span class="l">Métier · catégorie</span><b>' + esc(site ? site.activite : any.activite || '—') + '</b> <span class="m">' + esc(site ? site.categorie : '') + '</span>' + (ep ? ' <span class="pill bad">eau potable</span>' : '') + '</div>' +
@@ -2924,11 +3056,216 @@ var CLASSEUR = (function () {
       rows.slice(0, lim).map(function (a) { var iso = a.dt.toISOString(); return '<tr><td class="tx" data-v="' + iso.slice(0, 19) + '">' + iso.slice(8, 10) + '/' + iso.slice(5, 7) + ' <span class="m">' + CORE.JOURS[a.wd - 1] + '</span></td><td class="tx" data-v="' + iso.slice(11, 19) + '">' + iso.slice(11, 16) + (a.hno ? ' <span class="m">HNO</span>' : '') + '</td><td class="tx" data-v="' + esc(a.info) + '">' + esc(a.info) + '</td><td class="tx" data-v="' + esc(a.rang) + '"><span class="rk-' + a.rang.toLowerCase() + '">' + esc(a.rang) + '</span></td><td class="tx" data-v="' + esc(a.statut) + '">' + esc(a.statut.replace(/^[A-Z]+-/, '')) + '</td><td class="n" data-v="' + (a.delai === null ? '' : Math.round(a.delai)) + '">' + fmtDelai(a.delai) + '</td><td class="ell" title="' + esc(a.commentaire) + '">' + esc(a.commentaire) + '</td></tr>'; }).join('') +
       '</tbody></table></div>' + (rows.length > lim ? '<p class="note"><button class="btn ghost sm" id="fsMore">Afficher 100 de plus</button></p>' : '') + '</div>';
     p.innerHTML = h;
-    $('#fsBack').onclick = function () { delete state.f.ppv; delete state.f.info; refreshData(); };
+    $('#fsBack').onclick = function () { delete state.f.ppv; delete state.f.info; var r = state.ui.retour; state.ui.retour = null; refreshData(); if (r) go(r); };
     $('#fsPpv').onclick = function () { var v = String(state.f.ppv || ''); try { navigator.clipboard.writeText(v).then(function () { toast('Identifiant IPOP ' + v + ' copié'); }, function () { toast('Copie impossible : sélectionnez le code'); }); } catch (e) { toast('Copie impossible : sélectionnez le code'); } };
     var mo = $('#fsMore'); if (mo) mo.onclick = function () { u.fsN = lim + 100; renderSynthese(); };
   }
 
+
+  /* ---------- Vue d'ensemble (page d'accueil simple) ---------- */
+  function modelePerim() { return fm(F_ORDER.filter(function (k) { return k !== 'agence' && k !== 'secteur'; })); }
+  function nomPerim(f) { return f.secteur ? 'Le secteur ' + f.secteur + ' (' + shortAg(f.agence || '') + ')' : f.agence ? 'L\'agence ' + shortAg(f.agence) : 'La région Grand Ouest'; }
+  function cleHist(f) { return f.secteur ? 'sect:' + CORE.nk(f.secteur) : f.agence ? f.agence : 'region'; }
+  function topDe(m) { var b = null; Object.keys(m).forEach(function (k) { if (!b || m[k] > m[b]) b = k; }); return b; }
+  function pctTxt(v) { return nf0.format(Math.round(v)) + ' %'; }
+  function actionsPrioritaires(M) {
+    var cfg = M.cfg, inL = function (l) { var s = {}; (l || []).forEach(function (x) { s[CORE.nk(x)] = 1; }); return function (v) { return !!s[CORE.nk(v)]; }; };
+    var DU = CORE.analyseDurees(CORE.perimetres(M)[0].alarms, cfg).index;
+    var furt = inL(cfg.kpi.furtivesHisto), sans = inL(cfg.kpi.sansIntervention), astr = inL(cfg.kpi.sortieAstreinte), by = {}, tot = 0;
+    CORE.perimetres(M)[0].alarms.forEach(function (a) {
+      if (a.exclu) return; tot++;
+      var pt = a.mnemo || a.info, k = a.ppv + '||' + pt;
+      var o = by[k] || (by[k] = { ppv: a.ppv, site: a.siteNom, n: 0, info: {}, rang: {}, furt: 0, sans: 0, astr: 0, intru: 0, ep: a.eauPotable, com: 0 });
+      o.n++; o.info[a.info] = (o.info[a.info] || 0) + 1; o.rang[a.rang] = (o.rang[a.rang] || 0) + 1;
+      if (furt(a.statut)) o.furt++; if (sans(a.statut)) o.sans++; if (astr(a.statut)) o.astr++; if (a.intru) o.intru++; if (a.com) o.com++;
+    });
+    var L = Object.keys(by).map(function (k) {
+      var o = by[k], n = o.n, rang = topDe(o.rang), pf = o.furt / n, ps = o.sans / n, act, pq, typ;
+      o.libelle = topDe(o.info); o.niveau = rang;
+      if (o.intru && o.ep) { act = 'Vérifier les intrusions'; pq = o.intru + ' intrusion' + (o.intru > 1 ? 's' : '') + ' sur un site d\'eau potable'; typ = 'secu'; }
+      else if (o.com / n >= 0.5) { act = 'Fiabiliser la communication'; pq = 'liaison, modem ou GSM du site'; typ = 'com'; }
+      else if (pf >= 0.6) { var du = DU[k]; if (du && du.tempo) { act = 'Temporiser ' + du.tempo + ' min'; pq = 'évite au moins ' + du.evitees + ' alarmes par mois'; } else { act = 'Revoir le seuil'; pq = pctTxt(pf * 100) + ' disparaissent seules, mais durent plus de ' + (cfg.tempoPaliers || [15]).slice(-1)[0] + ' min'; } typ = 'tempo'; }
+      else if (rang === 'AHU' && ps >= 0.6) { act = 'Passer en ABU ou ANU'; pq = pctTxt(ps * 100) + ' traitées sans intervention'; typ = 'requal'; }
+      else if (rang === 'ABU' && ps >= 0.6) { act = 'Passer en ANU'; pq = pctTxt(ps * 100) + ' traitées sans intervention'; typ = 'requal'; }
+      else if (o.astr / n >= 0.3) { act = 'Traiter la cause sur site'; pq = o.astr + ' sortie' + (o.astr > 1 ? 's' : '') + ' d\'astreinte'; typ = 'site'; }
+      else { act = 'Analyser avec l\'exploitant'; pq = 'traitements variés'; typ = 'ana'; }
+      o.action = act; o.pourquoi = pq; o.type = typ; return o;
+    }).sort(function (a, b) { return b.n - a.n; });
+    return { liste: L, total: tot };
+  }
+  function renderAccueil() {
+    var p = $('#p-accueil'), M0 = state.model; if (!p) return; if (!M0) { p.innerHTML = ''; return; }
+    var f = { agence: state.f.agence, secteur: state.f.secteur }, Mp = modelePerim(), P0 = CORE.perimetres(Mp)[0];
+    var K = CORE.kpi(P0.alarms, P0.sites, Mp), obj = M0.cfg.objectif, r = K.ahuAbuSiteAn, nom = nomPerim(f);
+    var autres = Object.keys(state.f).filter(function (k) { return k !== 'agence' && k !== 'secteur' && k !== 'ppv'; });
+    var niv = r == null ? '' : r <= obj ? 'good' : r <= obj * 1.25 ? 'warn' : 'bad';
+    var c = curYM(), pr = c ? prevYM(c) : null, prev = pr ? histVal(cleHist(f), pr.y, pr.m) : null;
+    var tend = prev === null || r == null ? '' : Math.abs(r - prev) < 0.5 ? ' Stable par rapport à ' + moisLabel(pr) + '.' :
+      (r < prev ? ' <span class="ac-down">En baisse</span> de ' + nf1.format(prev - r) : ' <span class="ac-up">En hausse</span> de ' + nf1.format(r - prev)) + ' par rapport à ' + moisLabel(pr) + ' (' + nf1.format(prev) + ').';
+    var ecart = r == null ? '' : r <= obj ? 'L\'objectif de ' + obj + ' au maximum est <b>tenu</b> (' + pctTxt((1 - r / obj) * 100) + ' en dessous).' : r >= 2 * obj ? 'C\'est <b>' + nf1.format(r / obj) + ' fois l\'objectif</b> de ' + obj + ' au maximum.' : 'C\'est <b>' + pctTxt((r / obj - 1) * 100) + ' au-dessus</b> de l\'objectif de ' + obj + ' au maximum.';
+    var gmax = Math.max(obj * 2, r || 0) * 1.05, gx = function (v) { return Math.min(100, v / gmax * 100); };
+    var h = '<div class="ph"><div><h1>Vue d\'ensemble — ' + esc(M0.period.label) + '</h1><div class="sub">' + esc(nom) + ' · ' + nf0.format(K.sites) + ' sites télésurveillés. Changez de périmètre avec les menus Agence et Secteur ci-dessus.</div></div></div>';
+    if (autres.length) h += '<div class="ac-note">Cette page ne tient compte que de l\'agence et du secteur. Les autres filtres (' + esc(autres.map(function (k) { return F_LABEL[k]; }).join(', ')) + ') s\'appliquent seulement dans l\'analyse détaillée.</div>';
+    // 1. Verdict
+    h += '<section class="ac-card ac-verdict ' + niv + '"><div class="ac-q">Est-ce qu\'on va bien ce mois-ci ?</div>' +
+      '<div class="ac-vrow"><div class="ac-big"><b>' + (r == null ? '—' : nf1.format(r)) + '</b><span>alarmes urgentes<br>par site et par an</span></div>' +
+      '<div class="ac-phr"><p class="ac-lead">' + esc(nom) + ' reçoit en moyenne <b>' + (r == null ? '—' : nf1.format(r)) + ' alarmes urgentes par site et par an</b>. ' + ecart + tend + '</p>' +
+      '<div class="ac-gauge"><i style="width:' + gx(r || 0) + '%"></i><em style="left:' + gx(obj) + '%"><span>objectif ' + obj + '</span></em></div>' +
+      '<p class="ac-def">Alarme urgente = <b>AHU</b> (à traiter 24h/24, nuit et week-end compris) ou <b>ABU</b> (à traiter dans la journée). Le rythme annuel est calculé sur les ' + M0.period.jours + ' jours du mois, pour comparer les mois et les périmètres entre eux.</p></div></div></section>';
+    // chiffres clés
+    var AS = CORE.analyseAstreinte(P0.alarms, M0.cfg);
+    var ps = K.pSans || 0, nivS = ps > 60 ? 'bad' : ps > 40 ? 'warn' : 'good', eq = eqLevel(K.equilibre);
+    var tuile = function (cls, t, v, d) { return '<div class="ac-tile ' + cls + '"><div class="t">' + t + '</div><div class="v">' + v + '</div><div class="d">' + d + '</div></div>'; };
+    h += '<div class="ac-tiles">' +
+      tuile('', 'Alarmes du mois', nf0.format(K.total), 'soit ' + nf0.format(K.moyJour) + ' par jour, dont ' + pctTxt(K.pHNO || 0) + ' la nuit ou le week-end.') +
+      tuile(nivS, 'Sans aucune intervention', pctTxt(ps), 'disparues seules ou appel à l\'exploitant sans suite. <b>Ce sont les alarmes à réduire en priorité.</b>') +
+      tuile(AS.sans > 3 * AS.sortie ? 'bad' : AS.sans > 1.5 * AS.sortie ? 'warn' : 'good', 'Astreinte dérangée pour rien', nf0.format(AS.sans), 'appels hors heures ouvrées sans action nécessaire, dont ' + nf0.format(AS.nuitSans) + ' la nuit, pour ' + plur(AS.sortie, 'sortie') + '. <button class="lnk" data-ac="page:astreinte">Voir les points</button>') +
+      tuile(eq === 'good' ? 'good' : eq === 'warn' ? 'warn' : 'bad', 'Répartition des niveaux', '<span class="ac-mix"><i class="ahu" style="width:' + (K.pAHU || 0) + '%"></i><i class="abu" style="width:' + (K.pABU || 0) + '%"></i><i class="anu" style="width:' + (K.pANU || 0) + '%"></i></span>',
+        'AHU ' + pctTxt(K.pAHU || 0) + ' · ABU ' + pctTxt(K.pABU || 0) + ' · ANU ' + pctTxt(K.pANU || 0) + '. Cible : un tiers chacun. ' + ((K.pAHU || 0) > 45 ? '<b>Trop d\'AHU.</b>' : eq === 'good' ? 'Bien équilibré.' : 'À rééquilibrer.')) + '</div>';
+    // 2. Problèmes
+    var al = [], A = P0.alarms.filter(function (a) { return !a.exclu; });
+    if (K.intruEP > 0) {
+      var ep = {}; A.forEach(function (a) { if (a.intru && a.eauPotable) ep[a.ppv] = (ep[a.ppv] || 0) + 1; }); var t1 = topDe(ep), s1 = (Mp.siteByPpv[t1] || {}).nom || t1;
+      al.push({ niv: 'bad', ic: '🔓', txt: '<b>' + nf0.format(K.intruEP) + ' intrusion' + (K.intruEP > 1 ? 's' : '') + ' sur ' + K.intruSitesEP + ' site' + (K.intruSitesEP > 1 ? 's' : '') + ' d\'eau potable</b> ce mois. Le plus touché : ' + esc(s1) + ' (' + ep[t1] + ').', btn: ['intrus', 'Voir les sites'] });
+    }
+    if (!f.secteur) {
+      var pire = null; (f.agence ? [f.agence] : Mp.agences).forEach(function (ag) { CORE.rptSecteurs(Mp, ag).rows.forEach(function (rw) { if (rw.cls === '' && rw.k.sites >= 10 && rw.k.ahuAbuSiteAn > obj && (!pire || rw.k.ahuAbuSiteAn > pire.k.ahuAbuSiteAn)) pire = { nom: rw.cells[1], ag: ag, k: rw.k }; }); });
+      if (pire) {
+        var bs = {}, bi = {}; A.forEach(function (a) { if (a.sec.nom === pire.nom && (a.rang === 'AHU' || a.rang === 'ABU')) { bs[a.ppv] = (bs[a.ppv] || 0) + 1; (bi[a.ppv] || (bi[a.ppv] = {}))[a.info] = (bi[a.ppv][a.info] || 0) + 1; } });
+        var ts = topDe(bs), tl = ts ? topDe(bi[ts]) : '';
+        al.push({ niv: 'bad', ic: '📍', txt: 'Le secteur <b>' + esc(pire.nom) + '</b> est à <b>' + nf1.format(pire.k.ahuAbuSiteAn) + '</b> alarmes urgentes par site et par an, soit <b>' + nf1.format(pire.k.ahuAbuSiteAn / obj) + ' fois l\'objectif</b>.' + (ts ? ' Le site ' + esc((Mp.siteByPpv[ts] || {}).nom || ts) + ' en génère à lui seul ' + bs[ts] + ', surtout « ' + esc(tl) + ' ».' : ''), btn: ['secteur:' + pire.nom, 'Voir ce secteur'] });
+      }
+    } else {
+      var bs2 = {}, bi2 = {}; A.forEach(function (a) { if (a.rang === 'AHU' || a.rang === 'ABU') { bs2[a.ppv] = (bs2[a.ppv] || 0) + 1; (bi2[a.ppv] || (bi2[a.ppv] = {}))[a.info] = (bi2[a.ppv][a.info] || 0) + 1; } });
+      var t2 = topDe(bs2);
+      if (t2 && bs2[t2] >= 10) al.push({ niv: 'bad', ic: '📍', txt: 'Le site <b>' + esc((Mp.siteByPpv[t2] || {}).nom || t2) + '</b> a reçu <b>' + bs2[t2] + ' alarmes urgentes</b> ce mois, surtout « ' + esc(topDe(bi2[t2])) + ' » (' + bi2[t2][topDe(bi2[t2])] + ' fois).', btn: ['site:' + t2, 'Ouvrir la fiche du site'] });
+    }
+    if ((K.pAHU || 0) > 45) {
+      var qui = '';
+      if (!f.secteur) { var mx = null; (f.agence ? [f.agence] : Mp.agences).forEach(function (ag) { CORE.rptSecteurs(Mp, ag).rows.forEach(function (rw) { if (rw.cls === '' && rw.k.sites >= 10 && rw.k.total >= 50 && (!mx || rw.k.pAHU > mx.p)) mx = { nom: rw.cells[1], p: rw.k.pAHU }; }); }); if (mx) qui = ' C\'est le secteur ' + esc(mx.nom) + ' qui en a le plus (' + pctTxt(mx.p) + ').'; }
+      al.push({ niv: 'warn', ic: '⚖️', txt: '<b>' + pctTxt(K.pAHU) + ' des alarmes sont des AHU</b>, à traiter 24h/24, nuit comprise. La cible est d\'un tiers : une partie devrait passer en ABU ou en ANU.' + qui, btn: ['page:repartitions', 'Voir la répartition'] });
+    }
+    var AP = actionsPrioritaires(Mp), top10 = AP.liste.slice(0, 10), part10 = AP.total ? top10.reduce(function (s, o) { return s + o.n; }, 0) / AP.total * 100 : 0;
+    if (part10 >= 25) al.push({ niv: 'warn', ic: '🎯', txt: '<b>10 points d\'alarme font ' + pctTxt(part10) + ' de toutes les alarmes</b> du périmètre : les traiter ferait vite baisser le volume. Ils sont listés ci-dessous.', btn: ['ancre', 'Voir les actions'] });
+    h += '<section class="ac-card"><div class="ac-q">Qu\'est-ce qui pose problème ?</div>' + (al.length ? '<div class="ac-alerts">' + al.slice(0, 3).map(function (x) { return '<div class="ac-alert ' + x.niv + '"><span class="ic">' + x.ic + '</span><p>' + x.txt + '</p><button class="btn sm" data-ac="' + esc(x.btn[0]) + '">' + esc(x.btn[1]) + ' →</button></div>'; }).join('') + '</div>' : '<p class="ac-ok">✔ Rien d\'anormal repéré ce mois sur ce périmètre.</p>') + '</section>';
+    // 3. Actions
+    var TYP = { secu: 'bad', com: 'blue', tempo: 'teal', requal: 'warn', site: 'bad', ana: '' };
+    h += '<section class="ac-card" id="acActions"><div class="ac-q">Que faire en premier ?</div><p class="ac-sub">Les 10 points d\'alarme qui ont sonné le plus souvent ce mois. Traiter un point, c\'est autant d\'alarmes en moins chaque mois. Cliquez une ligne pour ouvrir la fiche du site.</p>' +
+      '<table class="ac-tab"><thead><tr><th>#</th><th>Site</th><th>Alarme</th><th class="n">Ce mois</th><th>Niveau</th><th>Action proposée</th></tr></thead><tbody>' +
+      top10.map(function (o, i) { return '<tr data-site="' + esc(o.ppv) + '"><td class="n">' + (i + 1) + '</td><td><b>' + esc(o.site) + '</b><span class="m">' + esc(o.ppv) + '</span></td><td>' + esc(o.libelle) + '</td><td class="n"><b>' + nf0.format(o.n) + '</b></td><td><span class="rk-' + String(o.niveau).toLowerCase() + '">' + esc(o.niveau) + '</span></td><td><span class="ac-act ' + TYP[o.type] + '">' + esc(o.action) + '</span><span class="m">' + esc(o.pourquoi) + '</span></td></tr>'; }).join('') +
+      '</tbody></table><p class="ac-foot">Ces 10 points représentent <b>' + pctTxt(part10) + '</b> des alarmes du périmètre. Les actions sont proposées par des règles simples (alarme qui disparaît seule → temporiser, d\'après sa durée ; alarme urgente traitée sans intervention → requalifier), à confirmer avec l\'exploitant. <button class="lnk" data-ac="page:repetitifs">Voir tous les points répétitifs</button></p></section>';
+    h += '<div class="ac-more">Pour aller plus loin : <button class="lnk" data-ac="page:astreinte">nuits et week-ends</button> · <button class="lnk" data-ac="page:tempo">temporisations</button> · <button class="lnk" data-ac="page:synthese">indicateurs détaillés</button> · <button class="lnk" data-ac="page:secteurs">secteurs</button> · <button class="lnk" data-ac="page:listes">listes d\'actions</button> · <button class="lnk" data-ac="page:evolution">évolution sur l\'année</button></div>';
+    p.innerHTML = h;
+    acBind(p);
+  }
+
+  /* ---------- Liens d'action communs aux vues simples ---------- */
+  function acBind(p) {
+    var M0 = state.model;
+    $$('[data-ac]', p).forEach(function (b) { b.onclick = function () {
+      var v = b.dataset.ac;
+      if (v === 'intrus') { state.ui.liste = 'intrusion'; delete state.f.ppv; refreshData(); go('listes'); }
+      else if (v === 'ancre') { $('#acActions').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      else if (v.indexOf('secteur:') === 0) { var sn = v.slice(8), s0 = M0.sites.filter(function (s) { return s.sec.nom === sn; })[0]; state.f.secteur = sn; if (s0) state.f.agence = s0.agence; afterFilter(); }
+      else if (v.indexOf('site:') === 0) { ouvrirSite(v.slice(5)); }
+      else if (v.indexOf('page:') === 0) { var pg = v.slice(5); if (!SIMPLES[pg]) state.ui.detailOpen = true; go(pg); }
+    }; });
+    $$('tr[data-site]', p).forEach(function (tr) { tr.onclick = function () { ouvrirSite(tr.dataset.site); }; });
+    $$('tr[data-sect]', p).forEach(function (tr) { tr.onclick = function () { var sn = tr.dataset.sect, s0 = M0.sites.filter(function (s) { return s.sec.nom === sn; })[0]; state.f.secteur = sn; if (s0) state.f.agence = s0.agence; afterFilter(); }; });
+  }
+  function fmtDur(m) { return m < 1 ? '< 1 min' : m < 10 ? nf1.format(m) + ' min' : fmtDelai(Math.round(m)); }
+  var SIMPLES = { accueil: 1, astreinte: 1, tempo: 1 };
+  function sitesCell(o) { return '<td><b>' + esc(o.site) + '</b><span class="m">' + esc(o.ppv) + (o.secteur ? ' · ' + esc(o.secteur) : '') + '</span></td>'; }
+  function rangCell(r) { return '<td><span class="rk-' + String(r).toLowerCase() + '">' + esc(r) + '</span></td>'; }
+  function plur(n, s, p) { return nf0.format(n) + ' ' + (n > 1 ? (p || s + 's') : s); }
+  function noteAutres() {
+    var autres = Object.keys(state.f).filter(function (k) { return k !== 'agence' && k !== 'secteur' && k !== 'ppv'; });
+    return autres.length ? '<div class="ac-note">Cette page ne tient compte que de l\'agence et du secteur. Les autres filtres (' + esc(autres.map(function (k) { return F_LABEL[k]; }).join(', ')) + ') s\'appliquent seulement dans l\'analyse détaillée.</div>' : '';
+  }
+
+  /* ---------- Nuits et week-ends : l'astreinte dérangée pour rien ---------- */
+  function actionAstreinte(o) {
+    if (o.intru) return ['Garder : sécurité', 'bad', 'alarme intrusion : vérifier le site et le capteur'];
+    if (o.sortie > 0 && o.sans >= 3 * o.sortie) return ['Conditionner l\'alarme', 'warn', plur(o.sans, 'appel') + ' sans suite pour ' + plur(o.sortie, 'sortie') + ' : distinguer les vrais cas'];
+    if (o.sortie > 0) return ['Traiter la cause sur site', 'bad', plur(o.sortie, 'sortie') + ' d\'astreinte sur ce point'];
+    if (o.niveau === 'AHU') return ['Passer en ABU', 'warn', 'aucune sortie sur ' + plur(o.sans, 'appel') + ' : peut attendre les heures ouvrées'];
+    if (o.niveau === 'ABU') return ['Revoir la consigne d\'appel', 'blue', 'ABU appelée hors heures ouvrées'];
+    return ['Analyser avec l\'exploitant', '', 'appels hors heures ouvrées'];
+  }
+  function renderAstreinte() {
+    var p = $('#p-astreinte'), M0 = state.model; if (!p) return; if (!M0) { p.innerHTML = ''; return; }
+    var f = { agence: state.f.agence, secteur: state.f.secteur }, Mp = modelePerim(), P0 = CORE.perimetres(Mp)[0], cfg = M0.cfg;
+    var A = CORE.analyseAstreinte(P0.alarms, cfg), nom = nomPerim(f), J = M0.period.jours || 30, sem = J / 7;
+    var ratio = A.sortie ? A.sans / A.sortie : null, niv = A.sans === 0 ? 'good' : ratio === null || ratio > 3 ? 'bad' : ratio > 1.5 ? 'warn' : 'good';
+    var nuitTxt = A.def.nuitDebut + 'h–' + A.def.nuitFin + 'h', nuitEntre = 'entre ' + A.def.nuitDebut + 'h et ' + A.def.nuitFin + 'h';
+    var h = '<div class="ph"><div><h1>Nuits et week-ends — ' + esc(M0.period.label) + '</h1><div class="sub">' + esc(nom) + ' · hors heures ouvrées = en semaine avant ' + cfg.hoDebut + 'h et après ' + cfg.hoFin + 'h, le week-end et les jours fériés.</div></div></div>' + noteAutres();
+    h += '<section class="ac-card ac-verdict ' + niv + '"><div class="ac-q">L\'astreinte est-elle dérangée pour rien ?</div>' +
+      '<div class="ac-vrow"><div class="ac-big"><b>' + nf0.format(A.sans) + '</b><span>appels à l\'astreinte<br>sans suite</span></div>' +
+      '<div class="ac-phr"><p class="ac-lead">Hors heures ouvrées, le télécontrôle a appelé l\'astreinte <b>' + plur(A.sans, 'fois', 'fois') + ' sans qu\'aucune action ne soit nécessaire</b>, dont <b>' + nf0.format(A.nuitSans) + ' en pleine nuit</b> (' + nuitTxt + ') et ' + nf0.format(A.weSans) + ' le week-end ou un jour férié. ' +
+      (A.sortie ? 'Dans le même temps, l\'astreinte s\'est déplacée <b>' + plur(A.sortie, 'fois', 'fois') + '</b> : ' + (ratio >= 1 ? '<b>' + nf1.format(ratio) + ' appels inutiles pour 1 déplacement</b>.' : 'moins d\'un appel inutile par déplacement.') : 'Aucune sortie d\'astreinte ce mois.') + '</p>' +
+      '<p class="ac-def">Appel sans suite = statut « TLC-Appel sortant vers exploitant » (l\'agent est appelé mais aucune action n\'est justifiée). Sortie = « TLC-Alarme traitée par G2A ». Les statuts retenus se changent dans Paramètres.</p></div></div></section>';
+    var tuile = function (cls, t, v, d) { return '<div class="ac-tile ' + cls + '"><div class="t">' + t + '</div><div class="v">' + v + '</div><div class="d">' + d + '</div></div>'; };
+    h += '<div class="ac-tiles">' +
+      tuile(A.sans ? 'bad' : 'good', 'Appels sans suite', nf0.format(A.sans), 'soit ' + (A.sans / sem >= 10 ? nf0 : nf1).format(A.sans / sem) + ' par semaine sur le périmètre.') +
+      tuile(A.nuitSans ? 'warn' : 'good', 'Dont en pleine nuit', nf0.format(A.nuitSans), nuitEntre + ' : les plus pénibles pour l\'agent d\'astreinte.') +
+      tuile('', 'Sorties d\'astreinte', nf0.format(A.sortie), 'déplacements justifiés hors heures ouvrées, dont ' + nf0.format(A.nuitSortie) + ' la nuit.') +
+      tuile('', 'Autres appels', nf0.format(A.autre), 'appels programmés ou suivis par l\'ordonnancement (« Télécontrôle prévenu », « ORDO-Vu avec exploitant »).') + '</div>';
+    // heures
+    var Hh = A.heures;
+    h += '<section class="ac-card"><div class="ac-q">À quelle heure ?</div><p class="ac-sub">Appels à l\'astreinte hors heures ouvrées, par heure d\'apparition de l\'alarme (tous jours confondus).</p>' +
+      legend([{ name: 'Appel sans suite', color: '#c8352a' }, { name: 'Sortie d\'astreinte', color: '#10233f' }, { name: 'Autre appel', color: '#b8c2d1' }]) +
+      '<div class="chart">' + barChart({ labels: Hh.map(function (_, i) { return i + 'h'; }), short: Hh.map(function (_, i) { return String(i); }), series: [
+        { name: 'Appel sans suite', color: '#c8352a', values: Hh.map(function (x) { return x.sans; }) },
+        { name: 'Sortie d\'astreinte', color: '#10233f', values: Hh.map(function (x) { return x.sortie; }) },
+        { name: 'Autre appel', color: '#b8c2d1', values: Hh.map(function (x) { return x.autre; }) }], w: 1100, height: 230 }) + '</div></section>';
+    // points
+    var top = A.points.slice(0, 15), part = A.sans ? top.reduce(function (s, o) { return s + o.sans; }, 0) / A.sans * 100 : 0;
+    h += '<section class="ac-card" id="acActions"><div class="ac-q">Quels points dérangent l\'astreinte pour rien ?</div><p class="ac-sub">Les points d\'alarme qui ont le plus souvent fait appeler l\'astreinte sans suite. Cliquez une ligne pour ouvrir la fiche du site.</p>' +
+      (top.length ? '<table class="ac-tab"><thead><tr><th>#</th><th>Site</th><th>Alarme</th><th>Niveau</th><th class="n">Appels sans suite</th><th class="n">dont nuit</th><th class="n">Sorties</th><th>Action proposée</th></tr></thead><tbody>' +
+        top.map(function (o, i) { var a = actionAstreinte(o); return '<tr data-site="' + esc(o.ppv) + '"><td class="n">' + (i + 1) + '</td>' + sitesCell(o) + '<td>' + esc(o.libelle) + '</td>' + rangCell(o.niveau) + '<td class="n"><b>' + o.sans + '</b><span class="m">sur ' + plur(o.nJours, 'jour') + '</span></td><td class="n">' + (o.nuit || '—') + '</td><td class="n">' + (o.sortie || '—') + '</td><td><span class="ac-act ' + a[1] + '">' + esc(a[0]) + '</span><span class="m">' + esc(a[2]) + '</span></td></tr>'; }).join('') +
+        '</tbody></table><p class="ac-foot">Ces ' + top.length + ' points font <b>' + pctTxt(part) + '</b> des appels sans suite. Règles : un point qui n\'a jamais fait sortir l\'astreinte peut attendre les heures ouvrées (AHU → ABU) ; un point qui mélange vrais et faux appels doit être conditionné dans l\'automatisme ; les intrusions restent prioritaires. À confirmer avec l\'exploitant.</p>'
+        : '<p class="ac-ok">✔ Aucun appel sans suite hors heures ouvrées sur ce périmètre.</p>') + '</section>';
+    // secteurs
+    if (!f.secteur) {
+      var S = A.secteurs.filter(function (s) { return s.kind !== 'absent' && (s.sans || s.sortie); }).slice(0, 20);
+      if (S.length > 1) h += '<section class="ac-card"><div class="ac-q">Quels secteurs sont les plus concernés ?</div><p class="ac-sub">Chaque secteur a sa propre astreinte : c\'est à ce niveau que la charge se ressent. Cliquez un secteur pour le sélectionner.</p>' +
+        '<table class="ac-tab"><thead><tr><th>Secteur</th><th class="n">Appels sans suite</th><th class="n">par semaine</th><th class="n">dont nuit</th><th class="n">Sorties</th><th class="n">Appels inutiles pour 1 sortie</th></tr></thead><tbody>' +
+        S.map(function (s) { var r2 = s.sortie ? s.sans / s.sortie : null; return '<tr data-sect="' + esc(s.nom) + '"><td><b>' + esc(s.nom) + '</b><span class="m">' + esc(shortAg(s.agence || '')) + '</span></td><td class="n"><b>' + s.sans + '</b></td><td class="n">' + nf1.format(s.sans / sem) + '</td><td class="n">' + (s.nuit || '—') + '</td><td class="n">' + (s.sortie || '—') + '</td><td class="n">' + (r2 === null ? (s.sans ? 'aucune sortie' : '—') : '<span class="' + (r2 > 3 ? 'ac-up' : '') + '">' + nf1.format(r2) + '</span>') + '</td></tr>'; }).join('') +
+        '</tbody></table></section>';
+    }
+    h += '<div class="ac-more">Voir aussi : <button class="lnk" data-ac="page:accueil">vue d\'ensemble</button> · <button class="lnk" data-ac="page:tempo">temporisations</button> · <button class="lnk" data-ac="page:listes">listes d\'actions</button></div>';
+    p.innerHTML = h; acBind(p);
+  }
+
+  /* ---------- Temporisations : durée des alarmes qui disparaissent seules ---------- */
+  function renderTempo() {
+    var p = $('#p-tempo'), M0 = state.model; if (!p) return; if (!M0) { p.innerHTML = ''; return; }
+    var f = { agence: state.f.agence, secteur: state.f.secteur }, Mp = modelePerim(), P0 = CORE.perimetres(Mp)[0], cfg = M0.cfg;
+    var D = CORE.analyseDurees(P0.alarms, cfg), nom = nomPerim(f), tot = P0.alarms.filter(function (a) { return !a.exclu; }).length;
+    var urg = state.ui.tempoUrg, L = D.propositions.filter(function (o) { return !urg || o.niveau === 'AHU' || o.niveau === 'ABU'; });
+    var evL = L.reduce(function (s, o) { return s + o.evitees; }, 0), pal = (cfg.tempoPaliers || [1, 2, 3, 5, 10, 15]).join(', ');
+    var h = '<div class="ph"><div><h1>Temporisations — ' + esc(M0.period.label) + '</h1><div class="sub">' + esc(nom) + ' · alarmes qui disparaissent toutes seules, et combien une temporisation en éviterait.</div></div></div>' + noteAutres();
+    h += '<section class="ac-card ac-verdict ' + (D.totalEvitees / Math.max(tot, 1) > 0.1 ? 'warn' : 'good') + '"><div class="ac-q">Combien d\'alarmes une temporisation éviterait-elle ?</div>' +
+      '<div class="ac-vrow"><div class="ac-big"><b>' + nf0.format(D.totalEvitees) + '</b><span>alarmes évitées<br>par mois, au moins</span></div>' +
+      '<div class="ac-phr"><p class="ac-lead"><b>' + nf0.format(D.mesurees) + ' alarmes ont disparu toutes seules</b> ce mois. ' + nf0.format(D.moins5) + ' d\'entre elles (' + pctTxt(D.mesurees ? D.moins5 / D.mesurees * 100 : 0) + ') ont duré <b>moins de 5 minutes</b>. En temporisant les ' + plur(D.propositions.length, 'point') + ' ci-dessous, on éviterait au moins <b>' + plur(D.totalEvitees, 'alarme') + ' par mois</b>, soit ' + pctTxt(tot ? D.totalEvitees / tot * 100 : 0) + ' de toutes les alarmes du périmètre.</p>' +
+      '<p class="ac-def"><b>Temporisation</b> : l\'alarme n\'est transmise que si le défaut dure plus de T minutes. Contrepartie : un vrai défaut est signalé T minutes plus tard. <b>Durée mesurée</b> : de l\'apparition à la clôture des alarmes classées « disparue ». Le retour à la normale a lieu au plus tard à la clôture, donc les durées réelles sont plus courtes et les gains sont estimés par défaut.</p></div></div></section>';
+    var T = D.tranches, mx = 0;
+    h += '<section class="ac-card"><div class="ac-q">Combien de temps durent les alarmes qui disparaissent seules ?</div><p class="ac-sub">Les barres de gauche (moins de 15 minutes) sont celles qu\'une temporisation courte peut supprimer.</p>' +
+      '<div class="chart">' + barChart({ labels: T.map(function (t) { return t.label; }), series: [{ name: 'Alarmes disparues', color: cv('teal'), values: T.map(function (t) { return t.n; }) }], dim: T.map(function (t) { return t.max > 15; }), w: 1100, height: 230, bw: 0.6 }) + '</div></section>';
+    h += '<section class="ac-card" id="acActions"><div class="ac-q">Quelles temporisations régler ?</div>' +
+      '<p class="ac-sub">Pour chaque point, la temporisation la plus courte qui supprime l\'essentiel de ses disparitions. Cliquez une ligne pour ouvrir la fiche du site.</p>' +
+      segHTML('tempoUrg', [['', 'Tous niveaux'], ['1', 'AHU et ABU seulement']], urg ? '1' : '') +
+      (L.length ? '<table class="ac-tab" style="margin-top:12px"><thead><tr><th>#</th><th>Site</th><th>Alarme</th><th>Niveau</th><th class="n">Ce mois</th><th class="n">Durée médiane</th><th>Temporisation</th><th class="n">Alarmes évitées</th><th>Précaution</th></tr></thead><tbody>' +
+        L.slice(0, 25).map(function (o, i) {
+          var pr = o.intru ? ['bad', 'Intrusion : à valider par la sécurité'] : o.sortie ? ['warn', plur(o.sortie, 'sortie') + ' d\'astreinte : vérifier qu\'un retard de ' + o.tempo + ' min est acceptable'] : o.ep && o.niveau === 'AHU' ? ['warn', 'Eau potable : à valider'] : o.inter > o.n - o.nMes ? ['', 'quelques alarmes traitées : vérifier'] : ['', '—'];
+          return '<tr data-site="' + esc(o.ppv) + '"><td class="n">' + (i + 1) + '</td>' + sitesCell(o) + '<td>' + esc(o.libelle) + '</td>' + rangCell(o.niveau) + '<td class="n">' + o.n + '</td><td class="n">' + fmtDur(o.mediane) + '</td><td><span class="ac-act teal">' + o.tempo + ' min</span></td><td class="n"><b>' + o.evitees + '</b><span class="m">' + pctTxt(o.evitees / o.n * 100) + ' du point</span></td><td>' + (pr[0] ? '<span class="ac-act ' + pr[0] + '">' + esc(pr[1]) + '</span>' : '<span class="m" style="margin:0">' + esc(pr[1]) + '</span>') + '</td></tr>';
+        }).join('') + '</tbody></table>' +
+        '<p class="ac-foot">' + (L.length > 25 ? 'Les 25 premiers points sur ' + L.length + ' (' + plur(evL, 'alarme') + ' évitées au total). ' : '') + 'Temporisation proposée = la plus courte parmi ' + pal + ' min qui absorbe au moins ' + pctTxt((cfg.tempoCouverture || 0.8) * 100) + ' des disparitions du point (mesurées sur au moins ' + (cfg.tempoMinMesures || 5) + ' alarmes) ; à défaut ' + (cfg.tempoPaliers || [15]).slice(-1)[0] + ' min si elle en absorbe la moitié. Alarmes évitées = disparitions plus courtes que la temporisation.</p>'
+        : '<p class="ac-ok" style="margin-top:12px">Aucun point ne se prête à une temporisation courte sur ce périmètre.</p>') + '</section>';
+    h += '<div class="ac-more">Voir aussi : <button class="lnk" data-ac="page:accueil">vue d\'ensemble</button> · <button class="lnk" data-ac="page:astreinte">nuits et week-ends</button> · <button class="lnk" data-ac="page:repetitifs">points répétitifs</button></div>';
+    p.innerHTML = h; acBind(p);
+    bindSeg(p, 'tempoUrg', function (v) { state.ui.tempoUrg = !!v; renderTempo(); });
+  }
 
   /* Synthèse vue d'un directeur d'agence (filtre agence) ou d'un responsable de secteur (filtre secteur) */
   function synGraphesLocal(M0, f, part) {
