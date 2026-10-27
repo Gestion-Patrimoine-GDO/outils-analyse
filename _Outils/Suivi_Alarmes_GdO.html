@@ -432,7 +432,7 @@ table.t td.selc{background:#f2f7ff}
       <div class="fcard" id="fc-evo"><div class="ic">3</div><div><div class="t">Historique <span class="opt">facultatif</span></div><div class="d">Le classeur du mois précédent généré par l'outil (il contient l'historique), ou l'ancien « Evolution des indicateurs ».</div></div></div>
     </div>
     <div id="importMsg"></div>
-    <div class="lfoot"><span>ℹ️ Tout se passe dans votre navigateur. Aucune donnée n'est envoyée sur internet.</span><button class="btn-link" id="backApp" hidden>Revenir à l'analyse en cours →</button></div>
+    <div class="lfoot"><span>ℹ️ Tout se passe dans votre navigateur. Vos fichiers ne quittent jamais votre poste.</span><button class="btn-link" id="backApp" hidden>Revenir à l'analyse en cours →</button></div>
   </div>
 </div>
 
@@ -3463,6 +3463,40 @@ var CLASSEUR = (function () {
   if (Object.keys(state.hist.annees).length) setFcard('evo', 'ok', 'Historique déjà en mémoire (' + Object.keys(state.hist.annees).sort().join(', ') + '). Redéposez le classeur pour le mettre à jour.');
   renderAll();
   window.__APP__ = { state: state, handleFiles: handleFiles, recompute: recompute, go: go, buildReport: buildReport, exportClasseur: exportClasseur };
+})();
+</script>
+<script>
+/* Mesure d'audience ANONYME — GDO (v4)
+   À l'ouverture : envoie au Google Form "<page> | moi/visiteur | ouverture | 0".
+   À la fermeture : envoie "<page> | moi/visiteur | duree | <secondes>" = temps pendant lequel la page
+   était affichée à l'écran, arrondi à 10 s (rien si moins de 10 s).
+   Aucun identifiant de poste ni de session : les lignes ne peuvent être reliées ni entre elles, ni à une personne.
+   « moi » = navigateur de l'administrateur (5 clics sur le logo du portail, ou ?admin=1), pour exclure ses propres visites.
+   L'ancien identifiant de poste (gdo_cid) des versions précédentes est effacé du navigateur. */
+(function(){
+  try{
+    var FORM="https://docs.google.com/forms/d/e/1FAIpQLScrMHKTGYYpD77erWOtXsPwLCu2XeOSK7MLyzp1yEh8qKa5gA/formResponse", CHAMP="entry.1091031611";
+    try{ localStorage.removeItem("gdo_cid"); }catch(e){}
+    var p=new URLSearchParams(location.search);
+    if(p.get("owner")==="1"||p.get("admin")==="1") localStorage.setItem("gdo_owner","1");
+    var qui=function(){ try{ return localStorage.getItem("gdo_owner")==="1"?"moi":"visiteur"; }catch(e){ return "visiteur"; } };
+    var page=decodeURIComponent(location.pathname.split("/").pop()||"index.html").replace(/\.html$/i,"")||"index";
+    var actif=0, depuis=document.visibilityState==="visible"?Date.now():null, fini=false;
+    var envoyer=function(evt,sec){
+      var corps=CHAMP+"="+encodeURIComponent([page,qui(),evt,sec].join(" | "));
+      if(evt!=="ouverture"&&navigator.sendBeacon){ try{ if(navigator.sendBeacon(FORM,new Blob([corps],{type:"application/x-www-form-urlencoded"}))) return; }catch(e){} }
+      fetch(FORM,{method:"POST",mode:"no-cors",keepalive:true,headers:{"Content-Type":"application/x-www-form-urlencoded"},body:corps}).catch(function(){});
+    };
+    envoyer("ouverture",0);
+    document.addEventListener("visibilitychange",function(){
+      if(document.visibilityState==="hidden"){ if(depuis){ actif+=Date.now()-depuis; depuis=null; } }
+      else if(!depuis){ depuis=Date.now(); }
+    });
+    window.addEventListener("pagehide",function(){
+      if(fini) return; fini=true; if(depuis){ actif+=Date.now()-depuis; depuis=null; }
+      var s=Math.round(actif/10000)*10; if(s>=10) envoyer("duree",s);
+    });
+  }catch(e){/* silencieux : ne casse jamais la page */}
 })();
 </script>
 </body>
