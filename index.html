@@ -1,23 +1,16 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
+<html lang="fr"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portail Outils — SUEZ Gestion d'Actif</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#F4F7FB; --panel:#FFFFFF; --panel-2:#F8FAFD; --line:#E4EAF3; --line-2:#CBD7E6;
   --text:#1E293B; --muted:#5B6B82; --faint:#93A2B8;
   --accent:#1B6FE8; --accent-dim:rgba(27,111,232,.08);
   --teal:#0D9488; --teal-dim:rgba(13,148,136,.10);
-  /* couleurs par famille */
-  --fam-ipop-start:var(--accent); --fam-ipop-end:#1559BE; --fam-ipop-dim:rgba(27,111,232,.08);
-  --fam-ptr-start:var(--teal); --fam-ptr-end:#16A34A; --fam-ptr-dim:var(--teal-dim);
-  --fam-dt-start:#D9770F; --fam-dt-end:#F59E0B; --fam-dt-dim:rgba(217,119,15,.10);
-  /* alarmes / astreinte : rouge alerte -> bordeaux (code couleur AHU de l'outil) */
-  --fam-alarm-start:#DC2626; --fam-alarm-end:#8E1F47; --fam-alarm-dim:rgba(220,38,38,.09);
   --shadow:0 1px 2px rgba(15,35,70,.05),0 10px 30px rgba(15,35,70,.06);
   --mono:'JetBrains Mono',Consolas,'Courier New',monospace;
   --sans:'Inter',system-ui,'Segoe UI',sans-serif;
@@ -39,6 +32,38 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .hero .brandtxt{display:flex;flex-direction:column;gap:1px}
 .hero .brandtxt b{font-family:var(--disp);font-size:15px;color:#132446;font-weight:700}
 .hero .brandtxt span{font-size:12px;color:var(--muted)}
+.perso-btn{margin-left:auto;font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--text);background:var(--panel);
+  border:1px solid var(--line-2);border-radius:99px;padding:7px 14px;cursor:pointer;box-shadow:var(--shadow)}
+.perso-btn:hover{border-color:var(--accent);color:var(--accent)}
+.perso-btn+.author{margin-left:0}
+.grid.noanim .tool{animation:none}
+/* panneau Personnaliser */
+.perso{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:100vw;z-index:60;background:var(--panel);border-left:1px solid var(--line);
+  box-shadow:-12px 0 40px rgba(15,35,70,.14);transform:translateX(105%);transition:transform .22s;display:flex;flex-direction:column}
+.perso.open{transform:none}
+.perso .ph{padding:18px 20px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.perso .ph b{font-family:var(--disp);font-size:17px;color:#132446}
+.perso .ph .x{margin-left:auto;border:0;background:none;font-size:20px;color:var(--muted);cursor:pointer}
+.perso .pb{padding:12px 20px 20px;overflow-y:auto;flex:1}
+.perso h3{font-family:var(--disp);font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+.perso .hint{font-size:12px;color:var(--faint);margin:-4px 0 8px}
+.perso .rg{display:grid;grid-template-columns:1fr 54px;gap:2px 10px;align-items:center;margin-bottom:8px;font-size:13px}
+.perso .rg input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.perso .rg .v{font-family:var(--mono);font-size:12px;color:var(--accent);text-align:right}
+.perso .cl{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.perso .cl span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.perso .cl input[type=color]{width:34px;height:28px;border:1px solid var(--line-2);border-radius:7px;padding:1px;background:#fff;cursor:pointer}
+.perso .cl .apercu{width:38px;height:12px;border-radius:6px}
+.perso .cl button{border:0;background:none;color:var(--faint);font-size:15px;cursor:pointer}
+.perso .add{display:flex;gap:8px;margin-top:10px}
+.perso select{flex:1;min-width:0;font-family:var(--sans);font-size:13px;border:1px solid var(--line-2);border-radius:8px;padding:6px 8px;background:#fff}
+.perso .pf{padding:14px 20px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.perso .b{font-family:var(--sans);font-weight:600;font-size:13.5px;border-radius:10px;padding:10px 14px;cursor:pointer;border:0;color:#fff}
+.perso .b.dl{background:linear-gradient(135deg,var(--teal),#0F766E);box-shadow:0 3px 12px rgba(13,148,136,.26)}
+.perso .b.rz{background:linear-gradient(135deg,#f6a523,#e07a06);box-shadow:0 3px 10px rgba(224,122,6,.28)}
+.perso .b.sm{background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);padding:6px 10px;font-size:12.5px}
+.perso .pf p{font-size:11.5px;color:var(--muted);line-height:1.5}
+@media print{.perso,.perso-btn{display:none}}
 .hero .author{margin-left:auto;font-size:12px;font-weight:600;color:#fff;
   background:linear-gradient(135deg,var(--accent),#1559BE);border-radius:99px;padding:8px 16px;
   box-shadow:0 4px 14px rgba(27,111,232,.28);white-space:nowrap}
@@ -62,43 +87,26 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tab.active{background:linear-gradient(135deg,var(--accent),#1559BE);color:#fff;border-color:transparent;
   box-shadow:0 4px 14px rgba(27,111,232,.28)}
 .tab .tc{font-family:var(--mono);font-size:10.5px;margin-left:5px;opacity:.7}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
-.tool{opacity:1;transform:translateY(0);transition:opacity .25s,transform .25s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--carte-largeur,340px),1fr));gap:var(--carte-espace,20px)}
 .tool.fade-in{animation:fadeUp .32s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.tool{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+/* Couleurs d'une carte : --c1 / --c2 (dégradé) et --cdim (teinte claire), posées par le programme depuis REGLAGES */
+.tool{--c1:#1B6FE8;--c2:#1559BE;--cdim:rgba(27,111,232,.08);--cglow:rgba(27,111,232,.26);
+  display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--carte-arrondi,16px);
   overflow:hidden;box-shadow:var(--shadow);transition:transform .13s,box-shadow .18s,border-color .18s;text-decoration:none;color:inherit}
-.tool:hover{transform:translateY(-3px);box-shadow:0 12px 34px rgba(27,111,232,.16);border-color:var(--accent)}
-.tool .band{height:6px;background:linear-gradient(90deg,var(--fam-ipop-start),var(--fam-ptr-start))}
-/* familles : IPOP (bleu), PTR (teal), Directions Techniques (ambre) */
-.tool.fam-ipop .band{background:linear-gradient(90deg,var(--fam-ipop-start),var(--fam-ipop-end))}
-.tool.fam-ptr  .band{background:linear-gradient(90deg,var(--fam-ptr-start),var(--fam-ptr-end))}
-.tool.fam-dt   .band{background:linear-gradient(90deg,var(--fam-dt-start),var(--fam-dt-end))}
+.tool:hover{transform:translateY(-3px);box-shadow:0 12px 34px var(--cdim);border-color:var(--c1)}
+.tool .band{height:var(--carte-bandeau,6px);background:linear-gradient(90deg,var(--c1),var(--c2))}
 .tool .body{padding:22px 22px 20px;display:flex;flex-direction:column;flex:1}
 .tool .top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
-.tool .emoji{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:26px;flex:none;
-  background:var(--fam-ipop-dim)}
-.tool.fam-ptr .emoji{background:var(--fam-ptr-dim)}
-.tool.fam-dt  .emoji{background:var(--fam-dt-dim)}
-.tool h2{font-family:var(--disp);font-size:18px;font-weight:700;color:#132446;margin-bottom:3px}
+.tool .emoji{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:26px;flex:none;background:var(--cdim)}
+.tool h2{font-family:var(--disp);font-size:var(--carte-titre,18px);font-weight:700;color:#132446;margin-bottom:3px}
 .tool .sub{font-family:var(--mono);font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
-.tool .desc{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.tool .desc{font-size:var(--carte-texte,13.5px);color:var(--muted);line-height:1.6;margin-bottom:16px}
 .tool .tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
-.tool .tag{font-family:var(--mono);font-size:10.5px;color:var(--fam-ipop-start);background:var(--fam-ipop-dim);
-  border-radius:6px;padding:3px 9px}
-.tool.fam-ptr .tag{color:var(--fam-ptr-start);background:var(--fam-ptr-dim)}
-.tool.fam-dt  .tag{color:var(--fam-dt-start);background:var(--fam-dt-dim)}
+.tool .tag{font-family:var(--mono);font-size:10.5px;color:var(--c1);background:var(--cdim);border-radius:6px;padding:3px 9px}
 .tool .open{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  background:linear-gradient(135deg,var(--fam-ipop-start),var(--fam-ipop-end));color:#fff;border-radius:10px;padding:11px 16px;
-  font-weight:600;font-size:13.5px;box-shadow:0 3px 12px rgba(27,111,232,.26)}
-.tool.fam-ptr .open{background:linear-gradient(135deg,var(--fam-ptr-start),var(--fam-ptr-end));box-shadow:0 3px 12px rgba(13,148,136,.26)}
-.tool.fam-dt  .open{background:linear-gradient(135deg,var(--fam-dt-start),var(--fam-dt-end));box-shadow:0 3px 12px rgba(217,119,15,.26)}
-/* famille Alarmes / astreinte (rouge) — à l'intérieur des Directions Techniques */
-.tool.fam-alarm .band{background:linear-gradient(90deg,var(--fam-alarm-start),var(--fam-alarm-end))}
-.tool.fam-alarm .emoji{background:var(--fam-alarm-dim)}
-.tool.fam-alarm .tag{color:#B91C1C;background:var(--fam-alarm-dim)}
-.tool.fam-alarm .open{background:linear-gradient(135deg,var(--fam-alarm-start),var(--fam-alarm-end));box-shadow:0 3px 12px rgba(220,38,38,.26)}
-.tool.fam-alarm:hover{box-shadow:0 12px 34px rgba(220,38,38,.16);border-color:var(--fam-alarm-start)}
+  background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;border-radius:10px;padding:11px 16px;
+  font-weight:600;font-size:13.5px;box-shadow:0 3px 12px var(--cglow)}
 .tool:hover .open{filter:brightness(1.05)}
 
 .empty{display:none;text-align:center;color:var(--muted);padding:50px 0;font-size:14px}
@@ -128,6 +136,7 @@ footer .dot{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
         <b>SUEZ — Gestion d'Actif</b>
         <span>Outils d'analyse</span>
       </div>
+      <button class="perso-btn" id="persoBtn" type="button" title="Changer les tailles et les couleurs du portail">🎨 Personnaliser</button>
       <span class="author">Tanguy BAYLE</span>
     </div>
     <h1>Portail Outils Patrimoine</h1>
@@ -141,7 +150,7 @@ footer .dot{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
 
   <div class="tabs" id="tabs"></div>
   <div class="count" id="count"></div>
-  <div class="grid" id="grid"></div>
+  <div class="grid noanim" id="grid"></div>
   <div class="empty" id="empty">Aucun outil ne correspond à votre recherche.</div>
 
   <div class="note">
@@ -158,8 +167,35 @@ footer .dot{width:4px;height:4px;border-radius:50%;background:var(--line-2)}
 
 </div>
 
+<aside class="perso" id="perso" aria-label="Personnaliser le portail"></aside>
+
 <script>
 'use strict';
+/* ================================================================
+   RÉGLAGES FACILES — tailles et couleurs du portail
+   Le plus simple : bouton « 🎨 Personnaliser » en haut de la page, puis
+   « Télécharger le portail modifié ». Ce bloc est alors réécrit tout seul.
+   À la main : changez un nombre ou un code couleur ci-dessous, enregistrez, F5.
+   Une couleur = un code #RRGGBB, ou deux codes ['#début','#fin'] pour un dégradé.
+   ================================================================ */
+/*REGLAGES-DEBUT*/
+const REGLAGES = {
+  largeurCarte: 260,     // largeur minimale d'une carte (px) : plus petit = plus de cartes par ligne
+  espaceCartes: 20,      // espace entre les cartes (px)
+  arrondi: 16,           // arrondi des coins (px) : 0 = coins carrés
+  bandeau: 6,            // hauteur de la bande de couleur en haut de la carte (px)
+  tailleTitre: 18,       // taille du titre de la carte (px)
+  tailleTexte: 12.5,     // taille de la description (px)
+  couleurRubrique: {     // couleur de toutes les cartes d'une rubrique
+    'Outils IPOP': ['#1B6FE8', '#1559BE'],
+    'Outils PTR': ['#0D9488', '#16A34A'],
+    'Outils Directions Techniques': ['#D9770F', '#F59E0B']
+  },
+  couleurOutil: {        // couleur propre à un outil (par son titre), prioritaire sur la rubrique
+    'Suivi des Alarmes': ['#DC2626', '#8E1F47']
+  }
+};
+/*REGLAGES-FIN*/
 /* ================================================================
    PORTAIL OUTILS — page d'accueil (lanceur)
    Pour ajouter un outil : ajoutez une entrée dans le tableau OUTILS.
@@ -299,7 +335,6 @@ const OUTILS=[
   }
   ,{
     cls:'t-alarm',
-    fam:'fam-alarm',
     rubrique:'Outils Directions Techniques',
     emoji:'🚨',
     titre:'Suivi des Alarmes',
@@ -310,7 +345,7 @@ const OUTILS=[
     mots:'alarmes alarme suivi oceane bdpti ahu abu anu astreinte g2a intrusion intrusions eau potable télécontrôle télésurveillance ppv secteur agence furtives répétitifs hno ho supervision automatisme scorecard objectif'
   }
   /* Pour ajouter un futur outil, dupliquez un bloc ci-dessus (sans oublier la virgule).
-     Champ facultatif « fam » : force la couleur de la carte (ex. 'fam-alarm'), sinon couleur de la rubrique. */
+     Sa couleur vient de sa rubrique ; pour une couleur à lui, voir REGLAGES.couleurOutil plus haut. */
 ];
 
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -325,8 +360,22 @@ function initRubriques(){
 }
 initRubriques();
 
+function hexRgb(h){h=String(h||'').replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return isNaN(n)?[27,111,232]:[n>>16&255,n>>8&255,n&255];}
+function fonce(h){const c=hexRgb(h).map(v=>Math.round(v*0.78));return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');}
+function couleursDe(o){
+  let c=(REGLAGES.couleurOutil||{})[o.titre]||(REGLAGES.couleurRubrique||{})[o.rubrique||'Autres']||['#1B6FE8','#1559BE'];
+  if(!Array.isArray(c)) c=[c,fonce(c)];
+  const [r,g,b]=hexRgb(c[0]);
+  return `--c1:${c[0]};--c2:${c[1]||fonce(c[0])};--cdim:rgba(${r},${g},${b},.09);--cglow:rgba(${r},${g},${b},.26)`;
+}
+function appliquerReglages(){
+  const R=REGLAGES, st=document.documentElement.style;
+  st.setProperty('--carte-largeur',R.largeurCarte+'px'); st.setProperty('--carte-espace',R.espaceCartes+'px');
+  st.setProperty('--carte-arrondi',R.arrondi+'px'); st.setProperty('--carte-bandeau',R.bandeau+'px');
+  st.setProperty('--carte-titre',R.tailleTitre+'px'); st.setProperty('--carte-texte',R.tailleTexte+'px');
+}
 function carteHtml(o,i){
-  return `<a class="tool ${i.clsOrFam} fade-in" href="${esc(o.href)}" target="_blank" rel="noopener" style="animation-delay:${i.delay}s">
+  return `<a class="tool fade-in" href="${esc(o.href)}" target="_blank" rel="noopener" style="animation-delay:${i.delay}s;${couleursDe(o)}">
       <div class="band"></div>
       <div class="body">
         <div class="top">
@@ -341,14 +390,6 @@ function carteHtml(o,i){
         <span class="open">Ouvrir l\u2019outil \u2192</span>
       </div>
     </a>`;
-}
-
-function familyClassForRubrique(r){
-  if(!r) return 'fam-ipop';
-  const key=r.toLowerCase();
-  if(key.includes('ipop')) return 'fam-ipop';
-  if(key.includes('ptr')) return 'fam-ptr';
-  return 'fam-dt';
 }
 
 function rendreTabs(liste){
@@ -380,12 +421,11 @@ function rendre(filtre){
       const items=liste.filter(o=>(o.rubrique||'Autres')===r);
       if(items.length===0) continue;
       html+=`<div class="group-title">${esc(r)} · ${items.length}</div>`;
-      for(const it of items){ const fam=it.fam||familyClassForRubrique(it.rubrique);
-        html+=carteHtml(it,{clsOrFam:fam,delay:(idx*0.06)}); idx++; }
+      for(const it of items){ html+=carteHtml(it,{delay:(idx*0.06)}); idx++; }
     }
     grid.innerHTML=html;
   }else{
-    grid.innerHTML=liste.map((o,i)=>carteHtml(o,{clsOrFam:o.fam||familyClassForRubrique(o.rubrique),delay:(i*0.06)})).join('');
+    grid.innerHTML=liste.map((o,i)=>carteHtml(o,{delay:(i*0.06)})).join('');
   }
   document.getElementById('empty').style.display=liste.length?'none':'block';
   document.getElementById('count').textContent=
@@ -394,7 +434,83 @@ function rendre(filtre){
 }
 document.getElementById('search').addEventListener('input',e=>rendre(e.target.value));
 document.getElementById('year').textContent=new Date().getFullYear();
+appliquerReglages();
 rendre('');
+</script>
+
+<script>
+/* ================================================================
+   PANNEAU « PERSONNALISER » : règle REGLAGES à la souris, aperçu immédiat,
+   puis télécharge une copie du portail avec les nouveaux réglages.
+   ================================================================ */
+(function(){
+  const panel=document.getElementById('perso'), btn=document.getElementById('persoBtn');
+  if(!panel||!btn) return;
+  const DEFAUT=JSON.parse(JSON.stringify(REGLAGES));
+  const CHAMPS=[['largeurCarte','Largeur des cartes',240,520,10],['espaceCartes','Espace entre les cartes',4,48,2],
+    ['arrondi','Arrondi des coins',0,30,1],['bandeau','Bande de couleur',0,16,1],['tailleTitre','Taille du titre',14,26,1],['tailleTexte','Taille de la description',11,17,0.5]];
+  const deux=c=>Array.isArray(c)?[c[0],c[1]||fonce(c[0])]:[c,fonce(c)];
+  const q=s=>"'"+String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";
+  function rafraichir(){ appliquerReglages(); const g=document.getElementById('grid'); g.classList.add('noanim'); rendre(document.getElementById('search').value); }
+  function ligneCouleur(nom,c,groupe,suppr){
+    const [a,b]=deux(c);
+    return `<div class="cl"><span title="${esc(nom)}">${esc(nom)}</span><i class="apercu" style="background:linear-gradient(90deg,${a},${b})"></i>`+
+      `<input type="color" value="${a}" data-g="${groupe}" data-n="${esc(nom)}" data-i="0" title="Couleur de début">`+
+      `<input type="color" value="${b}" data-g="${groupe}" data-n="${esc(nom)}" data-i="1" title="Couleur de fin (dégradé)">`+
+      (suppr?`<button data-del="${esc(nom)}" title="Retirer : l'outil reprend la couleur de sa rubrique">✕</button>`:'')+`</div>`;
+  }
+  function dessiner(){
+    const R=REGLAGES, sans=OUTILS.filter(o=>!R.couleurOutil[o.titre]);
+    panel.innerHTML=`<div class="ph"><b>🎨 Personnaliser</b><button class="x" id="pX" title="Fermer">✕</button></div><div class="pb">
+      <h3>Tailles</h3>`+CHAMPS.map(c=>`<div class="rg"><label for="r_${c[0]}">${c[1]}</label><span class="v" id="v_${c[0]}">${R[c[0]]} px</span>
+        <input type="range" id="r_${c[0]}" data-k="${c[0]}" min="${c[2]}" max="${c[3]}" step="${c[4]}" value="${R[c[0]]}"></div>`).join('')+
+      `<h3>Couleur des rubriques</h3><p class="hint">Deux pastilles : début et fin du dégradé.</p>`+
+      Object.keys(R.couleurRubrique).map(r=>ligneCouleur(r,R.couleurRubrique[r],'rub',false)).join('')+
+      `<h3>Couleur d'un outil précis</h3><p class="hint">Prioritaire sur la couleur de sa rubrique.</p>`+
+      Object.keys(R.couleurOutil).map(t=>ligneCouleur(t,R.couleurOutil[t],'out',true)).join('')+
+      (sans.length?`<div class="add"><select id="pSel">${sans.map(o=>`<option>${esc(o.titre)}</option>`).join('')}</select><button class="b sm" id="pAdd">+ Ajouter</button></div>`:'')+
+      `</div><div class="pf"><button class="b dl" id="pDl">⬇ Télécharger le portail modifié</button><button class="b rz" id="pRz">↺ Réinitialiser</button>
+      <p>Les changements ne s'appliquent qu'à l'aperçu. Pour les garder : téléchargez le fichier, puis remplacez l'ancien <b>index.html</b> du portail par celui-ci.</p></div>`;
+    panel.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',()=>{ R[el.dataset.k]=+el.value; document.getElementById('v_'+el.dataset.k).textContent=el.value+' px'; rafraichir(); }));
+    panel.querySelectorAll('input[type=color]').forEach(el=>el.addEventListener('input',()=>{
+      const tab=el.dataset.g==='rub'?R.couleurRubrique:R.couleurOutil, n=el.dataset.n, c=deux(tab[n]); c[+el.dataset.i]=el.value; tab[n]=c;
+      el.parentNode.querySelector('.apercu').style.background=`linear-gradient(90deg,${c[0]},${c[1]})`; rafraichir(); }));
+    panel.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{ delete R.couleurOutil[b.dataset.del]; rafraichir(); dessiner(); }));
+    const add=document.getElementById('pAdd'); if(add) add.addEventListener('click',()=>{ const t=document.getElementById('pSel').value, o=OUTILS.find(x=>x.titre===t);
+      R.couleurOutil[t]=deux(R.couleurRubrique[o&&o.rubrique]||'#1B6FE8'); rafraichir(); dessiner(); });
+    document.getElementById('pX').addEventListener('click',()=>panel.classList.remove('open'));
+    document.getElementById('pRz').addEventListener('click',()=>{ Object.keys(R).forEach(k=>delete R[k]); Object.assign(R,JSON.parse(JSON.stringify(DEFAUT))); rafraichir(); dessiner(); });
+    document.getElementById('pDl').addEventListener('click',telecharger);
+  }
+  function texteReglages(R){
+    const col=c=>'['+deux(c).map(q).join(', ')+']', obj=o=>Object.keys(o).map(k=>'    '+q(k)+': '+col(o[k])).join(',\n');
+    return 'const REGLAGES = {\n'+
+      '  largeurCarte: '+R.largeurCarte+',     // largeur minimale d\'une carte (px) : plus petit = plus de cartes par ligne\n'+
+      '  espaceCartes: '+R.espaceCartes+',      // espace entre les cartes (px)\n'+
+      '  arrondi: '+R.arrondi+',           // arrondi des coins (px) : 0 = coins carrés\n'+
+      '  bandeau: '+R.bandeau+',            // hauteur de la bande de couleur en haut de la carte (px)\n'+
+      '  tailleTitre: '+R.tailleTitre+',       // taille du titre de la carte (px)\n'+
+      '  tailleTexte: '+R.tailleTexte+',     // taille de la description (px)\n'+
+      '  couleurRubrique: {     // couleur de toutes les cartes d\'une rubrique\n'+obj(R.couleurRubrique)+'\n  },\n'+
+      '  couleurOutil: {        // couleur propre à un outil (par son titre), prioritaire sur la rubrique\n'+obj(R.couleurOutil)+'\n  }\n};';
+  }
+  function telecharger(){
+    const clone=document.documentElement.cloneNode(true);
+    clone.removeAttribute('style');
+    ['grid','tabs','count','year'].forEach(id=>{ const e=clone.querySelector('#'+id); if(e) e.innerHTML=''; });
+    const pe=clone.querySelector('#perso'); if(pe){ pe.className='perso'; pe.innerHTML=''; }
+    const em=clone.querySelector('#empty'); if(em) em.removeAttribute('style');
+    const sc=[...clone.querySelectorAll('script')].find(x=>x.textContent.indexOf('const OUTILS=[')>=0);
+    const debut='/*REGLAGES-DEBUT*/', fin='/*REGLAGES-FIN*/', t=sc.textContent, a=t.indexOf(debut), b=t.indexOf(fin);
+    if(a<0||b<0){ alert('Bloc de réglages introuvable dans le fichier.'); return; }
+    sc.textContent=t.slice(0,a+debut.length)+'\n'+texteReglages(REGLAGES)+'\n'+t.slice(b);
+    const html='<!DOCTYPE html>\n'+clone.outerHTML+'\n';
+    const lien=document.createElement('a'); lien.href=URL.createObjectURL(new Blob([html],{type:'text/html'})); lien.download='index.html';
+    document.body.appendChild(lien); lien.click(); lien.remove(); setTimeout(()=>URL.revokeObjectURL(lien.href),2000);
+  }
+  btn.addEventListener('click',()=>{ dessiner(); panel.classList.add('open'); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') panel.classList.remove('open'); });
+})();
 </script>
 
 <!-- ===== VERSION + SIGNALEMENT (modifier le numero de version ici) ===== -->
@@ -410,12 +526,12 @@ rendre('');
 @media print{.__ver-badge{display:none}}
 </style>
 <div class="__ver-badge">
-  <span class="__ver-txt">Portail Outils · v1.1 · octobre 2026</span>
-  <a class="__ver-report" id="__report" title="Signaler un problème par mail">⚠ Signaler</a>
+  <span class="__ver-txt">Portail Outils · v1.2 · octobre 2026</span>
+  <a class="__ver-report" id="__report" title="Signaler un problème par mail" href="mailto:tanguy.bayle@suez.com?subject=Signalement%20%E2%80%94%20Portail%20Outils%20v1.2&amp;body=Bonjour%20Tanguy%2C%0A%0AOutil%20%3A%20Portail%20Outils%0AVersion%20%3A%20v1.2%20(octobre%202026)%0ANavigateur%20%3A%20Mozilla%2F5.0%20(Windows%20NT%2010.0%3B%20Win64%3B%20x64)%20AppleWebKit%2F537.36%20(KHTML%2C%20like%20Gecko)%20Chrome%2F156.0.0.0%20Safari%2F537.36%0A%0A%E2%80%94%20Ce%20que%20je%20faisais%20%3A%0A%0A%0A%E2%80%94%20Ce%20qui%20s%E2%80%99est%20pass%C3%A9%20%3A%0A%0A%0AMerci%20!">⚠ Signaler</a>
 </div>
 <script>
 (function(){
-  var nom='Portail Outils', ver='v1.1', date='octobre 2026', mail='tanguy.bayle@suez.com';
+  var nom='Portail Outils', ver='v1.2', date='octobre 2026', mail='tanguy.bayle@suez.com';
   var a=document.getElementById("__report"); if(!a) return;
   var corps="Bonjour Tanguy,\n\n"+"Outil : "+nom+"\n"+"Version : "+ver+" ("+date+")\n"+
     "Navigateur : "+navigator.userAgent+"\n\n"+
@@ -455,5 +571,6 @@ rendre('');
   }catch(e){/* silencieux : ne casse jamais la page */}
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
