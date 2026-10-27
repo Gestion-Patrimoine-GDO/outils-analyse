@@ -178,9 +178,14 @@ body:not(.admin) .admin-only{display:none!important}
 @media (max-width:820px){.ligne{grid-template-columns:40px 1fr auto}.ligne .in2,.ligne .go{display:none}}
 .box.big{width:min(1120px,100%);max-height:88vh}
 .kpis.k5{grid-template-columns:repeat(5,1fr)}
+.scfg{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:13px;color:var(--text)}
+.scfg ol{margin:8px 0 10px 20px;line-height:1.7;color:var(--muted)}.scfg-r{display:flex;gap:8px;flex-wrap:wrap}
+.scfg input{flex:1;min-width:260px;font-family:var(--sans);font-size:13px;border:1px solid var(--line-2);border-radius:9px;padding:9px 11px}
+.scfg .b{margin-top:0!important}.scfg .b.sm2{background:var(--panel);color:var(--text);border:1px solid var(--line-2)}#sErr{color:#B91C1C;margin-top:6px}
+.smaj{margin-left:auto;font-size:12px;color:var(--faint)}.sbar .smaj~.b.sm2{margin-left:0}
 .sdrop{border:2px dashed var(--line-2);border-radius:14px;padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7;background:var(--panel-2)}
 .sdrop.ov{border-color:var(--accent);background:var(--accent-dim)}.sdrop b{color:#132446;font-size:15px}
-.sdrop .b,.sbar .b{margin-top:10px;font-family:var(--sans);font-weight:600;font-size:13px;border:0;border-radius:9px;padding:9px 14px;color:#fff;background:linear-gradient(135deg,var(--accent),#1559BE);cursor:pointer}
+.sdrop .b,.sbar .b,.scfg .b{margin-top:10px;font-family:var(--sans);font-weight:600;font-size:13px;border:0;border-radius:9px;padding:9px 14px;color:#fff;background:linear-gradient(135deg,var(--accent),#1559BE);cursor:pointer}
 .sbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 12px;font-size:13px}
 .sbar .sp{border:1px solid var(--line-2);background:var(--panel);border-radius:99px;padding:5px 12px;cursor:pointer;font-size:12.5px;color:var(--muted)}
 .sbar .sp.on{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -353,7 +358,7 @@ const OUTILS=[
     cls:'t-dash',
     rubrique:'Outils IPOP',
     emoji:'\ud83d\udd3d',
-    titre:'R210 Import Liste de Valeurs Attributs',
+    titre:'IPOP Import Liste de valeurs \u00c9quipements',
     sous:'Listes d\u00e9roulantes par type d\u2019\u00e9quipement',
     href:'_Outils/IPOP_Import_Liste_de_valeurs.html',
     desc:'Ajoute des listes d\u00e9roulantes Excel sur chaque colonne d\u2019attribut EQ_xx d\u2019un export R210, limit\u00e9es aux valeurs autoris\u00e9es selon le \u00ab Libell\u00e9 Type d\u2019\u00e9quipement \u00bb. Code couleur : bleu = liste, vert d\u2019eau = saisie libre, rose = attribut inutile pour le type. Jumeau de l\u2019outil R110 BF.',
@@ -364,7 +369,7 @@ const OUTILS=[
     cls:'t-dash',
     rubrique:'Outils IPOP',
     emoji:'\ud83d\udd3d',
-    titre:'R110 Import Liste de Valeurs Attributs BF',
+    titre:'IPOP Import Liste de valeurs Bloc fonctionnel',
     sous:'Listes d\u00e9roulantes par type de BF',
     href:'_Outils/IPOP_Import_Liste_de_valeurs_BF.html',
     desc:'M\u00eame outil que le R210, pour les blocs fonctionnels : ajoute des listes d\u00e9roulantes sur chaque colonne d\u2019attribut BF_xx d\u2019un export R110, selon le \u00ab Type de BF \u00bb, sites BF0 comme ouvrages BFN (TO-xxx). M\u00eame code couleur, toutes les feuilles r\u00e9unies sur un seul onglet.',
@@ -470,8 +475,8 @@ const INFOS={
   'Comparateur R210 (T0 → T1)':{entree:'2 exports R210 (.xlsx) : avant et après complétion'},
   'Dashboard R210':{entree:'1 export R210 (.xlsx)'},
   'Import Attributs':{entree:'Excel d’attributs en colonnes EQ_xx (.xlsx)'},
-  'R210 Import Liste de Valeurs Attributs':{entree:'1 export R210 (.xlsx)'},
-  'R110 Import Liste de Valeurs Attributs BF':{entree:'1 export R110 (.xlsx)'},
+  'IPOP Import Liste de valeurs \u00c9quipements':{entree:'1 export R210 (.xlsx)'},
+  'IPOP Import Liste de valeurs Bloc fonctionnel':{entree:'1 export R110 (.xlsx)'},
   'Base de prix PTR':{entree:'Un dossier de PTR (.xlsx / .xlsm)'},
   'Comparateur RAD (Word)':{entree:'Rapports National + RAD/RAP locaux (.docx)'},
   'Remplissage PTR':{entree:'1 PTR vierge + la base de prix PTR'},
@@ -522,7 +527,9 @@ function appliquerReglages(){
 function norm(x){return String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function lireLS(k){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}}
 function ecrireLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-let FAV=lireLS('portail_favoris'), RECENTS=lireLS('portail_recents'), VUE='cartes';
+const RENOMMES={'R210 Import Liste de Valeurs Attributs':'IPOP Import Liste de valeurs \u00c9quipements','R110 Import Liste de Valeurs Attributs BF':'IPOP Import Liste de valeurs Bloc fonctionnel'};
+const suivreNoms=L=>L.map(t=>RENOMMES[t]||t);
+let FAV=suivreNoms(lireLS('portail_favoris')), RECENTS=suivreNoms(lireLS('portail_recents')), VUE='cartes';
 function info(o){return INFOS[o.titre]||{};}
 function recent30(d){ if(!d) return false; const t=Date.parse(d); return !isNaN(t) && (Date.now()-t) < 30*864e5 && Date.now()>=t-864e5; }
 function badges(o){ const i=info(o); let h='';
@@ -581,10 +588,10 @@ function rendre(filtre){
   grid.classList.toggle('liste',VUE==='liste');
   let html='', idx=0;
   if(activeTab==='all'){
-    const favs=liste.filter(o=>FAV.includes(o.titre));
-    if(favs.length&&!q){ html+=`<div class="group-title fav">⭐ Mes outils · ${favs.length}</div>`; for(const it of favs){ html+=tpl(it,idx*0.04); idx++; } }
+    const favs=liste.filter(o=>FAV.includes(o.titre)), avecFav=favs.length>0&&!q;
+    if(avecFav){ html+=`<div class="group-title fav">⭐ Mes outils · ${favs.length}</div>`; for(const it of favs){ html+=tpl(it,idx*0.04); idx++; } }
     for(const r of RUBRIQUES){
-      const items=liste.filter(o=>(o.rubrique||'Autres')===r);
+      const items=liste.filter(o=>(o.rubrique||'Autres')===r&&!(avecFav&&FAV.includes(o.titre)));
       if(items.length===0) continue;
       html+=`<div class="group-title">${esc(r)} · ${items.length}</div>`;
       for(const it of items){ html+=tpl(it,idx*0.04); idx++; }
@@ -705,7 +712,8 @@ rendre('');
 /* ================================================================
    STATISTIQUES D'USAGE ANONYMES (administrateur)
    Source : feuille de réponses du compteur (Google Sheet), déposée en CSV
-   (Fichier → Télécharger → .csv), ou lue à l'adresse STATS_CSV si elle est renseignée.
+   (Fichier → Télécharger → .csv), ou lue directement à l'adresse « Publier sur le Web » (CSV) :
+   collée une fois dans la fenêtre Statistiques (mémorisée sur ce poste) ou inscrite dans STATS_CSV.
    Uniquement des totaux : ouvertures et durées d'affichage par outil, par jour et par heure.
    Aucune personne ni aucun poste n'est identifié (les identifiants des anciennes lignes sont ignorés).
    ================================================================ */
@@ -761,13 +769,14 @@ rendre('');
   }
   function dessiner(){
     const body=$('statsBody');
-    if(!DATA){ body.innerHTML=`<div class="sdrop" id="sDrop"><b>Déposez ici la feuille de réponses du compteur (.csv)</b><br><span>Google Sheet des réponses → Fichier → Télécharger → Valeurs séparées par des virgules (.csv)</span><br><button class="b" id="sPick" type="button">Choisir le fichier</button>${STATS_CSV?' <button class="b" id="sUrl" type="button">Lire depuis Google</button>':''}<input type="file" id="sFile" accept=".csv,text/csv" hidden></div>`; brancherDepot(); return; }
+    if(!DATA&&lienStats()&&!ETAT.manuel){ chargerLien(); return; }
+    if(!DATA){ body.innerHTML=configHtml()+`<div class="sdrop" id="sDrop"><b>Déposez ici la feuille de réponses du compteur (.csv)</b><br><span>Google Sheet des réponses → Fichier → Télécharger → Valeurs séparées par des virgules (.csv)</span><br><button class="b" id="sPick" type="button">Choisir le fichier</button>${STATS_CSV?' <button class="b" id="sUrl" type="button">Lire depuis Google</button>':''}<input type="file" id="sFile" accept=".csv,text/csv" hidden></div>`; brancherDepot(); brancherConfig(); return; }
     const E=filtres(), outils=[...new Set(DATA.map(e=>e.page))].sort();
     const per=[[7,'7 jours'],[30,'30 jours'],[90,'90 jours'],[0,'Tout']], vues=[['ensemble','Vue d’ensemble'],['outils','Par outil']];
     let h='<div class="sbar">'+per.map(p=>`<button class="sp${ETAT.periode===p[0]?' on':''}" data-per="${p[0]}">${p[1]}</button>`).join('')+
       `<select id="sOutil"><option value="">Tous les outils</option>${outils.map(o=>`<option${o===ETAT.outil?' selected':''}>${esc(o)}</option>`).join('')}</select>`+
       `<label><input type="checkbox" id="sMoi"${ETAT.exclureMoi?' checked':''}> Exclure mes visites</label>`+
-      `<button class="b sm2" id="sNew" type="button" title="Charger un autre fichier">Changer de fichier</button></div>`+
+      `<span class="smaj">${esc(ETAT.source||'')}</span>`+(lienStats()?`<button class="b sm2" id="sRef" type="button" title="Relire le Google Sheet">↻ Actualiser</button>`:'')+`<button class="b sm2" id="sNew" type="button" title="Changer de source">Source…</button></div>`+
       '<div class="svues">'+vues.map(v=>`<button class="${ETAT.vue===v[0]?'on':''}" data-vue2="${v[0]}">${v[1]}</button>`).join('')+'</div>';
     h+=!E.some(e=>e.type==='ouverture')?'<p class="hint">Aucune ouverture sur cette période avec ces filtres.</p>':ETAT.vue==='outils'?vueOutils(E):vueEnsemble(E);
     body.innerHTML=h;
@@ -776,9 +785,30 @@ rendre('');
     body.querySelectorAll('[data-outil]').forEach(r=>r.onclick=()=>{ ETAT.outil=r.dataset.outil; ETAT.vue='ensemble'; dessiner(); });
     $('sOutil').onchange=e=>{ ETAT.outil=e.target.value; dessiner(); };
     $('sMoi').onchange=e=>{ ETAT.exclureMoi=e.target.checked; dessiner(); };
-    $('sNew').onclick=()=>{ DATA=null; dessiner(); };
+    $('sNew').onclick=()=>{ DATA=null; ETAT.manuel=true; dessiner(); };
+    const rf=$('sRef'); if(rf) rf.onclick=()=>{ DATA=null; ETAT.manuel=false; chargerLien(); };
   }
-  function charger(texte, source){ try{ DATA=analyser(texte); }catch(e){ DATA=null; }
+  // Lien CSV publié : dans le code (STATS_CSV) ou collé une fois dans la fenêtre (mémorisé sur ce poste)
+  function lienStats(){ try{ return STATS_CSV||localStorage.getItem('portail_stats_url')||''; }catch(e){ return STATS_CSV||''; } }
+  function chargerLien(){
+    const body=$('statsBody'), url=lienStats(); body.innerHTML='<p class="hint">Lecture du Google Sheet…</p>';
+    fetch(url+(url.indexOf('?')>=0?'&':'?')+'t='+Date.now(),{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+      .then(t=>{ if(/^\s*</.test(t)) throw new Error('la page renvoyée n\u2019est pas un CSV'); const d=new Date(); ETAT.source='Google Sheet lu à '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); charger(t,'le Google Sheet'); })
+      .catch(e=>{ ETAT.manuel=true; DATA=null; dessiner(); const z=$('sErr'); if(z) z.innerHTML='Lecture impossible ('+esc(e.message)+'). Vérifiez que la feuille est bien publiée au format CSV et que le poste a accès à internet. En attendant, vous pouvez déposer le fichier.'; });
+  }
+  function configHtml(){ const u=lienStats();
+    return `<div class="scfg"><b>Affichage direct depuis le Google Sheet</b>
+      <ol><li>Ouvrez la feuille de réponses du formulaire, puis <b>Fichier → Partager → Publier sur le Web</b>.</li>
+      <li>Choisissez la feuille de réponses et le format <b>Valeurs séparées par des virgules (.csv)</b>, puis <b>Publier</b>.</li>
+      <li>Copiez le lien obtenu et collez-le ici : les statistiques s\u2019afficheront directement à chaque ouverture.</li></ol>
+      <div class="scfg-r"><input type="url" id="sLien" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv" value="${esc(u)}"><button class="b" id="sLienOk" type="button">Enregistrer et afficher</button>${u&&!STATS_CSV?'<button class="b sm2" id="sLienX" type="button">Retirer</button>':''}</div>
+      <p class="hint" id="sErr"></p><p class="hint">Les données publiées ne contiennent que des noms de pages, des heures et des durées, sans aucun identifiant.</p></div><p class="hint" style="text-align:center;margin:10px 0">— ou —</p>`; }
+  function brancherConfig(){
+    const ok=$('sLienOk'); if(ok) ok.onclick=()=>{ const v=$('sLien').value.trim(); if(!/^https:\/\//.test(v)){ $('sErr').textContent='Collez le lien complet, qui commence par https://'; return; }
+      try{ localStorage.setItem('portail_stats_url',v); }catch(e){} ETAT.manuel=false; DATA=null; chargerLien(); };
+    const x=$('sLienX'); if(x) x.onclick=()=>{ try{ localStorage.removeItem('portail_stats_url'); }catch(e){} DATA=null; ETAT.manuel=true; dessiner(); };
+  }
+  function charger(texte, source){ if(source&&!/Google/.test(source)) ETAT.source='Fichier : '+source; try{ DATA=analyser(texte); }catch(e){ DATA=null; }
     if(!DATA||!DATA.length){ DATA=null; $('statsBody').innerHTML='<p class="hint">Aucune ligne de compteur reconnue dans '+esc(source)+'. Vérifiez qu’il s’agit bien de la feuille de réponses du formulaire.</p>'; setTimeout(dessiner,2500); return; }
     dessiner(); }
   function brancherDepot(){
@@ -787,7 +817,7 @@ rendre('');
     z.ondrop=e=>{ e.preventDefault(); z.classList.remove('ov'); const x=e.dataTransfer.files[0]; if(x) x.text().then(t=>charger(t,x.name)); };
     const u=$('sUrl'); if(u) u.onclick=()=>{ $('statsBody').innerHTML='<p class="hint">Chargement…</p>'; fetch(STATS_CSV).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); }).then(t=>charger(t,'Google Sheet')).catch(e=>{ $('statsBody').innerHTML='<p class="hint">Lecture impossible ('+esc(e.message)+'). Déposez plutôt le fichier CSV.</p>'; setTimeout(dessiner,3000); }); };
   }
-  $('statsBtn').addEventListener('click',()=>{ dessiner(); $('statsModal').classList.add('open'); });
+  $('statsBtn').addEventListener('click',()=>{ if(!DATA) ETAT.manuel=false; dessiner(); $('statsModal').classList.add('open'); });
 })();
 </script>
 
@@ -804,12 +834,12 @@ rendre('');
 @media print{.__ver-badge{display:none}}
 </style>
 <div class="__ver-badge">
-  <span class="__ver-txt">Portail Outils · v1.5 · octobre 2026</span>
+  <span class="__ver-txt">Portail Outils · v1.6 · octobre 2026</span>
   <a class="__ver-report" id="__report" title="Signaler un problème par mail">⚠ Signaler</a>
 </div>
 <script>
 (function(){
-  var nom='Portail Outils', ver='v1.5', date='octobre 2026', mail='tanguy.bayle@suez.com';
+  var nom='Portail Outils', ver='v1.6', date='octobre 2026', mail='tanguy.bayle@suez.com';
   var a=document.getElementById("__report"); if(!a) return;
   var corps="Bonjour Tanguy,\n\n"+"Outil : "+nom+"\n"+"Version : "+ver+" ("+date+")\n"+
     "Navigateur : "+navigator.userAgent+"\n\n"+
