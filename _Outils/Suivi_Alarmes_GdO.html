@@ -1002,6 +1002,8 @@ var CORE = (function () {
     var sitesOk = M.sites.filter(function (s) { return !M.cfg.sitesActifsSeulement || s.actif; });
     var out = [];
     var inAg = {}; M.agences.forEach(function (a) { inAg[a] = 1; });
+    // Classeur restreint à une agence ou un secteur : un seul périmètre, nommé d'après la sélection
+    if (M.perim) return [{ key: 'region', label: M.perim.nom, sites: sitesOk.filter(function (s) { return !s.sec.exclu && inAg[s.agence]; }), alarms: M.alarms.filter(function (a) { return !a.sec.exclu && inAg[a.agence]; }) }];
     var keepSite = function (s) { return !s.sec.exclu && inAg[s.agence]; };
     var keepAl = function (a) { return !a.sec.exclu && inAg[a.agence]; };
     out.push({ key: 'region', label: 'Région ' + (M.cfg.region === 'GRAND OUEST' ? 'GdO' : M.cfg.region), sites: sitesOk.filter(keepSite), alarms: M.alarms.filter(keepAl) });
@@ -1568,6 +1570,7 @@ var CORE = (function () {
     var out = {};
     var P = perimetres(M);
     P.forEach(function (p) { var k = kpi(p.alarms, p.sites, M); out[p.key] = k.ahuAbuSiteAn; });
+    if (M.perim) out[M.perim.key] = out.region;
     M.agences.forEach(function (ag) {
       rptSecteurs(M, ag).rows.forEach(function (r) {
         if (r.cls === '' && r.k.sites) out['sect:' + nk(r.cells[1])] = r.k.ahuAbuSiteAn;
@@ -1837,7 +1840,8 @@ var CLASSEUR = (function () {
     cols.forEach(function (c, j) {
       var col = ws.getColumn(j + 1);
       if (c.w) col.width = c.w;
-      if (c.f && c.f !== 'txt') col.numFmt = FMT[c.f];
+      // format appliqué aux seules lignes du tableau (pas à toute la colonne : d'autres blocs peuvent la partager)
+      if (c.f && c.f !== 'txt') for (var rr = r0 + 1; rr <= r0 + Math.max(rows.length, 1); rr++) ws.getCell(rr, j + 1).numFmt = FMT[c.f];
     });
     ws.getRow(r0).height = 30;
     ws.getRow(r0).alignment = { vertical: 'middle', wrapText: true };
@@ -1896,11 +1900,108 @@ var CLASSEUR = (function () {
   }
 
   /* ---------- Construction du classeur ---------- */
+  /* ---------- Feuilles « simples » : Vue d'ensemble, Nuits et week-ends, Temporisations ---------- */
+  function phrase(ws, r, text, lastCol, o) {
+    o = o || {};
+    ws.mergeCells(r, o.col || 1, r, lastCol);
+    var c = ws.getCell(r, o.col || 1); c.value = text; c.font = font({ size: o.size || 11, bold: !!o.bold, color: o.color || C.ink, italic: !!o.italic });
+    c.alignment = { wrapText: true, vertical: 'middle', indent: o.indent || 0 };
+    if (o.fill) for (var k = o.col || 1; k <= lastCol; k++) ws.getCell(r, k).fill = fill(o.fill);
+    ws.getRow(r).height = o.h || Math.max(18, Math.ceil(String(text).length / (o.cpl || 150)) * 16);
+    return r + 1;
+  }
+  function grosChiffre(ws, r, v, fmt, label, color) {
+    ws.mergeCells(r, 1, r + 1, 2);
+    var c = ws.getCell(r, 1); c.value = conv(v, fmt); c.numFmt = FMT[fmt] || FMT.int; c.font = font({ size: 28, bold: true, color: color || C.ink }); c.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.mergeCells(r + 2, 1, r + 2, 2); var l = ws.getCell(r + 2, 1); l.value = label; l.font = font({ size: 9, color: C.muted }); l.alignment = { horizontal: 'center', wrapText: true, vertical: 'top' };
+    ws.getRow(r + 2).height = 26;
+  }
+  function feuillesSimples(wb, ctx, charts) {
+    var M = ctx.M, S = ctx.simples, obj = M.cfg.objectif, LC = 12, AC = S.accueil, AS = S.astreinte, DU = S.durees, nom = S.nom;
+    var niv = function (lv) { return lv === 'good' ? C.green : lv === 'warn' ? C.amber : lv === 'bad' ? C.red : C.ink; };
+    var W = [6, 30, 14, 24, 32, 9, 11, 11, 11, 26, 40, 14];
+
+    /* ===== VUE D'ENSEMBLE ===== */
+    var ws = newSheet(wb, 'Vue d\'ensemble', { tab: C.teal });
+    widths(ws, W);
+    var r = sheetTitle(ws, 'Vue d\'ensemble — ' + nom, 'Les trois questions du mois, en phrases : la même lecture que la page d\'accueil de l\'outil.', LC, { M: M });
+    r = section(ws, r + 1, 'Est-ce qu\'on va bien ce mois-ci ?', LC);
+    grosChiffre(ws, r, AC.r, 'dec', 'alarmes urgentes par site et par an (objectif ' + obj + ')', niv(AC.niv));
+    phrase(ws, r, AC.lead, LC, { col: 3, size: 12, h: 48, cpl: 120 });
+    phrase(ws, r + 1, AC.def, LC, { col: 3, size: 9, color: C.muted, h: 30, cpl: 160 });
+    r += 4;
+    r = kpiStrip(ws, r, [
+      ['Alarmes du mois', AC.K.total, 'int', nf(AC.K.moyJour, 0) + ' par jour, dont ' + nf(AC.K.pHNO, 0) + ' % la nuit ou le week-end'],
+      ['Sans aucune intervention', AC.K.pSans, 'pct', 'disparues seules ou appel sans suite', AC.K.pSans > 60 ? C.red : null],
+      ['Astreinte dérangée pour rien', AS.sans, 'int', 'appels sans suite hors heures ouvrées · ' + nf(AS.sortie, 0) + ' sorties', AS.sans > 3 * AS.sortie ? C.red : null],
+      ['Part des AHU', AC.K.pAHU, 'pct', 'ABU ' + nf(AC.K.pABU, 0) + ' % · ANU ' + nf(AC.K.pANU, 0) + ' % · cible : un tiers chacun', AC.K.pAHU > 45 ? C.red : null]
+    ]);
+    r = section(ws, r, 'Qu\'est-ce qui pose problème ?', LC);
+    if (AC.alertes.length) AC.alertes.forEach(function (a) { r = phrase(ws, r, a.txt, LC, { fill: a.niv === 'bad' ? C.redSoft : C.amberSoft, color: a.niv === 'bad' ? C.red : C.amber, bold: true, h: 34, indent: 1 }); r++; });
+    else r = phrase(ws, r, '✔ Rien d\'anormal repéré ce mois sur ce périmètre.', LC, { color: C.green, bold: true });
+    r = section(ws, r + 1, 'Que faire en premier ?', LC, 'Les 10 points d\'alarme qui ont sonné le plus souvent. Actions proposées par des règles simples, à confirmer avec l\'exploitant.');
+    r = block(ws, r, { cols: [{ l: '#', f: 'int' }, { l: 'Site', f: 'txt' }, { l: 'Identifiant IPOP', f: 'txt' }, { l: 'Secteur', f: 'txt' }, { l: 'Alarme', f: 'txt' }, { l: 'Niveau', f: 'txt' }, { l: 'Ce mois', f: 'int' }, { l: '', f: 'txt' }, { l: '', f: 'txt' }, { l: 'Action proposée', f: 'txt' }, { l: 'Pourquoi', f: 'txt' }],
+      rows: AC.top10.map(function (o, i) { return { cells: [i + 1, o.site, o.ppv, o.secteur || '', o.libelle, o.niveau, o.n, '', '', o.action, o.pourquoi] }; }) }, {}, ctx);
+    r = note(ws, r + 1, 'Ces 10 points représentent ' + nf(AC.part10, 0) + ' % des alarmes du périmètre.');
+    r = note(ws, r, 'Détail : feuilles « Nuits et week-ends », « Temporisations », « Synthèse » et « Points répétitifs ».');
+
+    /* ===== NUITS ET WEEK-ENDS ===== */
+    ws = newSheet(wb, 'Nuits et week-ends', { tab: C.head });
+    widths(ws, W);
+    r = sheetTitle(ws, 'Nuits et week-ends — ' + nom, 'Hors heures ouvrées = en semaine avant ' + M.cfg.hoDebut + 'h et après ' + M.cfg.hoFin + 'h, le week-end et les jours fériés.', LC, { M: M });
+    r = section(ws, r + 1, 'L\'astreinte est-elle dérangée pour rien ?', LC);
+    grosChiffre(ws, r, AS.sans, 'int', 'appels à l\'astreinte sans suite', AS.sans > 3 * AS.sortie ? C.red : C.ink);
+    phrase(ws, r, S.astrLead, LC, { col: 3, size: 12, h: 48, cpl: 120 });
+    phrase(ws, r + 1, 'Appel sans suite = « ' + (M.cfg.kpi.appelSansSuite || ['TLC-Appel sortant vers exploitant']).join(' », « ') + ' ». Sortie = « ' + M.cfg.kpi.sortieAstreinte.join(' », « ') + ' ». Autres appels = « ' + (M.cfg.kpi.appelAutres || []).join(' », « ') + ' ».', LC, { col: 3, size: 9, color: C.muted, h: 30, cpl: 160 });
+    r += 4;
+    r = kpiStrip(ws, r, [
+      ['Appels sans suite', AS.sans, 'int', nf(AS.sans / ((M.period.jours || 30) / 7), 1) + ' par semaine', AS.sans ? C.red : null],
+      ['Dont en pleine nuit', AS.nuitSans, 'int', 'entre ' + AS.def.nuitDebut + 'h et ' + AS.def.nuitFin + 'h'],
+      ['Sorties d\'astreinte', AS.sortie, 'int', 'dont ' + nf(AS.nuitSortie, 0) + ' la nuit'],
+      ['Autres appels', AS.autre, 'int', 'programmés ou suivis par l\'ordonnancement']
+    ]);
+    if (charts.astr) { r = section(ws, r, 'À quelle heure ?', LC, 'Appels hors heures ouvrées par heure d\'apparition — rouge : sans suite, bleu nuit : sortie, gris : autre appel.'); r += addImg(wb, ws, charts.astr, 1, r, 900); }
+    r = section(ws, r + 1, 'Quels points dérangent l\'astreinte pour rien ?', LC, 'Tous les points ayant fait appeler l\'astreinte sans suite, du plus fréquent au moins fréquent.');
+    r = block(ws, r, { cols: [{ l: '#', f: 'int' }, { l: 'Site', f: 'txt' }, { l: 'Identifiant IPOP', f: 'txt' }, { l: 'Secteur', f: 'txt' }, { l: 'Alarme', f: 'txt' }, { l: 'Niveau', f: 'txt' }, { l: 'Appels sans suite', f: 'int' }, { l: 'dont nuit', f: 'int' }, { l: 'Sorties', f: 'int' }, { l: 'Action proposée', f: 'txt' }, { l: 'Pourquoi', f: 'txt' }],
+      rows: AS.points.slice(0, 60).map(function (o, i) { var a = S.actionAstreinte(o); return { cells: [i + 1, o.site, o.ppv, o.secteur, o.libelle, o.niveau, o.sans, o.nuit || null, o.sortie || null, a[0], a[2]] }; }) }, {}, ctx);
+    if (AS.points.length > 60) r = note(ws, r, '… ' + (AS.points.length - 60) + ' autre(s) point(s), avec moins d\'appels.');
+    if (S.secteurs) {
+      var secs = AS.secteurs.filter(function (s) { return s.kind !== 'absent' && (s.sans || s.sortie); });
+      if (secs.length > 1) {
+        r = section(ws, r + 1, 'Quels secteurs sont les plus concernés ?', LC, 'Chaque secteur a sa propre astreinte.');
+        r = block(ws, r, { cols: [{ l: '', f: 'txt' }, { l: 'Secteur', f: 'txt' }, { l: 'Agence', f: 'txt' }, { l: 'Appels sans suite', f: 'int' }, { l: 'Par semaine', f: 'dec' }, { l: 'Dont nuit', f: 'int' }, { l: 'Sorties', f: 'int' }, { l: 'Appels inutiles pour 1 sortie', f: 'dec' }],
+          rows: secs.map(function (s) { return { cells: ['', s.nom, (s.agence || '').replace(/^AG /, ''), s.sans, s.sans / ((M.period.jours || 30) / 7), s.nuit, s.sortie, s.sortie ? s.sans / s.sortie : null] }; }) }, { scaleCols: [3], scaleColor: 'FFF3B7B1' }, ctx);
+      }
+    }
+
+    /* ===== TEMPORISATIONS ===== */
+    ws = newSheet(wb, 'Temporisations', { tab: C.teal });
+    widths(ws, W);
+    r = sheetTitle(ws, 'Temporisations — ' + nom, 'Alarmes qui disparaissent toutes seules, et combien une temporisation en éviterait.', LC, { M: M });
+    r = section(ws, r + 1, 'Combien d\'alarmes une temporisation éviterait-elle ?', LC);
+    grosChiffre(ws, r, DU.totalEvitees, 'int', 'alarmes évitées par mois, au moins', C.teal);
+    phrase(ws, r, S.tempoLead, LC, { col: 3, size: 12, h: 48, cpl: 120 });
+    phrase(ws, r + 1, 'Durée mesurée de l\'apparition à la clôture des alarmes « disparues » : le retour à la normale a lieu au plus tard à la clôture, les gains sont donc estimés par défaut. Une temporisation de T min retarde aussi de T min le signalement d\'un vrai défaut.', LC, { col: 3, size: 9, color: C.muted, h: 30, cpl: 160 });
+    r += 4;
+    r = kpiStrip(ws, r, [
+      ['Alarmes disparues seules', DU.mesurees, 'int', 'durée mesurée jusqu\'à la clôture'],
+      ['Dont moins de 5 minutes', DU.moins5, 'int', nf(DU.mesurees ? DU.moins5 / DU.mesurees * 100 : 0, 0) + ' % des disparitions'],
+      ['Points à temporiser', DU.propositions.length, 'int', 'temporisation proposée'],
+      ['Alarmes évitées', DU.totalEvitees, 'int', nf(S.totalAlarmes ? DU.totalEvitees / S.totalAlarmes * 100 : 0, 0) + ' % de toutes les alarmes', C.teal]
+    ]);
+    if (charts.tempo) { r = section(ws, r, 'Combien de temps durent les alarmes qui disparaissent seules ?', LC, 'Barres foncées : moins de 15 minutes, la zone qu\'une temporisation courte peut supprimer.'); r += addImg(wb, ws, charts.tempo, 1, r, 900); }
+    r = section(ws, r + 1, 'Quelles temporisations régler ?', LC, S.tempoRegle);
+    var tcols = [{ l: '#', f: 'int', w: 6 }, { l: 'Site', f: 'txt', w: 30 }, { l: 'Identifiant IPOP', f: 'txt', w: 14 }, { l: 'Secteur', f: 'txt', w: 24 }, { l: 'Alarme', f: 'txt', w: 32 }, { l: 'Niveau', f: 'txt', w: 9 },
+      { l: 'Alarmes du mois', f: 'int', w: 11 }, { l: 'Durée médiane (min)', f: 'dec', w: 11 }, { l: 'Temporisation (min)', f: 'int', w: 11 }, { l: 'Alarmes évitées', f: 'int', w: 26 }, { l: 'Précaution', f: 'txt', w: 40 }, { l: '% du point', f: 'pct', w: 14 }];
+    xlTable(ws, r, 'T_Temporisations', tcols, DU.propositions.map(function (o, i) { return [i + 1, o.site, o.ppv, o.secteur, o.libelle, o.niveau, o.n, Math.round(o.mediane * 10) / 10, o.tempo, o.evitees, S.precaution(o)[1], o.evitees / o.n * 100]; }), 'TableStyleMedium7');
+  }
+
   function build(ctx) {
     var M = ctx.M, cfg = M.cfg, CORE = ctx.CORE, obj = cfg.objectif;
     CORE_NIV = CORE.NIVEAUX;
     var wb = new ExcelJS.Workbook();
     wb.creator = 'Suivi des Alarmes GdO'; wb.created = new Date(); wb.calcProperties = { fullCalcOnLoad: false };
+    var RL = ctx.regLabel || 'Région';
     var syn = ctx.synTable(M, true), P = syn.P, K = syn.K, A = ctx.attention(M), conc = CORE.concentration(M);
     var c = ctx.curYM(), p = c ? ctx.prevYM(c) : null;
     var listes = cfg.listes;
@@ -1909,15 +2010,15 @@ var CLASSEUR = (function () {
 
     // Pré-rendu des graphiques
     var jobs = [];
-    jobs.push(svgToPng(ctx.hbarChart({ labels: P.slice(1).map(function (x) { return x.label.replace(/^AG /, ''); }), values: K.slice(1).map(function (k) { return k.ahuAbuSiteAn; }), target: obj, w: 620, rowH: 40, fs: 13 })).then(function (r) { charts.ag = r; }));
+    if (P.length > 1) jobs.push(svgToPng(ctx.hbarChart({ labels: P.slice(1).map(function (x) { return x.label.replace(/^AG /, ''); }), values: K.slice(1).map(function (k) { return k.ahuAbuSiteAn; }), target: obj, w: 620, rowH: 40, fs: 13 })).then(function (r) { charts.ag = r; }));
     M.agences.forEach(function (ag) {
       var rs = CORE.rptSecteurs(M, ag).rows.filter(function (x) { return x.cls === '' && x.k.sites > 0; }).sort(function (a, b) { return b.k.ahuAbuSiteAn - a.k.ahuAbuSiteAn; });
       jobs.push(svgToPng(ctx.hbarChart({ labels: rs.map(function (x) { return x.cells[1] + (x.k.sites < 10 ? ' (' + x.k.sites + ' sites)' : ''); }), values: rs.map(function (x) { return x.k.ahuAbuSiteAn; }), target: obj, w: 620, rowH: 28, fs: 12, maxLabel: 230 })).then(function (r) { charts['s:' + ag] = r; }));
     });
     var hasTrend = c && ctx.histVal('region', c.y, 1) !== null || (c && c.m > 1 && ctx.histVal('region', c.y, c.m - 1) !== null);
     if (hasTrend) {
-      var keys = ['region'].concat(M.agences), vm = CORE.valeursMois(M), colors = ['#0f1b2d', '#1B6FE8', '#0D9488', '#b86e00', '#7c3aed'];
-      var series = keys.map(function (k, i) { return { name: k === 'region' ? 'Région' : k.replace(/^AG /, ''), color: colors[i], width: i === 0 ? 3 : 1.8, labels: i === 0, values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].slice(0, Math.max(c.m, 2)).map(function (m) { return m === c.m ? vm[k] : ctx.histVal(k, c.y, m); }) }; });
+      var keys = M.perim ? ['region'] : ['region'].concat(M.agences), vm = CORE.valeursMois(M), colors = ['#0f1b2d', '#1B6FE8', '#0D9488', '#b86e00', '#7c3aed'];
+      var series = keys.map(function (k, i) { return { name: k === 'region' ? RL : k.replace(/^AG /, ''), color: colors[i], width: i === 0 ? 3 : 1.8, labels: i === 0, values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].slice(0, Math.max(c.m, 2)).map(function (m) { return m === c.m ? vm[k] : ctx.histVal(k, c.y, m); }) }; });
       charts.trendSeries = series;
       jobs.push(svgToPng(ctx.lineChart({ labels: ctx.MOIS_C.slice(0, Math.max(c.m, 2)), series: series, target: obj, w: 900, height: 300 }) ).then(function (r) { charts.trend = r; }));
     }
@@ -1925,16 +2026,23 @@ var CLASSEUR = (function () {
       { name: 'AHU', color: '#8e1f47', values: rows.map(function (x) { return get(x).AHU; }) },
       { name: 'ABU', color: '#f0a020', values: rows.map(function (x) { return get(x).ABU; }) },
       { name: 'ANU', color: '#1B6FE8', values: rows.map(function (x) { return get(x).ANU; }) }]; };
-    var PKm = P.map(function (x, i) { return { label: i ? x.label.replace(/^AG /, '') : 'Région', k: K[i] }; });
+    var PKm = P.map(function (x, i) { return { label: i ? x.label.replace(/^AG /, '') : RL, k: K[i] }; });
     jobs.push(svgToPng(ctx.stack100Chart({ labels: PKm.map(function (x) { return x.label; }), bold: PKm.map(function (x, i) { return i === 0; }), parts: mixParts(PKm, function (x) { return x.k; }), w: 760, rowH: 30, fs: 12 })).then(function (r) { charts.mixAg = r; }));
     M.agences.forEach(function (ag) {
       var rs = CORE.rptSecteurs(M, ag).rows.filter(function (x) { return (x.cls === '' || x.cls === 'total') && x.k.total > 0; });
       jobs.push(svgToPng(ctx.stack100Chart({ labels: rs.map(function (x) { return x.cls === 'total' ? 'TOTAL AGENCE' : x.cells[1]; }), bold: rs.map(function (x) { return x.cls === 'total'; }), parts: mixParts(rs, function (x) { return x.k; }),
         flags: rs.map(function (x) { var l = ctx.eqLevel(x.k.equilibre); return l === 'bad' ? '#c8352a' : l === 'warn' ? '#e09a00' : '#15803d'; }), w: 760, rowH: 26, fs: 11.5, maxLabel: 230 })).then(function (r) { charts['m:' + ag] = r; }));
     });
-    var GS = CORE.rptGroupesStatut(M), gsLab = P.map(function (x, i) { return i ? x.label.replace(/^AG /, '') : 'Région'; }), gsCol = ['#3b4f7d', '#94a3b8', '#c8352a', '#0D9488'];
+    var GS = CORE.rptGroupesStatut(M), gsLab = P.map(function (x, i) { return i ? x.label.replace(/^AG /, '') : RL; }), gsCol = ['#3b4f7d', '#94a3b8', '#c8352a', '#0D9488'];
     jobs.push(svgToPng(ctx.stack100Chart({ labels: gsLab, bold: gsLab.map(function (x, i) { return i === 0; }), parts: GS.rows.map(function (row, gi) { return { name: row.cells[0], color: gsCol[gi % 4], values: row.cells.slice(1).map(function (v) { return v || 0; }) }; }), w: 760, rowH: 30, fs: 12 }).replace(/<line [^>]*stroke-dasharray="4 3"[^>]*\/>/g, '').replace(/<text [^>]*>(1\/3|2\/3)<\/text>/g, '')).then(function (r) { charts.statuts = r; charts.statutsLeg = GS.rows.map(function (row, gi) { return [row.cells[0], gsCol[gi % 4]]; }); }));
     var vol = CORE.volJour(M, 'all', 'region');
+    if (ctx.simples) {
+      var HH = ctx.simples.astreinte.heures, TR = ctx.simples.durees.tranches;
+      jobs.push(svgToPng(ctx.barChart({ labels: HH.map(function (_, i) { return i + 'h'; }), short: HH.map(function (_, i) { return String(i); }), series: [
+        { name: 'Appel sans suite', color: '#c8352a', values: HH.map(function (x) { return x.sans; }) }, { name: 'Sortie d\'astreinte', color: '#10233f', values: HH.map(function (x) { return x.sortie; }) },
+        { name: 'Autre appel', color: '#b8c2d1', values: HH.map(function (x) { return x.autre; }) }], w: 1000, height: 240 })).then(function (r) { charts.astr = r; }));
+      jobs.push(svgToPng(ctx.barChart({ labels: TR.map(function (t) { return t.label; }), series: [{ name: 'Alarmes disparues', color: '#0D9488', values: TR.map(function (t) { return t.n; }) }], dim: TR.map(function (t) { return t.max > 15; }), w: 1000, height: 240, bw: 0.6 })).then(function (r) { charts.tempo = r; }));
+    }
     var days = vol.days;
     jobs.push(svgToPng(ctx.barChart({ labels: days, short: days.map(function (d) { return String(+d.slice(8, 10)); }), dim: days.map(function (d) { var wd = (new Date(d + 'T00:00:00Z').getUTCDay() + 6) % 7; return wd >= 5 || !!M.feries[d]; }),
       series: [{ name: 'AHU', color: '#8e1f47', values: days.map(function (d) { return vol.byDay[d].AHU; }) }, { name: 'ABU', color: '#f0a020', values: days.map(function (d) { return vol.byDay[d].ABU; }) }, { name: 'ANU', color: '#1B6FE8', values: days.map(function (d) { return vol.byDay[d].ANU; }) }],
@@ -1946,7 +2054,7 @@ var CLASSEUR = (function () {
       /* ===== SOMMAIRE ===== */
       var ws = newSheet(wb, 'Sommaire', { tab: C.head });
       widths(ws, [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16]);
-      var r = sheetTitle(ws, 'Suivi des alarmes — Région ' + cfg.region, 'Analyse mensuelle de la télésurveillance, générée à partir des exports bruts OCEANE et BDPTI.', 12, { M: M, withBack: false });
+      var r = sheetTitle(ws, 'Suivi des alarmes — ' + (M.perim ? M.perim.nom : 'Région ' + cfg.region), 'Analyse mensuelle de la télésurveillance, générée à partir des exports bruts OCEANE et BDPTI.', 12, { M: M, withBack: false });
       r = kpiStrip(ws, r + 1, [
         ['Alarmes AHU + ABU + ANU', K[0].total, 'int', nf(K[0].moyJour, 1) + ' / jour · ' + nf(K[0].pHNO, 1) + ' % en HNO'],
         ['AHU + ABU / site / an', K[0].ahuAbuSiteAn, 'dec', 'objectif ' + obj + ' · écart ' + (K[0].ecart > 0 ? '+' : '') + nf(K[0].ecart, 1) + ' %' + (p && ctx.histVal('region', p.y, p.m) !== null ? ' · mois préc. ' + nf(ctx.histVal('region', p.y, p.m), 1) : ''), K[0].ecart > 0 ? C.red : C.green],
@@ -1963,16 +2071,19 @@ var CLASSEUR = (function () {
       r = section(ws, r, 'Niveaux d\'alarme', 12, 'Un secteur bien paramétré tend vers 1/3 de chaque niveau ; il y a toujours des cas particuliers.');
       r = niveauxBlock(ws, r, 12);
       r = section(ws, r, 'Contenu du classeur', 12, 'Cliquez un nom de feuille pour y accéder ; chaque feuille a un lien « ← Sommaire ».');
-      var toc = [
+      var toc = (ctx.simples ? [
+        ['Vue d\'ensemble', 'Les trois questions du mois en phrases : est-ce qu\'on va bien, qu\'est-ce qui pose problème, que faire en premier'],
+        ['Nuits et week-ends', 'L\'astreinte dérangée pour rien : appels sans suite hors heures ouvrées, points et secteurs concernés'],
+        ['Temporisations', 'Alarmes qui disparaissent seules, temporisation proposée par point et alarmes évitées']] : []).concat([
         ['Synthèse', 'Scorecard, intrusions, répartition AHU / ABU / ANU, points d\'attention, tendance'],
-      ].concat(M.agences.map(function (ag) { return [ag.replace(/^AG /, ''), 'Agence : secteurs (avec interlocuteurs et équilibre AHU / ABU / ANU), intrusions, top sites, points répétitifs']; }))
+      ].concat(M.agences.map(function (ag) { return [M.perim && /^sect:/.test(M.perim.key) ? M.perim.nom.replace(/^Secteur /, '').replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31) : ag.replace(/^AG /, ''), (M.perim && /^sect:/.test(M.perim.key) ? 'Secteur' : 'Agence') + ' : secteurs (avec interlocuteurs et équilibre AHU / ABU / ANU), intrusions, top sites, points répétitifs']; }))
         .concat([
           ['Évolution', 'AHU + ABU / site / an mois par mois (région, agences, secteurs)'],
           ['Répartitions', 'À quel niveau et quand sonnent les alarmes, que deviennent-elles, sur quels types de sites'],
           ['Volumétrie', 'Alarmes par jour et par agence, HO / HNO'],
           ['Points répétitifs', 'Même point d\'alarme qui sonne en boucle sur un site (≥ ' + ctx.repSeuil + ' fois)']
         ]).concat(Object.keys(listes).map(function (k) { return [LNAME[k], listes[k].aide]; }))
-        .concat([['Contrôles', 'Contrôles de cohérence des exports et traitements appliqués'], ['Données alarmes', 'Journal OCEANE enrichi (secteur, métier, HO/HNO, classements), filtrable'], ['Données sites', 'Sites BDPTI de la région retenus et écartés, avec la raison']]);
+        .concat([['Contrôles', 'Contrôles de cohérence des exports et traitements appliqués'], ['Données alarmes', 'Journal OCEANE enrichi (secteur, métier, HO/HNO, classements), filtrable'], ['Données sites', 'Sites BDPTI de la région retenus et écartés, avec la raison']]));
       toc.forEach(function (t, i) {
         var a = ws.getCell(r, 1); a.value = { text: t[0], hyperlink: "#'" + t[0] + "'!A1" }; a.font = font({ bold: true, color: C.blue, underline: true });
         ws.mergeCells(r, 3, r, 12); var d = ws.getCell(r, 3); d.value = t[1]; d.font = font({ color: C.muted, size: 9.5 });
@@ -1997,17 +2108,19 @@ var CLASSEUR = (function () {
       r++; var cq = ws.getCell(r, 1); cq.value = { text: 'Contrôles : ' + (nErr ? nErr + ' anomalie(s), ' : '') + nWarn + ' point(s) à vérifier — voir la feuille Contrôles', hyperlink: "#'Contrôles'!A1" }; cq.font = font({ bold: true, color: nErr ? C.red : nWarn ? C.amber : C.green, underline: true });
       r += 2; note(ws, r, 'Généré le ' + new Date().toLocaleString('fr-FR') + ' par l\'outil « Suivi des Alarmes » à partir des exports bruts, sans retouche manuelle.');
 
+      if (ctx.simples) feuillesSimples(wb, ctx, charts);
+
       /* ===== SYNTHÈSE ===== */
       ws = newSheet(wb, 'Synthèse', { tab: C.blue });
       widths(ws, [44, 14, 14, 14, 14, 14, 3, 14, 14, 14, 14, 14]);
-      r = sheetTitle(ws, 'Synthèse mensuelle — scorecard', 'Région et agences, hors ' + cfg.secteursExclusAgence.join(', ') + ' et hors alarmes inhibées « intervention ». Objectif : ' + obj + ' alarmes AHU + ABU par site et par an.', 12, { M: M });
+      r = sheetTitle(ws, 'Synthèse mensuelle — scorecard', (M.perim ? M.perim.nom : 'Région et agences') + ', hors ' + cfg.secteursExclusAgence.join(', ') + ' et hors alarmes inhibées « intervention ». Objectif : ' + obj + ' alarmes AHU + ABU par site et par an.', 12, { M: M });
       r = section(ws, r + 1, 'Scorecard', 6);
       var synRows = syn.rows.map(function (row) { return { cells: row.cells, fmt: row.fmt === 'num' ? 'dec' : row.fmt, cls: row.cls }; });
       var abRow = syn.rows.map(function (x) { return x.cells[0]; }).indexOf('AHU + ABU / site / an');
       var rEnd = block(ws, r, { cols: syn.cols.map(function (cc, j) { return { l: cc.l, f: j ? 'dec' : 'txt' }; }), rows: synRows }, {}, ctx);
       // mise en forme conditionnelle sur la ligne AHU+ABU/site/an et le mois précédent
       [abRow, syn.rows.length - 1].forEach(function (ri) { if (ri < 0) return; var rr = r + 1 + ri; ws.addConditionalFormatting({ ref: 'B' + rr + ':F' + rr, rules: [{ type: 'cellIs', operator: 'greaterThan', formulae: [obj], priority: 1, style: { font: { color: { argb: C.red }, bold: true } } }, { type: 'cellIs', operator: 'lessThanOrEqual', formulae: [obj], priority: 2, style: { font: { color: { argb: C.green }, bold: true } } }] }); });
-      ws.getCell(r - 1, 8).value = 'AHU + ABU / site / an par agence'; ws.getCell(r - 1, 8).font = font({ size: 12, bold: true, color: C.head });
+      if (charts.ag) ws.getCell(r - 1, 8).value = 'AHU + ABU / site / an par agence'; ws.getCell(r - 1, 8).font = font({ size: 12, bold: true, color: C.head });
       if (charts.ag) addImg(wb, ws, charts.ag, 8, r, 520);
       r = rEnd + 1;
       // Points d'attention
@@ -2022,14 +2135,14 @@ var CLASSEUR = (function () {
       // Intrusions
       r = section(ws, r, 'Alarmes intrusion', 12, 'À surveiller en priorité en eau potable. Justifiées = sortie d\'astreinte (G2A). Détail par site : feuille « Intrusions ».');
       var intT = { cols: [{ l: 'Périmètre', f: 'txt' }, { l: 'Intrusions', f: 'int' }, { l: 'dont eau potable', f: 'int' }, { l: 'Sites touchés', f: 'int' }, { l: 'dont eau potable', f: 'int' }, { l: '% non justifiées', f: 'pct' }],
-        rows: P.map(function (x, i) { var k = K[i]; return { cells: [i ? x.label : 'Région', k.intru, k.intruEP, k.intruSites, k.intruSitesEP, k.pIntruNonJust], cls: i ? '' : 'b' }; }) };
+        rows: P.map(function (x, i) { var k = K[i]; return { cells: [i ? x.label : RL, k.intru, k.intruEP, k.intruSites, k.intruSitesEP, k.pIntruNonJust], cls: i ? '' : 'b' }; }) };
       var rI = block(ws, r, intT, { alert: true, scaleCols: [2], scaleColor: 'FFF3A39B' }, ctx);
       [3, 5].forEach(function (cc) { for (var rr = r + 1; rr < rI; rr++) { var x = ws.getCell(rr, cc); if (x.value) x.font = font({ bold: true, color: C.red }); } });
       r = rI + 1;
       // Répartition AHU / ABU / ANU
       r = section(ws, r, 'Répartition AHU / ABU / ANU', 12, 'Un parc bien paramétré tend vers 1/3 de chaque niveau. Équilibre = part des alarmes qu\'il faudrait reclasser pour l\'atteindre.');
       var mixT = { cols: [{ l: 'Périmètre', f: 'txt' }, { l: '% AHU', f: 'pct' }, { l: '% ABU', f: 'pct' }, { l: '% ANU', f: 'pct' }, { l: 'Équilibre 1/3', f: 'eq' }],
-        rows: P.map(function (x, i) { var k = K[i]; return { cells: [i ? x.label : 'Région', k.pAHU, k.pABU, k.pANU, k.equilibre], cls: i ? '' : 'b' }; }) };
+        rows: P.map(function (x, i) { var k = K[i]; return { cells: [i ? x.label : RL, k.pAHU, k.pABU, k.pANU, k.equilibre], cls: i ? '' : 'b' }; }) };
       var rM = block(ws, r, mixT, { ahuCols: [1] }, ctx);
       if (charts.mixAg) { addImg(wb, ws, charts.mixAg, 8, r, 520); legendRow(ws, rM, [['AHU', '#8e1f47'], ['ABU', '#f0a020'], ['ANU', '#1B6FE8'], ['pointillés : 1/3 et 2/3', '#0f1b2d']], 8); }
       r = Math.max(rM, r + 10) + 2;
@@ -2040,12 +2153,13 @@ var CLASSEUR = (function () {
 
       /* ===== UNE FEUILLE PAR AGENCE ===== */
       M.agences.forEach(function (ag) {
-        var name = ag.replace(/^AG /, '');
+        var name = M.perim && /^sect:/.test(M.perim.key) ? M.perim.nom.replace(/^Secteur /, '').replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31) : ag.replace(/^AG /, '');
         var wsA = newSheet(wb, name, { tab: C.teal });
         widths(wsA, [22, 30, 9, 10, 9, 10, 11, 11, 9, 9, 11, 10, 11, 10, 10, 10, 10, 10, 10, 34]);
-        var PA = CORE.perimetres(M).filter(function (x) { return x.key === ag; })[0], k = CORE.kpi(PA.alarms, PA.sites, M);
-        var ra = sheetTitle(wsA, ag, 'Détail de l\'agence. Rouge : au-dessus de l\'objectif de ' + obj + ' AHU + ABU / site / an.', 17, { M: M });
-        var pab = p ? ctx.histVal(ag, p.y, p.m) : null;
+        var PA = CORE.perimetres(M).filter(function (x) { return x.key === ag; })[0] || CORE.perimetres(M)[0], k = CORE.kpi(PA.alarms, PA.sites, M);
+        var estSect = M.perim && /^sect:/.test(M.perim.key);
+        var ra = sheetTitle(wsA, estSect ? M.perim.nom + ' (' + ag.replace(/^AG /, '') + ')' : ag, (estSect ? 'Détail du secteur.' : 'Détail de l\'agence.') + ' Rouge : au-dessus de l\'objectif de ' + obj + ' AHU + ABU / site / an.', 17, { M: M });
+        var pab = p ? ctx.histVal(estSect ? M.perim.key : ag, p.y, p.m) : null;
         ra = kpiStrip(wsA, ra + 1, [
           ['Sites télésurveillés', k.sites, 'int', 'max objectif : ' + nf(k.moyJourMax, 1) + ' AHU+ABU / jour'],
           ['Alarmes AHU + ABU + ANU', k.total, 'int', nf(k.moyJour, 1) + ' / jour'],
@@ -2095,7 +2209,7 @@ var CLASSEUR = (function () {
       widths(ws, [32, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 11, 11, 11, 11]);
       r = sheetTitle(ws, 'Évolution — AHU + ABU / site / an', 'Mois saisis à la main dans l\'ancien classeur (valeurs tronquées) ou calculés par l\'outil. Rouge : au-dessus de l\'objectif.', 17, { M: M });
       var yr = c ? c.y : null;
-      var groups = [['region', 'Région et agences']].concat(cfg.agences.map(function (a) { return [a.nom, a.nom + ' — secteurs']; }));
+      var groups = M.perim ? [[M.perim.key, M.perim.nom + (/^sect:/.test(M.perim.key) ? '' : ' — secteurs')]] : [['region', 'Région et agences']].concat(cfg.agences.map(function (a) { return [a.nom, a.nom + ' — secteurs']; }));
       var vmc = CORE.valeursMois(M);
       groups.forEach(function (g) {
         var rowsK = ctx.evoRows(g[0]);
@@ -2105,17 +2219,17 @@ var CLASSEUR = (function () {
         var rowsE = rowsK.map(function (k) {
           var vals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (m) { var v = ctx.histVal(k.key, yr, m); if (v === null && c && m === c.m) v = vmc[k.key]; return typeof v === 'number' ? v : null; });
           var nn = vals.filter(function (v) { return v !== null; });
-          return { cells: [k.key === 'region' ? 'Région' : k.label].concat(vals).concat([nn.length ? nn.reduce(function (a, b) { return a + b; }, 0) / nn.length : null]).concat(py.map(function (y) { return (ctx.hist.annuelles[k.key] || {})[y]; })), cls: k.key === g[0] ? 'b' : '' };
+          return { cells: [k.key === 'region' ? RL : k.label].concat(vals).concat([nn.length ? nn.reduce(function (a, b) { return a + b; }, 0) / nn.length : null]).concat(py.map(function (y) { return (ctx.hist.annuelles[k.key] || {})[y]; })), cls: k.key === g[0] ? 'b' : '' };
         });
         var oc = []; for (var j = 1; j < cols.length; j++) oc.push(j);
         r = block(ws, r + 1, { cols: cols, rows: rowsE }, { objCols: oc }, ctx) + 1;
       });
-      if (charts.trend) { r = section(ws, r, 'Région et agences — ' + yr, 17); addImg(wb, ws, charts.trend, 1, r, 900); }
+      if (charts.trend) { r = section(ws, r, (M.perim ? M.perim.nom : 'Région et agences') + ' — ' + yr, 17); addImg(wb, ws, charts.trend, 1, r, 900); }
       ws.views = [{ showGridLines: false, state: 'frozen', xSplit: 1, ySplit: 0 }];
 
       /* ===== RÉPARTITIONS (3 blocs) ===== */
       ws = newSheet(wb, 'Répartitions', { tab: C.blue });
-      var RP = P.map(function (x) { return CORE.repartition(M, x.key); }), RN = P.map(function (x, i) { return i ? x.label.replace(/^AG /, '') : 'Région'; });
+      var RP = P.map(function (x) { return CORE.repartition(M, x.key); }), RN = P.map(function (x, i) { return i ? x.label.replace(/^AG /, '') : RL; });
       widths(ws, [44, 11, 11, 11, 11, 11, 11, 11, 11, 11]);
       r = sheetTitle(ws, 'Répartition des alarmes', 'Trois questions : à quel niveau sonnent les alarmes, que deviennent-elles, et sur quels types de sites. Plus la cellule est foncée, plus la valeur est élevée dans sa colonne.', 10, { M: M });
       // ---- 1. Niveaux et horaires
@@ -2904,6 +3018,7 @@ var CLASSEUR = (function () {
     if (c && onlyAgFilter()) {
       var p = prevYM(c), vm = CORE.valeursMois(M);
       CORE.evoKeys(M.cfg).forEach(function (k) {
+        if (M.perim && k.key === 'region') return;
         var pv = histVal(k.key, p.y, p.m), v = vm[k.key];
         if (pv !== null) hasPrev = true;
         if (pv !== null && typeof v === 'number' && v - pv >= 3) hausses.push({ nom: k.key === 'region' ? 'Région' : k.label, ag: k.isAg || k.key === 'region' ? '' : shortAg(k.agence), d: v - pv, v: v, pv: pv });
@@ -2954,7 +3069,7 @@ var CLASSEUR = (function () {
     var defs = all ? CORE.KPI_ROWS.concat([['__prev', 'AHU + ABU / site / an — mois précédent', 'dec']]) : SYN_ESS;
     var cols = [{ l: 'Indicateur', f: 'txt' }].concat(P.map(function (p) { return { l: p.label, f: 'num' }; }));
     var rows = defs.map(function (d) {
-      return { cells: [d[0] === 'pFurt' ? '% alarmes furtives (' + furtLabel() + ')' : d[1]].concat(K.map(function (k, i) { return d[0] === '__prev' ? prevAhuAbu(P[i].key) : k[d[0]]; })), fmt: d[2], cls: d[3] || '' };
+      return { cells: [d[0] === 'pFurt' ? '% alarmes furtives (' + furtLabel() + ')' : d[1]].concat(K.map(function (k, i) { return d[0] === '__prev' ? prevAhuAbu(M.perim && P[i].key === 'region' ? M.perim.key : P[i].key) : k[d[0]]; })), fmt: d[2], cls: d[3] || '' };
     });
     return { cols: cols, rows: rows, P: P, K: K };
   }
@@ -3075,7 +3190,7 @@ var CLASSEUR = (function () {
     CORE.perimetres(M)[0].alarms.forEach(function (a) {
       if (a.exclu) return; tot++;
       var pt = a.mnemo || a.info, k = a.ppv + '||' + pt;
-      var o = by[k] || (by[k] = { ppv: a.ppv, site: a.siteNom, n: 0, info: {}, rang: {}, furt: 0, sans: 0, astr: 0, intru: 0, ep: a.eauPotable, com: 0 });
+      var o = by[k] || (by[k] = { ppv: a.ppv, site: a.siteNom, secteur: a.sec.nom, n: 0, info: {}, rang: {}, furt: 0, sans: 0, astr: 0, intru: 0, ep: a.eauPotable, com: 0 });
       o.n++; o.info[a.info] = (o.info[a.info] || 0) + 1; o.rang[a.rang] = (o.rang[a.rang] || 0) + 1;
       if (furt(a.statut)) o.furt++; if (sans(a.statut)) o.sans++; if (astr(a.statut)) o.astr++; if (a.intru) o.intru++; if (a.com) o.com++;
     });
@@ -3238,6 +3353,9 @@ var CLASSEUR = (function () {
   }
 
   /* ---------- Temporisations : durée des alarmes qui disparaissent seules ---------- */
+  function precautionTempo(o) {
+    return o.intru ? ['bad', 'Intrusion : à valider par la sécurité'] : o.sortie ? ['warn', plur(o.sortie, 'sortie') + ' d\'astreinte : vérifier qu\'un retard de ' + o.tempo + ' min est acceptable'] : o.ep && o.niveau === 'AHU' ? ['warn', 'Eau potable : à valider'] : o.inter > o.n - o.nMes ? ['', 'quelques alarmes traitées : vérifier'] : ['', '—'];
+  }
   function renderTempo() {
     var p = $('#p-tempo'), M0 = state.model; if (!p) return; if (!M0) { p.innerHTML = ''; return; }
     var f = { agence: state.f.agence, secteur: state.f.secteur }, Mp = modelePerim(), P0 = CORE.perimetres(Mp)[0], cfg = M0.cfg;
@@ -3257,7 +3375,7 @@ var CLASSEUR = (function () {
       segHTML('tempoUrg', [['', 'Tous niveaux'], ['1', 'AHU et ABU seulement']], urg ? '1' : '') +
       (L.length ? '<table class="ac-tab" style="margin-top:12px"><thead><tr><th>#</th><th>Site</th><th>Alarme</th><th>Niveau</th><th class="n">Ce mois</th><th class="n">Durée médiane</th><th>Temporisation</th><th class="n">Alarmes évitées</th><th>Précaution</th></tr></thead><tbody>' +
         L.slice(0, 25).map(function (o, i) {
-          var pr = o.intru ? ['bad', 'Intrusion : à valider par la sécurité'] : o.sortie ? ['warn', plur(o.sortie, 'sortie') + ' d\'astreinte : vérifier qu\'un retard de ' + o.tempo + ' min est acceptable'] : o.ep && o.niveau === 'AHU' ? ['warn', 'Eau potable : à valider'] : o.inter > o.n - o.nMes ? ['', 'quelques alarmes traitées : vérifier'] : ['', '—'];
+          var pr = precautionTempo(o);
           return '<tr data-site="' + esc(o.ppv) + '"><td class="n">' + (i + 1) + '</td>' + sitesCell(o) + '<td>' + esc(o.libelle) + '</td>' + rangCell(o.niveau) + '<td class="n">' + o.n + '</td><td class="n">' + fmtDur(o.mediane) + '</td><td><span class="ac-act teal">' + o.tempo + ' min</span></td><td class="n"><b>' + o.evitees + '</b><span class="m">' + pctTxt(o.evitees / o.n * 100) + ' du point</span></td><td>' + (pr[0] ? '<span class="ac-act ' + pr[0] + '">' + esc(pr[1]) + '</span>' : '<span class="m" style="margin:0">' + esc(pr[1]) + '</span>') + '</td></tr>';
         }).join('') + '</tbody></table>' +
         '<p class="ac-foot">' + (L.length > 25 ? 'Les 25 premiers points sur ' + L.length + ' (' + plur(evL, 'alarme') + ' évitées au total). ' : '') + 'Temporisation proposée = la plus courte parmi ' + pal + ' min qui absorbe au moins ' + pctTxt((cfg.tempoCouverture || 0.8) * 100) + ' des disparitions du point (mesurées sur au moins ' + (cfg.tempoMinMesures || 5) + ' alarmes) ; à défaut ' + (cfg.tempoPaliers || [15]).slice(-1)[0] + ' min si elle en absorbe la moitié. Alarmes évitées = disparitions plus courtes que la temporisation.</p>'
@@ -3891,14 +4009,32 @@ var CLASSEUR = (function () {
       (state.hist.kpis[c0.y] || (state.hist.kpis[c0.y] = {}))[c0.m] = CORE.kpisMois(M); saveHist();
     }
     var histPack = { v: 1, genere: new Date().toISOString(), periode: M.period.label, hist: state.hist, cfg: { renommages: state.cfg.renommages || {}, interlocuteurs: state.cfg.interlocuteurs || {} } };
-    var ctx = { histPack: histPack, M: M, CORE: CORE, synTable: synTable, attention: attention, curYM: curYM, prevYM: prevYM, histVal: histVal, hist: state.hist,
+    // Périmètre du classeur : celui choisi dans les menus Agence / Secteur (sinon toute la région)
+    var f0 = { agence: state.f.agence, secteur: state.f.secteur }, enPerim = !!(f0.agence || f0.secteur), M0 = M;
+    renderAccueil(); renderAstreinte(); renderTempo();
+    var regNom = 'Région ' + (M.cfg.region === 'GRAND OUEST' ? 'GdO' : M.cfg.region);
+    var nomX = f0.secteur ? 'Secteur ' + f0.secteur : f0.agence ? f0.agence : regNom;
+    if (enPerim) M = Object.assign({}, modelePerim(), { perim: { key: cleHist(f0), nom: nomX }, sitesEcartesList: (M0.sitesEcartesList || []).filter(function (s) { return !f0.secteur && s.agence === f0.agence; }) });
+    var P0x = CORE.perimetres(M)[0], APx = actionsPrioritaires(M), top10x = APx.liste.slice(0, 10);
+    var Kx = CORE.kpi(P0x.alarms, P0x.sites, M), rx = Kx.ahuAbuSiteAn, objx = M.cfg.objectif;
+    var txtOf = function (sel) { var e = $(sel); return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; };
+    var simples = {
+      nom: nomX, secteurs: !f0.secteur, totalAlarmes: P0x.alarms.filter(function (a) { return !a.exclu; }).length,
+      accueil: { r: rx, niv: rx == null ? '' : rx <= objx ? 'good' : rx <= objx * 1.25 ? 'warn' : 'bad', K: Kx, lead: txtOf('#p-accueil .ac-lead'), def: txtOf('#p-accueil .ac-def'),
+        alertes: $$('#p-accueil .ac-alert').map(function (el) { return { niv: el.classList.contains('bad') ? 'bad' : 'warn', txt: el.querySelector('p').textContent.replace(/\s+/g, ' ').trim() }; }),
+        top10: top10x, part10: APx.total ? top10x.reduce(function (s, o) { return s + o.n; }, 0) / APx.total * 100 : 0 },
+      astreinte: CORE.analyseAstreinte(P0x.alarms, M.cfg), durees: CORE.analyseDurees(P0x.alarms, M.cfg),
+      astrLead: txtOf('#p-astreinte .ac-lead'), tempoLead: txtOf('#p-tempo .ac-lead'), tempoRegle: txtOf('#p-tempo .ac-foot'),
+      actionAstreinte: actionAstreinte, precaution: precautionTempo
+    };
+    var ctx = { simples: simples, regLabel: enPerim ? nomX.replace(/^AG /, '') : 'Région', histPack: histPack, M: M, CORE: CORE, synTable: synTable, attention: attention, curYM: curYM, prevYM: prevYM, histVal: function (k, y, m) { return histVal(M.perim && k === 'region' ? M.perim.key : k, y, m); }, hist: state.hist,
       hbarChart: hbarChart, lineChart: lineChart, barChart: barChart, MOIS_C: MOIS_C, ctrlList: function () { return ctrlCounts().list; }, furtLabel: furtLabel,
-      repSeuil: state.ui.repSeuil || M.cfg.seuilRepetitif, files: { journal: state.journal.file, bdpti: state.bdpti.file }, secteurTable: secteurTable, evoRows: evoRows, skipData: !!window.__skipData, stack100Chart: stack100Chart, eqLevel: eqLevel };
+      repSeuil: state.ui.repSeuil || M.cfg.seuilRepetitif, files: { journal: state.journal.file, bdpti: state.bdpti.file }, secteurTable: secteurTable, evoRows: function (k) { return evoRows(M.perim && k === 'region' ? M.perim.key : k); }, skipData: !!window.__skipData, stack100Chart: stack100Chart, eqLevel: eqLevel };
     setTimeout(function () {
       CLASSEUR.build(ctx).then(function (wb) { return wb.xlsx.writeBuffer(); }).then(function (buf) {
         var reg = M.cfg.region === 'GRAND OUEST' ? 'GdO' : M.cfg.region;
-        download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Région ' + reg + ' - Analyse & Suivi des Alarmes ' + M.period.label + '.xlsx');
-        state.reportDone = true; renderAll(); toast('Classeur généré · ' + M.period.label + ' enregistré dans l\'historique');
+        download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), (enPerim ? nomX : 'Région ' + reg) + ' - Analyse & Suivi des Alarmes ' + M.period.label + '.xlsx');
+        state.reportDone = true; renderAll(); toast('Classeur généré' + (enPerim ? ' pour ' + nomX : '') + ' · ' + M.period.label + ' enregistré dans l\'historique');
       }).catch(function (e) { console.error(e); toast('Erreur de génération : ' + e.message); })
         .then(function () { btn.disabled = false; btn.innerHTML = old; });
     }, 40);
